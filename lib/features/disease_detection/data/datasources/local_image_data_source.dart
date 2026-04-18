@@ -22,11 +22,16 @@ class LocalImageDataSourceImpl implements LocalImageDataSource {
     if (selectedImage == null) {
       return null;
     }
+    // Save to lib/core/uploads/img.jpg
+    // final Directory appDirectory = await getApplicationDocumentsDirectory();
+    // final Directory uploadsDirectory = Directory(
+    //   '${appDirectory.path}${Platform.pathSeparator}uploads',
+    // );
 
-    final Directory appDirectory = await getApplicationDocumentsDirectory();
-    final Directory uploadsDirectory = Directory(
-      '${appDirectory.path}${Platform.pathSeparator}uploads',
-    );
+    // Save to project-local path: lib/core/uploads/img.jpg
+    final String projectUploadsPath =
+        '${Directory.current.path}${Platform.pathSeparator}lib${Platform.pathSeparator}core${Platform.pathSeparator}uploads';
+    final Directory uploadsDirectory = Directory(projectUploadsPath);
 
     if (!await uploadsDirectory.exists()) {
       await uploadsDirectory.create(recursive: true);

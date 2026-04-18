@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -27,36 +26,31 @@ class RoboflowRemoteDataSourceImpl implements RoboflowRemoteDataSource {
       throw Exception('No saved image found. Please upload an image first.');
     }
 
-    final String encodedImage = base64Encode(await imageFile.readAsBytes());
-    final Uri endpoint = Uri.parse(_config.baseUrl).replace(
-      pathSegments: <String>[
-        ...Uri.parse(
-          _config.baseUrl,
-        ).pathSegments.where((String segment) => segment.isNotEmpty),
-        _config.workspaceName,
-        'workflows',
-        _config.workflowId,
-      ],
-    );
+    final Uri endpoint = Uri.parse(
+      '${_config.baseUrl}/${_config.modelId}',
+    ).replace(queryParameters: <String, String>{'api_key': _config.apiKey});
 
-    final Map<String, dynamic> payload = <String, dynamic>{
-      'api_key': _config.apiKey,
-      'use_cache': true,
-      'inputs': <String, dynamic>{
-        'image': <String, dynamic>{'type': 'base64', 'value': encodedImage},
-        'classes': _config.classes,
-      },
-    };
+    final FormData formData = FormData.fromMap(<String, dynamic>{
+      'file': await MultipartFile.fromFile(imageFile.path, filename: 'img.jpg'),
+    });
 
-    final Response<dynamic> response = await _dio.postUri(
-      endpoint,
-      data: payload,
-      options: Options(
-        headers: <String, String>{'Content-Type': 'application/json'},
-        sendTimeout: const Duration(seconds: 35),
-        receiveTimeout: const Duration(seconds: 35),
-      ),
-    );
+    Response<dynamic> response;
+    try {
+      response = await _dio.postUri(
+        endpoint,
+        data: formData,
+        options: Options(
+          sendTimeout: const Duration(seconds: 35),
+          receiveTimeout: const Duration(seconds: 35),
+        ),
+      );
+    } on DioException catch (error) {
+      final int? statusCode = error.response?.statusCode;
+      final dynamic errorBody = error.response?.data;
+      throw Exception(
+        'Roboflow model API failed. status=$statusCode body=$errorBody',
+      );
+    }
 
     final dynamic body = response.data;
     if (body is Map<String, dynamic>) {
