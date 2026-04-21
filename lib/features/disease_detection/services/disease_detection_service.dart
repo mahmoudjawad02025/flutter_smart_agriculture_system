@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/config/app_runtime_config.dart';
 import '../../../core/config/roboflow_config.dart';
 import '../models/detection_result.dart';
 
@@ -10,13 +12,16 @@ class DiseaseDetectionService {
   DiseaseDetectionService({
     required ImagePicker imagePicker,
     required Dio dio,
+    required FirebaseDatabase database,
     required RoboflowConfig config,
   }) : _imagePicker = imagePicker,
        _dio = dio,
+       _database = database,
        _config = config;
 
   final ImagePicker _imagePicker;
   final Dio _dio;
+  final FirebaseDatabase _database;
   final RoboflowConfig _config;
 
   Future<String?> pickAndSaveLeafImage() async {
@@ -91,5 +96,71 @@ class DiseaseDetectionService {
     }
 
     throw Exception('Unexpected API response format.');
+  }
+
+  Future<void> updateLeafStatusInFirebase(DetectionResult result) async {
+    try {
+      final List<String> labels = result.detectedLabels;
+      final bool isHealthy = _isHealthy(labels);
+
+      print('[DISEASE_DETECTION] Detected labels: $labels');
+      print('[DISEASE_DETECTION] Is healthy: $isHealthy');
+
+      // Handle case where detection failed or no disease detected
+      final String leafStatus;
+      if (labels.isEmpty) {
+        leafStatus = 'Unknown - Detection Failed';
+      } else if (isHealthy) {
+        leafStatus = 'Healthy';
+      } else {
+        leafStatus = labels.first;
+      }
+
+      final String reuploadAt = isHealthy
+          ? ''
+          : DateTime.now()
+                .toUtc()
+                .add(
+                  const Duration(
+                    days: AppRuntimeConfig.diseaseReuploadDelayDays,
+                  ),
+                )
+                .toIso8601String();
+
+      print('[DISEASE_DETECTION] Updating Firebase with:');
+      print('[DISEASE_DETECTION]   status: $leafStatus');
+      print('[DISEASE_DETECTION]   needs_fix: ${!isHealthy}');
+      print('[DISEASE_DETECTION]   reupload_at: $reuploadAt');
+
+      await _database
+          .ref('smart_cucumber_agriculture/data/leaf')
+          .update(<String, dynamic>{
+            'status': leafStatus,
+            'needs_fix': !isHealthy,
+            'reupload_at': reuploadAt,
+            'last_updated': DateTime.now().toUtc().toIso8601String(),
+          });
+
+      print('[DISEASE_DETECTION] Firebase update successful!');
+    } catch (e) {
+      print('[DISEASE_DETECTION] Firebase update FAILED: $e');
+      // Firebase write failed - rethrow so UI shows the error
+      throw Exception('Firebase update failed: $e');
+    }
+  }
+
+  bool _isHealthy(List<String> labels) {
+    if (labels.isEmpty) {
+      return false;
+    }
+
+    final List<String> keywords = AppRuntimeConfig.healthyKeywords
+        .map((String value) => value.toLowerCase())
+        .toList();
+
+    return labels.every((String label) {
+      final String normalized = label.toLowerCase();
+      return keywords.any(normalized.contains);
+    });
   }
 }

@@ -67,22 +67,51 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
       ),
     );
 
+    print('[ANALYZE_IMAGE] Starting image analysis...');
+
     try {
+      print('[ANALYZE_IMAGE] Calling Roboflow API...');
       final result = await _diseaseDetectionService.analyzeSavedImage(
         imagePath,
       );
+      print(
+        '[ANALYZE_IMAGE] API returned successfully: ${result.detectedLabels}',
+      );
+
+      // Attempt Firebase update, but don't fail if it errors
+      String? firebaseError;
+      try {
+        print('[ANALYZE_IMAGE] Updating Firebase leaf status...');
+        await _diseaseDetectionService.updateLeafStatusInFirebase(result);
+        print('[ANALYZE_IMAGE] Firebase update completed!');
+      } catch (firebaseErr) {
+        // Store error message but continue - analysis was successful
+        print('[ANALYZE_IMAGE] Firebase update FAILED: $firebaseErr');
+        firebaseError = 'Firebase sync failed (non-critical): $firebaseErr';
+      }
+
+      // Emit success with analysis result, regardless of Firebase status
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.success,
           result: result,
           clearError: true,
+          // Include Firebase error in state if occurred, but don't block UI
+          errorMessage: firebaseError,
         ),
       );
+      print('[ANALYZE_IMAGE] Analysis completed successfully!');
     } catch (error) {
+      print('[ANALYZE_IMAGE] API ANALYSIS FAILED: $error');
+      // This is the critical error: API call failed
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.error,
-          errorMessage: 'API request failed: $error',
+          errorMessage:
+              'API Analysis failed: $error\n\nTips:\n'
+              '• Check image quality\n'
+              '• Ensure good lighting\n'
+              '• Verify Roboflow API key',
         ),
       );
     }

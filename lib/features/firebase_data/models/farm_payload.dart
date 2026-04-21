@@ -2,7 +2,7 @@ class FarmPayload {
   const FarmPayload._();
 
   static const String rootPath = 'smart_cucumber_agriculture';
-  static const String nitrogenPath = '$rootPath/data/live/n';
+  static const String nitrogenPath = '$rootPath/data/sensors/n';
 
   static Map<String, dynamic> sampleData() {
     return <String, dynamic>{
