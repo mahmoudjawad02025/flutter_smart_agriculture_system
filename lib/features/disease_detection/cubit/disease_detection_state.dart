@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../detection_result.dart';
+import '../models/detection_result.dart';
 
 enum DiseaseDetectionStatus { idle, imageReady, analyzing, success, error }
 

@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/config/roboflow_config.dart';
-import 'detection_result.dart';
+import '../../../core/config/roboflow_config.dart';
+import '../models/detection_result.dart';
 
 class DiseaseDetectionService {
   DiseaseDetectionService({

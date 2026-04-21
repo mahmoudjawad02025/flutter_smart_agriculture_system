@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../disease_detection_service.dart';
+import '../services/disease_detection_service.dart';
 import 'disease_detection_state.dart';
 
 class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {

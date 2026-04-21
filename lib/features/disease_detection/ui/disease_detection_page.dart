@@ -4,106 +4,103 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../detection_result.dart';
 import '../cubit/disease_detection_cubit.dart';
 import '../cubit/disease_detection_state.dart';
+import '../models/detection_result.dart';
 
 class DiseaseDetectionPage extends StatelessWidget {
   const DiseaseDetectionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Cucumber Leaf Analysis')),
-      body: SafeArea(
-        child: BlocConsumer<DiseaseDetectionCubit, DiseaseDetectionState>(
-          listenWhen:
-              (DiseaseDetectionState previous, DiseaseDetectionState current) {
-                return previous.errorMessage != current.errorMessage &&
-                    current.errorMessage != null;
-              },
-          listener: (BuildContext context, DiseaseDetectionState state) {
-            final String? message = state.errorMessage;
-            if (message == null || message.isEmpty) {
-              return;
-            }
+    return SafeArea(
+      child: BlocConsumer<DiseaseDetectionCubit, DiseaseDetectionState>(
+        listenWhen:
+            (DiseaseDetectionState previous, DiseaseDetectionState current) {
+              return previous.errorMessage != current.errorMessage &&
+                  current.errorMessage != null;
+            },
+        listener: (BuildContext context, DiseaseDetectionState state) {
+          final String? message = state.errorMessage;
+          if (message == null || message.isEmpty) {
+            return;
+          }
 
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(content: Text(message)));
-          },
-          builder: (BuildContext context, DiseaseDetectionState state) {
-            final DiseaseDetectionCubit cubit = context
-                .read<DiseaseDetectionCubit>();
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(message)));
+        },
+        builder: (BuildContext context, DiseaseDetectionState state) {
+          final DiseaseDetectionCubit cubit = context
+              .read<DiseaseDetectionCubit>();
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Text(
-                    'Upload cucumber leaf image',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'The app saves the latest upload as lib/core/uploads/img.jpg and '
-                    'replaces old image automatically.',
-                  ),
-                  const SizedBox(height: 14),
-                  _ImagePreview(
-                    path: state.imagePath,
-                    refreshToken: state.previewRevision,
-                  ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: <Widget>[
-                      ElevatedButton.icon(
-                        onPressed: state.isAnalyzing
-                            ? null
-                            : cubit.pickImageAndSave,
-                        icon: const Icon(Icons.upload_file),
-                        label: const Text('Upload Image'),
-                      ),
-                      FilledButton.icon(
-                        onPressed: (!state.hasImage || state.isAnalyzing)
-                            ? null
-                            : cubit.analyzeImage,
-                        icon: const Icon(Icons.cloud_upload_outlined),
-                        label: const Text('Connect API'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    state.imagePath == null
-                        ? 'Saved file: lib/core/uploads/img.jpg (after first upload)'
-                        : 'Saved file: ${state.imagePath}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Text('Result', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 12),
-                  if (state.isAnalyzing) ...<Widget>[
-                    const Center(child: CircularProgressIndicator()),
-                    const SizedBox(height: 8),
-                    const Center(child: Text('Analyzing image...')),
-                  ] else if (state.result != null) ...<Widget>[
-                    _ResultView(result: state.result!),
-                  ] else ...<Widget>[
-                    const Text(
-                      'No analysis result yet. Upload image then press Connect API.',
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  'Upload cucumber leaf image',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'The app saves the latest upload as lib/core/uploads/img.jpg and '
+                  'replaces old image automatically.',
+                ),
+                const SizedBox(height: 14),
+                _ImagePreview(
+                  path: state.imagePath,
+                  refreshToken: state.previewRevision,
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: <Widget>[
+                    ElevatedButton.icon(
+                      onPressed: state.isAnalyzing
+                          ? null
+                          : cubit.pickImageAndSave,
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Upload Image'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: (!state.hasImage || state.isAnalyzing)
+                          ? null
+                          : cubit.analyzeImage,
+                      icon: const Icon(Icons.cloud_upload_outlined),
+                      label: const Text('Connect API'),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  state.imagePath == null
+                      ? 'Saved file: lib/core/uploads/img.jpg (after first upload)'
+                      : 'Saved file: ${state.imagePath}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 16),
+                Text('Result', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                if (state.isAnalyzing) ...<Widget>[
+                  const Center(child: CircularProgressIndicator()),
+                  const SizedBox(height: 8),
+                  const Center(child: Text('Analyzing image...')),
+                ] else if (state.result != null) ...<Widget>[
+                  _ResultView(result: state.result!),
+                ] else ...<Widget>[
+                  const Text(
+                    'No analysis result yet. Upload image then press Connect API.',
+                  ),
                 ],
-              ),
-            );
-          },
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -123,7 +120,6 @@ class _ImagePreviewState extends State<_ImagePreview> {
   @override
   void didUpdateWidget(covariant _ImagePreview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Clear image cache when path changes to force reload
     if ((oldWidget.path != widget.path ||
             oldWidget.refreshToken != widget.refreshToken) &&
         widget.path != null) {
@@ -174,7 +170,6 @@ class _ImagePreviewState extends State<_ImagePreview> {
       );
     }
 
-    // Use the upload revision in the key so the image widget reloads after overwrite.
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Image.file(
