@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -121,8 +123,8 @@ class DiseaseDetectionService {
           : DateTime.now()
                 .toUtc()
                 .add(
-                  const Duration(
-                    days: AppRuntimeConfig.diseaseReuploadDelayDays,
+                  Duration(
+                    days: AppRuntimeConfig.diseaseReuploadDelayDays.value,
                   ),
                 )
                 .toIso8601String();
@@ -154,7 +156,7 @@ class DiseaseDetectionService {
       return false;
     }
 
-    final List<String> keywords = AppRuntimeConfig.healthyKeywords
+    final List<String> keywords = AppRuntimeConfig.healthyKeywords.value
         .map((String value) => value.toLowerCase())
         .toList();
 

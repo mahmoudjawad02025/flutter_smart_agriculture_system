@@ -1,3 +1,5 @@
+import '../../../core/config/app_runtime_config.dart';
+
 class FarmPayload {
   const FarmPayload._();
 
@@ -25,15 +27,15 @@ class FarmPayload {
       'actions': <String, dynamic>{
         'pumps': <String, dynamic>{'water': false, 'fert': false, 'auto': true},
         'goals': <String, dynamic>{
-          'moist_min': 30,
-          'moist_max': 65,
-          'n_min': 100,
-          'n_max': 180,
-          'p_min': 40,
-          'p_max': 80,
-          'k_min': 150,
-          'k_max': 250,
-          'leaf_goal': 'Healthy',
+          'moist_min': AppRuntimeConfig.moistMin.value,
+          'moist_max': AppRuntimeConfig.moistMax.value,
+          'n_min': AppRuntimeConfig.nMin.value,
+          'n_max': AppRuntimeConfig.nMax.value,
+          'p_min': AppRuntimeConfig.pMin.value,
+          'p_max': AppRuntimeConfig.pMax.value,
+          'k_min': AppRuntimeConfig.kMin.value,
+          'k_max': AppRuntimeConfig.kMax.value,
+          'leaf_goal': AppRuntimeConfig.leafGoal.value,
         },
       },
       'logs': <String, dynamic>{
@@ -53,6 +55,22 @@ class FarmPayload {
           'id_1': <String, dynamic>{
             'time': DateTime.now().toUtc().toIso8601String(),
             'res': 'Healthy',
+          },
+        },
+      },
+      'notifications': <String, dynamic>{
+        'unread_count': 0,
+        'items': <String, dynamic>{
+          'notif_1': <String, dynamic>{
+            'title': 'Disease Detected',
+            'message': 'Powdery Mildew detected on your cucumber leaf',
+            'disease_name': 'Powdery_Mildew',
+            'next_upload': DateTime.now()
+                .toUtc()
+                .add(const Duration(days: 2))
+                .toIso8601String(),
+            'is_read': false,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
           },
         },
       },

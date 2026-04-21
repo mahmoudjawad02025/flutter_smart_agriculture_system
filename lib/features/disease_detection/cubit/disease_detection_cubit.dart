@@ -1,15 +1,22 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_runtime_config.dart';
+import '../../notifications/cubit/notifications_cubit.dart';
 import '../services/disease_detection_service.dart';
 import 'disease_detection_state.dart';
 
 class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
   DiseaseDetectionCubit({
     required DiseaseDetectionService diseaseDetectionService,
+    required NotificationsCubit notificationsCubit,
   }) : _diseaseDetectionService = diseaseDetectionService,
+       _notificationsCubit = notificationsCubit,
        super(const DiseaseDetectionState());
 
   final DiseaseDetectionService _diseaseDetectionService;
+  final NotificationsCubit _notificationsCubit;
 
   Future<void> pickImageAndSave() async {
     emit(state.copyWith(status: DiseaseDetectionStatus.idle, clearError: true));
@@ -78,32 +85,47 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
         '[ANALYZE_IMAGE] API returned successfully: ${result.detectedLabels}',
       );
 
-      // Attempt Firebase update, but don't fail if it errors
       String? firebaseError;
       try {
         print('[ANALYZE_IMAGE] Updating Firebase leaf status...');
         await _diseaseDetectionService.updateLeafStatusInFirebase(result);
         print('[ANALYZE_IMAGE] Firebase update completed!');
       } catch (firebaseErr) {
-        // Store error message but continue - analysis was successful
         print('[ANALYZE_IMAGE] Firebase update FAILED: $firebaseErr');
         firebaseError = 'Firebase sync failed (non-critical): $firebaseErr';
       }
 
-      // Emit success with analysis result, regardless of Firebase status
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.success,
           result: result,
           clearError: true,
-          // Include Firebase error in state if occurred, but don't block UI
           errorMessage: firebaseError,
         ),
       );
+
+      final bool isHealthy = _isHealthy(result.detectedLabels);
+      if (!isHealthy && result.detectedLabels.isNotEmpty) {
+        final String diseaseName = result.detectedLabels.first;
+        final String nextUpload = DateTime.now()
+            .toUtc()
+            .add(
+              Duration(days: AppRuntimeConfig.diseaseReuploadDelayDays.value),
+            )
+            .toIso8601String();
+
+        await _notificationsCubit.addDiseaseNotification(
+          diseaseName: diseaseName,
+          nextUpload: nextUpload,
+          createdAt: DateTime.now(),
+        );
+
+        print('[ANALYZE_IMAGE] Notification added for disease: $diseaseName');
+      }
+
       print('[ANALYZE_IMAGE] Analysis completed successfully!');
     } catch (error) {
       print('[ANALYZE_IMAGE] API ANALYSIS FAILED: $error');
-      // This is the critical error: API call failed
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.error,
@@ -115,5 +137,20 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
         ),
       );
     }
+  }
+
+  bool _isHealthy(List<String> labels) {
+    if (labels.isEmpty) {
+      return false;
+    }
+
+    final List<String> keywords = AppRuntimeConfig.healthyKeywords.value
+        .map((String value) => value.toLowerCase())
+        .toList();
+
+    return labels.every((String label) {
+      final String normalized = label.toLowerCase();
+      return keywords.any(normalized.contains);
+    });
   }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../configurations/ui/configurations_page.dart';
 import '../../dashboard/ui/dashboard_page.dart';
 import '../../disease_detection/ui/disease_detection_page.dart';
 import '../../firebase_data/ui/firebase_data_page.dart';
+import '../../notifications/ui/notifications_page.dart';
+import '../../settings/ui/settings_page.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 
@@ -19,19 +22,15 @@ class _AppShellPageState extends State<AppShellPage> {
   static const List<String> _titles = <String>[
     'Farm Dashboard',
     'AI Disease Detection',
-    'Firebase Read/Write',
+    'Farm Configurations',
     'Settings',
   ];
 
   late final List<Widget> _pages = <Widget>[
     const DashboardPage(),
     const DiseaseDetectionPage(),
-    const FirebaseDataPage(),
-    const _PlaceholderPage(
-      title: 'Settings',
-      subtitle: 'Use this page later for thresholds and automation options.',
-      icon: Icons.settings_outlined,
-    ),
+    const ConfigurationsPage(),
+    const SettingsPage(),
   ];
 
   void _goToPage(int index) {
@@ -39,6 +38,18 @@ class _AppShellPageState extends State<AppShellPage> {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  void _openNotifications() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const NotificationsPage()));
+  }
+
+  void _openFirebaseTest() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const FirebaseDataPage()));
   }
 
   @override
@@ -60,19 +71,7 @@ class _AppShellPageState extends State<AppShellPage> {
             Expanded(child: Text(_titles[_currentIndex])),
           ],
         ),
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Notifications',
-            onPressed: () {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  const SnackBar(content: Text('No notifications right now.')),
-                );
-            },
-            icon: const Icon(Icons.notifications_none_outlined),
-          ),
-        ],
+        actions: <Widget>[const NotificationBadge()],
       ),
       drawer: Drawer(
         child: SafeArea(
@@ -107,14 +106,30 @@ class _AppShellPageState extends State<AppShellPage> {
                 onTap: () => _goToPage(1),
               ),
               _DrawerNavTile(
-                icon: Icons.cloud_outlined,
-                label: 'Firebase Test',
+                icon: Icons.tune_outlined,
+                label: 'Configurations',
                 onTap: () => _goToPage(2),
               ),
               _DrawerNavTile(
                 icon: Icons.settings_outlined,
                 label: 'Settings',
                 onTap: () => _goToPage(3),
+              ),
+              _DrawerNavTile(
+                icon: Icons.notifications_outlined,
+                label: 'Notifications',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _openNotifications();
+                },
+              ),
+              _DrawerNavTile(
+                icon: Icons.cloud_outlined,
+                label: 'Firebase Test',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _openFirebaseTest();
+                },
               ),
             ],
           ),
@@ -136,9 +151,9 @@ class _AppShellPageState extends State<AppShellPage> {
             label: 'AI',
           ),
           NavigationDestination(
-            icon: Icon(Icons.cloud_outlined),
-            selectedIcon: Icon(Icons.cloud_done),
-            label: 'Firebase',
+            icon: Icon(Icons.tune_outlined),
+            selectedIcon: Icon(Icons.tune),
+            label: 'Config',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
@@ -177,43 +192,6 @@ class _DrawerNavTile extends StatelessWidget {
         title: Text(label),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _PlaceholderPage extends StatelessWidget {
-  const _PlaceholderPage({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 52),
-              const SizedBox(height: 12),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

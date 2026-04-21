@@ -6,15 +6,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_cucumber_agriculture_system/firebase_options.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'core/config/app_access_control.dart';
+import 'core/config/app_runtime_config.dart';
+import 'features/auth/cubit/auth_cubit.dart';
+import 'features/auth/services/auth_service.dart';
+import 'features/auth/ui/auth_wrapper.dart';
+
 import 'core/config/roboflow_config.dart';
-import 'features/app_shell/ui/app_shell_page.dart';
 import 'features/disease_detection/cubit/disease_detection_cubit.dart';
 import 'features/disease_detection/services/disease_detection_service.dart';
 import 'features/firebase_data/cubit/firebase_data_cubit.dart';
+import 'features/notifications/cubit/notifications_cubit.dart';
+import 'features/notifications/services/notifications_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await AppAccessControl.instance.initialize();
+  await AppRuntimeConfig.initialize();
   runApp(const MyApp());
 }
 
@@ -72,15 +83,33 @@ class MyApp extends StatelessWidget {
       ),
       home: MultiBlocProvider(
         providers: <BlocProvider<dynamic>>[
+          BlocProvider<AuthCubit>(
+            create: (_) => AuthCubit(
+              authService: AuthService(
+                firebaseAuth: FirebaseAuth.instance,
+                database: FirebaseDatabase.instance,
+              ),
+            ),
+          ),
+          BlocProvider<NotificationsCubit>(
+            create: (_) => NotificationsCubit(
+              notificationsService: NotificationsService(
+                database: FirebaseDatabase.instance,
+              ),
+            ),
+          ),
           BlocProvider<DiseaseDetectionCubit>(
-            create: (_) {
-              final service = DiseaseDetectionService(
+            create: (context) {
+              final DiseaseDetectionService service = DiseaseDetectionService(
                 imagePicker: ImagePicker(),
                 dio: Dio(),
                 database: FirebaseDatabase.instance,
                 config: _config,
               );
-              return DiseaseDetectionCubit(diseaseDetectionService: service);
+              return DiseaseDetectionCubit(
+                diseaseDetectionService: service,
+                notificationsCubit: context.read<NotificationsCubit>(),
+              );
             },
           ),
           BlocProvider<FirebaseDataCubit>(
@@ -88,7 +117,7 @@ class MyApp extends StatelessWidget {
                 FirebaseDataCubit(database: FirebaseDatabase.instance),
           ),
         ],
-        child: const AppShellPage(),
+        child: const AuthWrapper(),
       ),
     );
   }
