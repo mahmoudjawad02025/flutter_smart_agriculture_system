@@ -31,9 +31,10 @@ class AuthUnauthenticated extends AuthState {
 
 class AuthError extends AuthState {
   final String message;
+  final AuthUser? authenticatedUser; // Optional: if the error occurred while user was logged in
 
-  const AuthError(this.message);
+  const AuthError(this.message, {this.authenticatedUser});
 
   @override
-  List<Object?> get props => <Object?>[message];
+  List<Object?> get props => <Object?>[message, authenticatedUser];
 }

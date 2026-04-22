@@ -46,78 +46,77 @@ class MyApp extends StatelessWidget {
           surface: const Color(0xFFF4F8EE),
         );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Smart Cucumber Agriculture',
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFEEF5E9),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2E7D32),
-          foregroundColor: Colors.white,
-          elevation: 1,
+    return MultiBlocProvider(
+      providers: <BlocProvider<dynamic>>[
+        BlocProvider<AuthCubit>(
+          create: (_) => AuthCubit(
+            authService: AuthService(
+              firebaseAuth: FirebaseAuth.instance,
+              database: FirebaseDatabase.instance,
+            ),
+          ),
         ),
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: const Color(0xFFE3F0DB),
-          indicatorColor: const Color(0xFFB7D9A8),
-          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((
-            Set<WidgetState> states,
-          ) {
-            final bool selected = states.contains(WidgetState.selected);
-            return TextStyle(
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected
-                  ? const Color(0xFF1F5B24)
-                  : const Color(0xFF3D4B35),
+        BlocProvider<NotificationsCubit>(
+          create: (_) => NotificationsCubit(
+            notificationsService: NotificationsService(
+              database: FirebaseDatabase.instance,
+            ),
+          ),
+        ),
+        BlocProvider<DiseaseDetectionCubit>(
+          create: (context) {
+            final DiseaseDetectionService service = DiseaseDetectionService(
+              imagePicker: ImagePicker(),
+              dio: Dio(),
+              database: FirebaseDatabase.instance,
+              config: _config,
             );
-          }),
+            return DiseaseDetectionCubit(
+              diseaseDetectionService: service,
+              notificationsCubit: context.read<NotificationsCubit>(),
+            );
+          },
         ),
-        cardTheme: CardThemeData(
-          color: Colors.white,
-          elevation: 0.8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+        BlocProvider<FirebaseDataCubit>(
+          create: (_) => FirebaseDataCubit(database: FirebaseDatabase.instance),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Smart Cucumber Agriculture',
+        theme: ThemeData(
+          colorScheme: colorScheme,
+          useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFFEEF5E9),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF2E7D32),
+            foregroundColor: Colors.white,
+            elevation: 1,
           ),
-        ),
-      ),
-      home: MultiBlocProvider(
-        providers: <BlocProvider<dynamic>>[
-          BlocProvider<AuthCubit>(
-            create: (_) => AuthCubit(
-              authService: AuthService(
-                firebaseAuth: FirebaseAuth.instance,
-                database: FirebaseDatabase.instance,
-              ),
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor: const Color(0xFFE3F0DB),
+            indicatorColor: const Color(0xFFB7D9A8),
+            labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((
+              Set<WidgetState> states,
+            ) {
+              final bool selected = states.contains(WidgetState.selected);
+              return TextStyle(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected
+                    ? const Color(0xFF1F5B24)
+                    : const Color(0xFF3D4B35),
+              );
+            }),
+          ),
+          cardTheme: CardThemeData(
+            color: Colors.white,
+            elevation: 0.8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
-          BlocProvider<NotificationsCubit>(
-            create: (_) => NotificationsCubit(
-              notificationsService: NotificationsService(
-                database: FirebaseDatabase.instance,
-              ),
-            ),
-          ),
-          BlocProvider<DiseaseDetectionCubit>(
-            create: (context) {
-              final DiseaseDetectionService service = DiseaseDetectionService(
-                imagePicker: ImagePicker(),
-                dio: Dio(),
-                database: FirebaseDatabase.instance,
-                config: _config,
-              );
-              return DiseaseDetectionCubit(
-                diseaseDetectionService: service,
-                notificationsCubit: context.read<NotificationsCubit>(),
-              );
-            },
-          ),
-          BlocProvider<FirebaseDataCubit>(
-            create: (_) =>
-                FirebaseDataCubit(database: FirebaseDatabase.instance),
-          ),
-        ],
-        child: const AuthWrapper(),
+        ),
+        home: const AuthWrapper(),
       ),
     );
   }

@@ -22,9 +22,6 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    // Pre-fill with default admin credentials for testing
-    _emailController.text = 'admin@agriculture.local';
-    _passwordController.text = 'admin';
   }
 
   @override
@@ -36,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _handleLogin() {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showSnackBar('Please fill in all fields');
+      _showSnackBar('Please fill in all fields', isError: true);
       return;
     }
 
@@ -46,9 +43,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message), 
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 4),
+      ),
     );
   }
 
@@ -56,13 +57,19 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (BuildContext context, AuthState state) {
+        // Prevents double snackbars when SignUpPage is on top
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+
         if (state is AuthError) {
-          _showSnackBar(state.message);
+          final bool isSuccess = state.message.contains('successfully');
+          _showSnackBar(state.message, isError: !isSuccess);
         }
         if (state is AuthLoading) {
           setState(() => _isLoading = true);
         }
-        if (state is AuthAuthenticated || state is AuthUnauthenticated) {
+        if (state is AuthAuthenticated ||
+            state is AuthUnauthenticated ||
+            state is AuthError) {
           setState(() => _isLoading = false);
         }
       },
@@ -98,11 +105,15 @@ class _LoginPageState extends State<LoginPage> {
                     color: Color(0xFF2E7D32),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 const Text(
-                  'Disease Detection & Monitoring',
+                  'Auto Irrigation and Fertilization and AI Disease Detection',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 14, 
+                    color: Color(0xFF388E3C),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 48),
                 const Text(
@@ -219,31 +230,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Default Admin Credentials (First Use):',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Email: admin@agriculture.local\nPassword: admin',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),

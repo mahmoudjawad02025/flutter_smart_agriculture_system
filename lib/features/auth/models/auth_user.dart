@@ -7,7 +7,8 @@ class AuthUser extends Equatable {
   final String? photoUrl;
   final bool isAnonymous;
   final DateTime? createdAt;
-  final String? role; // 'admin', 'user', etc.
+  final String role; // 'admin', 'user'
+  final String status; // 'pending', 'approved', 'rejected', 'blocked'
 
   const AuthUser({
     required this.uid,
@@ -17,6 +18,7 @@ class AuthUser extends Equatable {
     this.isAnonymous = false,
     this.createdAt,
     this.role = 'user',
+    this.status = 'approved', // default for backward compatibility
   });
 
   AuthUser copyWith({
@@ -27,6 +29,7 @@ class AuthUser extends Equatable {
     bool? isAnonymous,
     DateTime? createdAt,
     String? role,
+    String? status,
   }) {
     return AuthUser(
       uid: uid ?? this.uid,
@@ -36,17 +39,19 @@ class AuthUser extends Equatable {
       isAnonymous: isAnonymous ?? this.isAnonymous,
       createdAt: createdAt ?? this.createdAt,
       role: role ?? this.role,
+      status: status ?? this.status,
     );
   }
 
   @override
   List<Object?> get props => <Object?>[
-    uid,
-    email,
-    displayName,
-    photoUrl,
-    isAnonymous,
-    createdAt,
-    role,
-  ];
+        uid,
+        email,
+        displayName,
+        photoUrl,
+        isAnonymous,
+        createdAt,
+        role,
+        status,
+      ];
 }

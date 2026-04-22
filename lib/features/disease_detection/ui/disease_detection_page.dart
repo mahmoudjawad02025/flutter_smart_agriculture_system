@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_runtime_config.dart';
 import '../cubit/disease_detection_cubit.dart';
 import '../cubit/disease_detection_state.dart';
 import '../models/detection_result.dart';
@@ -324,34 +325,41 @@ class _ResultView extends StatelessWidget {
                     .toList(),
               ),
             const SizedBox(height: 14),
-            Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  'Advanced details',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                subtitle: const Text('Developer JSON response'),
-                children: <Widget>[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
+            ValueListenableBuilder<bool>(
+              valueListenable: AppRuntimeConfig.showAdvancedDetails,
+              builder: (context, show, child) {
+                if (!show) return const SizedBox.shrink();
+
+                return Theme(
+                  data: Theme.of(
+                    context,
+                  ).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      'Advanced details',
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
-                    child: SelectableText(
-                      prettyJson,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    subtitle: const Text('Developer JSON response'),
+                    children: <Widget>[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                        ),
+                        child: SelectableText(
+                          prettyJson,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -359,3 +367,4 @@ class _ResultView extends StatelessWidget {
     );
   }
 }
+

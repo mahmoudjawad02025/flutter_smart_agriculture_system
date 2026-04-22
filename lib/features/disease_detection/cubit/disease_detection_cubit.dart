@@ -45,7 +45,13 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
           clearError: true,
         ),
       );
+
+      // Trigger automatic analysis if enabled in settings
+      if (AppRuntimeConfig.autoAnalyze.value) {
+        await analyzeImage();
+      }
     } catch (error) {
+
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.error,
@@ -106,22 +112,28 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
 
       final bool isHealthy = _isHealthy(result.detectedLabels);
       if (!isHealthy && result.detectedLabels.isNotEmpty) {
-        final String diseaseName = result.detectedLabels.first;
-        final String nextUpload = DateTime.now()
-            .toUtc()
-            .add(
-              Duration(days: AppRuntimeConfig.diseaseReuploadDelayDays.value),
-            )
-            .toIso8601String();
+        // Only send notification if user enabled push notifications in settings
+        if (AppRuntimeConfig.pushNotifications.value) {
+          final String diseaseName = result.detectedLabels.first;
+          final String nextUpload = DateTime.now()
+              .toUtc()
+              .add(
+                Duration(days: AppRuntimeConfig.diseaseReuploadDelayDays.value),
+              )
+              .toIso8601String();
 
-        await _notificationsCubit.addDiseaseNotification(
-          diseaseName: diseaseName,
-          nextUpload: nextUpload,
-          createdAt: DateTime.now(),
-        );
+          await _notificationsCubit.addDiseaseNotification(
+            diseaseName: diseaseName,
+            nextUpload: nextUpload,
+            createdAt: DateTime.now(),
+          );
 
-        print('[ANALYZE_IMAGE] Notification added for disease: $diseaseName');
+          print('[ANALYZE_IMAGE] Notification added for disease: $diseaseName');
+        } else {
+          print('[ANALYZE_IMAGE] Push notifications are disabled. Skipping notification.');
+        }
       }
+
 
       print('[ANALYZE_IMAGE] Analysis completed successfully!');
     } catch (error) {

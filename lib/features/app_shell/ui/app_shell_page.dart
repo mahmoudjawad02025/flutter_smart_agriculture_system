@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/config/app_runtime_config.dart';
 import '../../configurations/ui/configurations_page.dart';
 import '../../dashboard/ui/dashboard_page.dart';
 import '../../disease_detection/ui/disease_detection_page.dart';
 import '../../firebase_data/ui/firebase_data_page.dart';
 import '../../notifications/ui/notifications_page.dart';
 import '../../settings/ui/settings_page.dart';
+import '../../auth/cubit/auth_cubit.dart';
+import '../../auth/cubit/auth_state.dart';
+import '../../auth/ui/admin_users_page.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 
@@ -34,7 +39,9 @@ class _AppShellPageState extends State<AppShellPage> {
   ];
 
   void _goToPage(int index) {
-    Navigator.of(context).maybePop();
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
     setState(() {
       _currentIndex = index;
     });
@@ -84,12 +91,12 @@ class _AppShellPageState extends State<AppShellPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     CircleAvatar(
-                      radius: 44,
+                      radius: 34,
                       backgroundImage: const AssetImage(_appIconAsset),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Smart Cucumber Menu',
+                      'Cucumber Pro Menu',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],
@@ -123,13 +130,45 @@ class _AppShellPageState extends State<AppShellPage> {
                   _openNotifications();
                 },
               ),
-              _DrawerNavTile(
-                icon: Icons.cloud_outlined,
-                label: 'Firebase Test',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _openFirebaseTest();
+              ValueListenableBuilder<bool>(
+                valueListenable: AppRuntimeConfig.showDeveloperTools,
+                builder: (context, showDev, _) {
+                  if (!showDev) return const SizedBox.shrink();
+                  return _DrawerNavTile(
+                    icon: Icons.cloud_outlined,
+                    label: 'Firebase Diagnostics',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _openFirebaseTest();
+                    },
+                  );
                 },
+              ),
+              const Divider(indent: 20, endIndent: 20),
+              BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, state) {
+                  if (state is AuthAuthenticated && state.user.role == 'admin') {
+                    return _DrawerNavTile(
+                      icon: Icons.people_outline,
+                      label: 'User Management',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminUsersPage(),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+              _DrawerNavTile(
+                icon: Icons.logout,
+                label: 'Log Out',
+                onTap: () => context.read<AuthCubit>().logout(),
               ),
             ],
           ),

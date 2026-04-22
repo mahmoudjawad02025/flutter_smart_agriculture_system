@@ -64,8 +64,13 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _showSnackBar(String message) {
+    final bool isSuccess = message.contains('Account created successfully');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message), 
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 
@@ -79,9 +84,11 @@ class _SignUpPageState extends State<SignUpPage> {
         if (state is AuthLoading) {
           setState(() => _isLoading = true);
         }
-        if (state is AuthAuthenticated) {
+        if (state is AuthAuthenticated || state is AuthError) {
           setState(() => _isLoading = false);
-          Navigator.pop(context);
+          if (state is AuthAuthenticated) {
+            Navigator.pop(context);
+          }
         }
       },
       child: Scaffold(

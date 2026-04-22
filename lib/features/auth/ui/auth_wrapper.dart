@@ -21,75 +21,56 @@ class AuthWrapper extends StatelessWidget {
 
         return BlocBuilder<AuthCubit, AuthState>(
           builder: (BuildContext context, AuthState state) {
-            if (state is AuthInitial || state is AuthLoading) {
-              return Scaffold(
-                backgroundColor: const Color(0xFFEEF5E9),
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        child: const Icon(
-                          Icons.agriculture,
-                          size: 60,
-                          color: Color(0xFF2E7D32),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF2E7D32),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            } else if (state is AuthAuthenticated) {
+            // 1. Authenticated or Error with user preserved -> Stay in App
+            if (state is AuthAuthenticated || (state is AuthError && state.authenticatedUser != null)) {
               return const AppShellPage();
-            } else if (state is AuthUnauthenticated) {
-              return const LoginPage();
-            } else if (state is AuthError) {
-              return Scaffold(
-                backgroundColor: const Color(0xFFEEF5E9),
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Auth Error',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(state.message),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<AuthCubit>().logout();
-                        },
-                        child: const Text('Back to Login'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
             }
 
+            // 2. Initial Loading Screen
+            if (state is AuthInitial) {
+              return _LoadingScreen();
+            }
+
+            // 3. Otherwise -> Login Flow
+            // This includes AuthUnauthenticated and AuthError without user (signup/login errors)
             return const LoginPage();
           },
         );
       },
+    );
+  }
+}
+
+class _LoadingScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFEEF5E9),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: const Icon(
+                Icons.agriculture,
+                size: 60,
+                color: Color(0xFF2E7D32),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Color(0xFF2E7D32),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

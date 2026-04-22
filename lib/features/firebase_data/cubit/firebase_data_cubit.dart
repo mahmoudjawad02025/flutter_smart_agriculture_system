@@ -79,4 +79,47 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
       );
     }
   }
+
+  Future<void> pushTestNotification() async {
+    emit(state.copyWith(status: FirebaseDataStatus.loading, clearMessage: true));
+    try {
+      final String id = 'test_notif_${DateTime.now().millisecondsSinceEpoch}';
+      final ref = _database.ref(
+        '${FarmPayload.rootPath}/notifications/items/$id',
+      );
+
+      await ref.set({
+        'title': 'System Test Alert',
+        'message': 'This is a manual test notification to verify cloud sync.',
+        'disease_name': 'Manual_Test',
+        'next_upload': DateTime.now()
+            .add(const Duration(days: 2))
+            .toIso8601String(),
+        'is_read': false,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      // Update unread count
+      final countRef = _database.ref(
+        '${FarmPayload.rootPath}/notifications/unread_count',
+      );
+      final current = await countRef.get();
+      final currentVal = (current.value as int? ?? 0);
+      await countRef.set(currentVal + 1);
+
+      emit(
+        state.copyWith(
+          status: FirebaseDataStatus.success,
+          message: 'Test notification pushed!',
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: FirebaseDataStatus.error,
+          message: 'Push failed: $e',
+        ),
+      );
+    }
+  }
 }

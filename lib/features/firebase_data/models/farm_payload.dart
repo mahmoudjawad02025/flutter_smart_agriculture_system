@@ -7,73 +7,70 @@ class FarmPayload {
   static const String nitrogenPath = '$rootPath/data/sensors/n';
 
   static Map<String, dynamic> sampleData() {
+    final now = DateTime.now().toUtc().toIso8601String();
     return <String, dynamic>{
-      'data': <String, dynamic>{
-        'sensors': <String, dynamic>{
-          'moist': 45,
-          'temp': 24.5,
-          'hum': 60,
-          'n': 120,
-          'p': 50,
-          'k': 200,
-          'time': DateTime.now().toUtc().toIso8601String(),
-        },
-        'leaf': <String, dynamic>{
-          'status': 'Healthy',
-          'needs_fix': false,
-          'reupload_at': '',
-        },
-      },
       'actions': <String, dynamic>{
-        'pumps': <String, dynamic>{'water': false, 'fert': false, 'auto': true},
         'goals': <String, dynamic>{
-          'moist_min': AppRuntimeConfig.moistMin.value,
-          'moist_max': AppRuntimeConfig.moistMax.value,
-          'n_min': AppRuntimeConfig.nMin.value,
-          'n_max': AppRuntimeConfig.nMax.value,
-          'p_min': AppRuntimeConfig.pMin.value,
-          'p_max': AppRuntimeConfig.pMax.value,
-          'k_min': AppRuntimeConfig.kMin.value,
-          'k_max': AppRuntimeConfig.kMax.value,
-          'leaf_goal': AppRuntimeConfig.leafGoal.value,
+          'k_max': 250,
+          'k_min': 150,
+          'leaf_goal': "Healthy",
+          'moist_max': 165,
+          'moist_min': 60,
+          'n_max': 180,
+          'n_min': 150,
+          'p_max': 80,
+          'p_min': 40
         },
+        'pumps': <String, dynamic>{
+          'auto': true,
+          'fert': false,
+          'water': false,
+        }
+      },
+      'data': <String, dynamic>{
+        'leaf': <String, dynamic>{
+          'last_updated': now,
+          'needs_fix': true,
+          'reupload_at': DateTime.now().toUtc().add(const Duration(days: 3)).toIso8601String(),
+          'status': "Downy_Mildew"
+        },
+        'sensors': <String, dynamic>{
+          'hum': 60,
+          'k': 200,
+          'moist': 65,
+          'n': 130,
+          'p': 50,
+          'temp': 54.5,
+          'time': now
+        }
       },
       'logs': <String, dynamic>{
-        'water_log': <String, dynamic>{
-          'id_1': <String, dynamic>{
-            'time': DateTime.now().toUtc().toIso8601String(),
-          },
-        },
-        'fert_log': <String, dynamic>{
-          'id_1': <String, dynamic>{
-            'time': DateTime.now().toUtc().toIso8601String(),
-            'type': 'Disease_Fix',
-            'val': 'Mildew',
-          },
-        },
-        'upload_log': <String, dynamic>{
-          'id_1': <String, dynamic>{
-            'time': DateTime.now().toUtc().toIso8601String(),
-            'res': 'Healthy',
-          },
-        },
+        'manual_log': <String, dynamic>{
+          'manual_initial': <String, dynamic>{
+            'action': "ON",
+            'pump': "Water",
+            'state': <String, dynamic>{
+              'moist': 65,
+              'status': "Downy_Mildew",
+              'temp': 54.5
+            },
+            'time': now
+          }
+        }
       },
       'notifications': <String, dynamic>{
-        'unread_count': 0,
         'items': <String, dynamic>{
-          'notif_1': <String, dynamic>{
-            'title': 'Disease Detected',
-            'message': 'Powdery Mildew detected on your cucumber leaf',
-            'disease_name': 'Powdery_Mildew',
-            'next_upload': DateTime.now()
-                .toUtc()
-                .add(const Duration(days: 2))
-                .toIso8601String(),
-            'is_read': false,
-            'created_at': DateTime.now().toUtc().toIso8601String(),
+          'test_1': <String, dynamic>{
+            'created_at': now,
+            'disease_name': "Downy_Mildew",
+            'is_read': true,
+            'message': "Downy_Mildew detected on your cucumber leaf",
+            'next_upload': now,
+            'title': "Disease Detected"
           },
         },
-      },
+        'unread_count': 0
+      }
     };
   }
 }

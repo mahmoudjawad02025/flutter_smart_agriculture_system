@@ -8,11 +8,11 @@ class AppAccessControl {
 
   static const String _skipLoginKey = 'skip_login_screen';
 
-  final ValueNotifier<bool> skipLogin = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> skipLogin = ValueNotifier<bool>(false);
 
   Future<void> initialize() async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
-    skipLogin.value = preferences.getBool(_skipLoginKey) ?? true;
+    skipLogin.value = preferences.getBool(_skipLoginKey) ?? false;
   }
 
   Future<void> setSkipLogin(bool value) async {

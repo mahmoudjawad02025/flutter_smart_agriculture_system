@@ -15,7 +15,13 @@ class AuthService {
   Stream<AuthUser?> get authStateChanges {
     return _firebaseAuth.authStateChanges().asyncMap((User? user) async {
       if (user == null) return null;
-      return _userFromFirebaseUser(user);
+      try {
+        final authUser = await _userFromFirebaseUser(user);
+        if (authUser.status != 'approved') return null; 
+        return authUser;
+      } catch (e) {
+        return null;
+      }
     });
   }
 
@@ -29,25 +35,44 @@ class AuthService {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       final User user = userCredential.user!;
-
-      // Update display name
       await user.updateDisplayName(displayName);
 
-      // Save user data to Realtime Database
+      final bool isAdmin = email.toLowerCase() == 'admin@agriculture.local';
+
       await _database.ref('users/${user.uid}').set({
         'uid': user.uid,
         'email': user.email,
         'displayName': displayName,
-        'photoUrl': user.photoURL,
-        'role': 'user',
+        'role': isAdmin ? 'admin' : 'user',
+        'status': isAdmin ? 'approved' : 'pending',
         'createdAt': DateTime.now().toIso8601String(),
       });
 
-      return _userFromFirebaseUser(user);
+      if (!isAdmin) {
+        final String notifId = 'signup_${user.uid}_${DateTime.now().millisecondsSinceEpoch}';
+        await _database.ref('smart_cucumber_agriculture/data/notifications/$notifId').set({
+          'id': notifId,
+          'title': 'New User Request',
+          'disease_name': 'User_Signup', 
+          'message': 'A new user ($displayName) has registered and is waiting for your approval in User Management.',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'next_upload': '',
+          'is_read': false,
+        });
+      }
+
+      final authUser = await _userFromFirebaseUser(user);
+
+      if (authUser.status == 'pending') {
+        await _firebaseAuth.signOut();
+        throw Exception('Account created successfully! Please wait for an administrator to approve your request.');
+      }
+
+      return authUser;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw Exception('Sign up failed: ${e.toString()}');
+      rethrow;
     }
   }
 
@@ -59,11 +84,22 @@ class AuthService {
       final UserCredential userCredential = await _firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
 
-      return _userFromFirebaseUser(userCredential.user!);
+      final authUser = await _userFromFirebaseUser(userCredential.user!);
+
+      if (authUser.status == 'pending') {
+        await logout();
+        throw Exception('Your account is pending approval by an admin. Please check back later.');
+      }
+      if (authUser.status == 'rejected' || authUser.status == 'blocked') {
+        await logout();
+        throw Exception('Your account access has been restricted by an admin.');
+      }
+
+      return authUser;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw Exception('Login failed: ${e.toString()}');
+      rethrow;
     }
   }
 
@@ -75,6 +111,30 @@ class AuthService {
     }
   }
 
+  Future<AuthUser?> getCurrentUser() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+    final authUser = await _userFromFirebaseUser(user);
+    return authUser.status == 'approved' ? authUser : null;
+  }
+
+  // Security Verification Methods
+  Future<void> reauthenticate(String password) async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null || user.email == null) throw Exception('No user logged in.');
+    
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+    
+    try {
+      await user.reauthenticateWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
   Future<void> updateProfile({
     required String displayName,
     String? photoUrl,
@@ -82,78 +142,108 @@ class AuthService {
     try {
       final User user = _firebaseAuth.currentUser!;
       await user.updateDisplayName(displayName);
-      await user.updatePhotoURL(photoUrl);
+      if (photoUrl != null) await user.updatePhotoURL(photoUrl);
 
-      // Update in database
-      final Map<String, dynamic> updates = <String, dynamic>{
+      await _database.ref('users/${user.uid}').update({
         'displayName': displayName,
         'photoUrl': photoUrl,
-      };
-      updates.removeWhere((String _, dynamic value) => value == null);
-      await _database.ref('users/${user.uid}').update(updates);
+      });
     } catch (e) {
       throw Exception('Update profile failed: ${e.toString()}');
     }
   }
 
-  Future<void> changeEmail({required String newEmail}) async {
+  Future<void> changeEmail({
+    required String currentPassword,
+    required String newEmail,
+  }) async {
     try {
+      await reauthenticate(currentPassword);
       final User user = _firebaseAuth.currentUser!;
+      // Firebase verifyBeforeUpdateEmail sends a link to the NEW email
       await user.verifyBeforeUpdateEmail(newEmail);
-
-      // Update in database
       await _database.ref('users/${user.uid}/email').set(newEmail);
-    } catch (e) {
-      throw Exception('Change email failed: ${e.toString()}');
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
     }
   }
 
-  Future<void> changePassword({required String newPassword}) async {
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
     try {
+      await reauthenticate(currentPassword);
       final User user = _firebaseAuth.currentUser!;
       await user.updatePassword(newPassword);
-    } catch (e) {
-      throw Exception('Change password failed: ${e.toString()}');
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
     }
   }
 
-  Future<AuthUser?> getCurrentUser() async {
-    final User? user = _firebaseAuth.currentUser;
-    if (user == null) return null;
-    return _userFromFirebaseUser(user);
-  }
+  Future<AuthUser> _userFromFirebaseUser(User user) async {
+    final snapshot = await _database.ref('users/${user.uid}').get();
+    
+    if (!snapshot.exists) {
+      return AuthUser(
+        uid: user.uid,
+        email: user.email ?? '',
+        displayName: user.displayName,
+        role: (user.email?.toLowerCase() == 'admin@agriculture.local') ? 'admin' : 'user',
+        status: (user.email?.toLowerCase() == 'admin@agriculture.local') ? 'approved' : 'pending',
+        createdAt: user.metadata.creationTime,
+      );
+    }
 
-  AuthUser _userFromFirebaseUser(User user) {
+    final data = snapshot.value as Map? ?? {};
     return AuthUser(
       uid: user.uid,
       email: user.email ?? '',
-      displayName: user.displayName,
-      photoUrl: user.photoURL,
-      isAnonymous: user.isAnonymous,
+      displayName: data['displayName'] ?? user.displayName,
+      role: data['role'] ?? 'user',
+      status: data['status'] ?? 'approved',
       createdAt: user.metadata.creationTime,
     );
   }
 
+  Future<void> updateUserStatus(String uid, String newStatus) async {
+    await _database.ref('users/$uid/status').set(newStatus);
+  }
+
+  Future<List<AuthUser>> getAllUsers() async {
+    final snapshot = await _database.ref('users').get();
+    if (!snapshot.exists) return [];
+    
+    final Map<dynamic, dynamic> usersMap = snapshot.value as Map;
+    final List<AuthUser> users = [];
+    
+    usersMap.forEach((key, value) {
+      final data = value as Map;
+      users.add(AuthUser(
+        uid: data['uid'] ?? '',
+        email: data['email'] ?? '',
+        displayName: data['displayName'],
+        role: data['role'] ?? 'user',
+        status: data['status'] ?? 'pending',
+      ));
+    });
+    
+    return users;
+  }
+
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
-      case 'weak-password':
-        return 'The password provided is too weak.';
-      case 'email-already-in-use':
-        return 'The account already exists for that email.';
-      case 'invalid-email':
-        return 'The email address is not valid.';
-      case 'user-disabled':
-        return 'The user account has been disabled.';
-      case 'user-not-found':
-        return 'No user found for that email.';
-      case 'wrong-password':
-        return 'Wrong password provided.';
-      case 'operation-not-allowed':
-        return 'This operation is not allowed.';
-      case 'too-many-requests':
-        return 'Too many login attempts. Try again later.';
-      default:
-        return e.message ?? 'An error occurred';
+      case 'weak-password': return 'The password provided is too weak.';
+      case 'email-already-in-use': return 'The account already exists for that email.';
+      case 'invalid-email': return 'The email address is not valid.';
+      case 'user-disabled': return 'The user account has been disabled.';
+      case 'user-not-found': return 'No user found for that email.';
+      case 'wrong-password': 
+      case 'invalid-credential':
+        return 'The current password you entered is incorrect.';
+      case 'internal-error':
+        return 'Authentication failed. Please check your current password.';
+      default: return e.message ?? 'An error occurred';
     }
   }
 }

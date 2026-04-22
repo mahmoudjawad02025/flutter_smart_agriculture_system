@@ -376,6 +376,8 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             ],
           ),
           const SizedBox(height: 12),
+          _PumpControlSection(database: _database),
+          const SizedBox(height: 12),
           _SectionCard(
             title: 'What You Need',
             subtitle: 'Minimal checklist for a clean farm workflow',
@@ -391,6 +393,133 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     );
   }
 }
+
+class _PumpControlSection extends StatelessWidget {
+  const _PumpControlSection({required this.database});
+  final FirebaseDatabase database;
+
+  Future<void> _handleManualToggle(
+    DatabaseReference pumpRef,
+    String pumpName,
+    bool newValue,
+  ) async {
+    try {
+      // 1. Capture "Before" state snapshot
+      final DataSnapshot dataSnapshot =
+          await database.ref('${FarmPayload.rootPath}/data').get();
+      final Map<dynamic, dynamic> currentData =
+          dataSnapshot.value as Map? ?? {};
+      final Map<dynamic, dynamic> sensors = currentData['sensors'] as Map? ?? {};
+      final Map<dynamic, dynamic> leaf = currentData['leaf'] as Map? ?? {};
+
+      // 2. Perform the toggle
+      await pumpRef.set(newValue);
+
+      // 3. Push a simplified manual log
+      final String logId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
+      
+      final Map<String, dynamic> sensorsData = _toMap(currentData['sensors']);
+      final Map<String, dynamic> leafData = _toMap(currentData['leaf']);
+
+      await database.ref('${FarmPayload.rootPath}/logs/manual_log/$logId').set({
+        'time': DateTime.now().toUtc().toIso8601String(),
+        'action': '${newValue ? 'ON' : 'OFF'}',
+        'pump': pumpName,
+        'state': {
+          'temp': sensorsData['temp'] ?? 0,
+          'moist': sensorsData['moist'] ?? 0,
+          'hum': sensorsData['hum'] ?? 0,
+          'n': sensorsData['n'] ?? 0,
+          'p': sensorsData['p'] ?? 0,
+          'k': sensorsData['k'] ?? 0,
+          'status': leafData['status'] ?? 'Unknown',
+        },
+      });
+
+    } catch (e) {
+      debugPrint('Manual log failed: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DatabaseEvent>(
+      stream: database.ref('${FarmPayload.rootPath}/actions/pumps').onValue,
+      builder: (context, snapshot) {
+        final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
+        final bool isAuto = data['auto'] == true;
+        final bool isWater = data['water'] == true;
+        final bool isFert = data['fert'] == true;
+
+        return _SectionCard(
+          title: 'Pump & Mode Control',
+          subtitle: 'Override auto systems or toggle manual state',
+          children: <Widget>[
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Auto Control Mode'),
+              subtitle: const Text('Let the system handle pumps automatically'),
+              value: isAuto,
+              onChanged: (bool value) {
+                database
+                    .ref('${FarmPayload.rootPath}/actions/pumps/auto')
+                    .set(value);
+              },
+            ),
+            const Divider(),
+            Opacity(
+              opacity: isAuto ? 0.5 : 1.0,
+              child: IgnorePointer(
+                ignoring: isAuto,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Water Pump'),
+                      subtitle: const Text('Manual override for irrigation'),
+                      value: isWater,
+                      onChanged: (bool value) {
+                        _handleManualToggle(
+                          database.ref(
+                            '${FarmPayload.rootPath}/actions/pumps/water',
+                          ),
+                          'Water',
+                          value,
+                        );
+                      },
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fertilizer Pump'),
+                      subtitle: const Text('Manual override for nutrients'),
+                      value: isFert,
+                      onChanged: (bool value) {
+                        _handleManualToggle(
+                          database.ref(
+                            '${FarmPayload.rootPath}/actions/pumps/fert',
+                          ),
+                          'Fertilizer',
+                          value,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+Map<String, dynamic> _toMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
+}
+
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({

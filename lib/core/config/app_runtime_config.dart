@@ -17,6 +17,11 @@ class AppRuntimeConfig {
   static const String _kMinKey = 'goal_k_min';
   static const String _kMaxKey = 'goal_k_max';
   static const String _leafGoalKey = 'goal_leaf_goal';
+  static const String _autoAnalyzeKey = 'auto_analyze';
+  static const String _showAdvancedDetailsKey = 'show_advanced_details';
+  static const String _pushNotificationsKey = 'push_notifications';
+  static const String _strongAlertModeKey = 'strong_alert_mode';
+  static const String _showDeveloperToolsKey = 'show_developer_tools';
 
   static final ValueNotifier<int> diseaseReuploadDelayDays = ValueNotifier<int>(
     2,
@@ -40,6 +45,14 @@ class AppRuntimeConfig {
     'Healthy',
   );
 
+  static final ValueNotifier<bool> autoAnalyze = ValueNotifier<bool>(true);
+  static final ValueNotifier<bool> showAdvancedDetails = ValueNotifier<bool>(
+    true,
+  );
+  static final ValueNotifier<bool> pushNotifications = ValueNotifier<bool>(true);
+  static final ValueNotifier<bool> strongAlertMode = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> showDeveloperTools = ValueNotifier<bool>(false);
+
   static const bool enableDebugLogging = true;
 
   static Future<void> initialize() async {
@@ -60,6 +73,44 @@ class AppRuntimeConfig {
     kMin.value = preferences.getInt(_kMinKey) ?? 150;
     kMax.value = preferences.getInt(_kMaxKey) ?? 250;
     leafGoal.value = preferences.getString(_leafGoalKey) ?? 'Healthy';
+
+    autoAnalyze.value = preferences.getBool(_autoAnalyzeKey) ?? true;
+    showAdvancedDetails.value =
+        preferences.getBool(_showAdvancedDetailsKey) ?? true;
+    pushNotifications.value = preferences.getBool(_pushNotificationsKey) ?? true;
+    strongAlertMode.value = preferences.getBool(_strongAlertModeKey) ?? false;
+    showDeveloperTools.value =
+        preferences.getBool(_showDeveloperToolsKey) ?? false;
+  }
+
+  static Future<void> setAutoAnalyze(bool value) async {
+    autoAnalyze.value = value;
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_autoAnalyzeKey, value);
+  }
+
+  static Future<void> setShowAdvancedDetails(bool value) async {
+    showAdvancedDetails.value = value;
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_showAdvancedDetailsKey, value);
+  }
+
+  static Future<void> setPushNotifications(bool value) async {
+    pushNotifications.value = value;
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_pushNotificationsKey, value);
+  }
+
+  static Future<void> setStrongAlertMode(bool value) async {
+    strongAlertMode.value = value;
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_strongAlertModeKey, value);
+  }
+
+  static Future<void> setShowDeveloperTools(bool value) async {
+    showDeveloperTools.value = value;
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_showDeveloperToolsKey, value);
   }
 
   static Future<void> setDiseaseReuploadDelayDays(int value) async {

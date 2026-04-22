@@ -1,22 +1,34 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
+import 'logs_history_page.dart';
 import '../../firebase_data/models/farm_payload.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final DatabaseReference ref = FirebaseDatabase.instance.ref(
-      FarmPayload.rootPath,
-    );
+  State<DashboardPage> createState() => _DashboardPageState();
+}
 
+class _DashboardPageState extends State<DashboardPage> {
+  late final DatabaseReference _dataRef;
+  late final Stream<DatabaseEvent> _dataStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _dataRef = FirebaseDatabase.instance.ref('${FarmPayload.rootPath}/data');
+    _dataStream = _dataRef.onValue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: StreamBuilder<DatabaseEvent>(
-        stream: ref.onValue,
+        stream: _dataStream,
         builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
           if (snapshot.hasError) {
             return _MessageView(
@@ -39,14 +51,11 @@ class DashboardPage extends StatelessWidget {
             );
           }
 
-          final Map<String, dynamic> root = Map<String, dynamic>.from(raw);
-          final Map<String, dynamic> data = _toMap(root['data']);
+          final Map<String, dynamic> data = _toMap(raw);
           final Map<String, dynamic> live = _toMap(data['live']);
           final Map<String, dynamic> sensors = _toMap(data['sensors']);
           final Map<String, dynamic> source = live.isNotEmpty ? live : sensors;
           final Map<String, dynamic> leaf = _toMap(data['leaf']);
-          final Map<String, dynamic> actions = _toMap(root['actions']);
-          final Map<String, dynamic> pumps = _toMap(actions['pumps']);
 
           final String time = '${source['time'] ?? '-'}';
           final String leafStatus = '${leaf['status'] ?? '-'}';
@@ -104,27 +113,230 @@ class DashboardPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              _PumpsCard(
-                water: pumps['water'] == true,
-                fert: pumps['fert'] == true,
-                auto: pumps['auto'] == true,
-              ),
+              _PumpsSnapshot(database: FirebaseDatabase.instance),
+              const SizedBox(height: 14),
+              _LogsSnapshot(database: FirebaseDatabase.instance),
             ],
           );
         },
       ),
     );
   }
+}
 
-  static Map<String, dynamic> _toMap(dynamic value) {
-    if (value is Map<String, dynamic>) {
-      return value;
-    }
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
-    return <String, dynamic>{};
+class _LogsSnapshot extends StatelessWidget {
+  const _LogsSnapshot({required this.database});
+  final FirebaseDatabase database;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DatabaseEvent>(
+      stream: database.ref('${FarmPayload.rootPath}/logs').onValue,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+          return const SizedBox.shrink();
+        }
+
+        final Map<String, dynamic> logsData = _toMap(snapshot.data?.snapshot.value);
+        final List<_LogItem> allLogs = [];
+
+        // Parse Fertilizer Logs
+        _toMap(logsData['fert_log']).forEach((key, val) {
+          final data = _toMap(val);
+          allLogs.add(
+            _LogItem(
+              time: _parseDate(data['time']),
+              title: 'Fertilizer: ${data['type'] ?? 'Apply'}',
+              subtitle: 'Value: ${data['val'] ?? '-'}',
+              icon: Icons.science_outlined,
+            ),
+          );
+        });
+
+        // Parse Water Logs
+        _toMap(logsData['water_log']).forEach((key, val) {
+          final data = _toMap(val);
+          allLogs.add(
+            _LogItem(
+              time: _parseDate(data['time']),
+              title: 'Watering Session',
+              subtitle: 'Irrigation pump activated',
+              icon: Icons.water_drop_outlined,
+            ),
+          );
+        });
+
+        // Parse AI Upload Logs
+        _toMap(logsData['upload_log']).forEach((key, val) {
+          final data = _toMap(val);
+          allLogs.add(
+            _LogItem(
+              time: _parseDate(data['time']),
+              title: 'AI Scan Result',
+              subtitle: 'Detection: ${data['res'] ?? 'Healthy'}',
+              icon: Icons.auto_awesome_outlined,
+            ),
+          );
+        });
+
+        // Parse Manual Logs
+        _toMap(logsData['manual_log']).forEach((key, val) {
+          final data = _toMap(val);
+          final state = _toMap(data['state']);
+          allLogs.add(
+            _LogItem(
+              time: _parseDate(data['time']),
+              title: 'Manual ${data['pump']}: ${data['action']}',
+              icon: Icons.touch_app_outlined,
+              isManual: true,
+              n: state['n']?.toString() ?? '?',
+              p: state['p']?.toString() ?? '?',
+              k: state['k']?.toString() ?? '?',
+              moist: state['moist']?.toString() ?? '?',
+              temp: state['temp']?.toString() ?? '?',
+            ),
+          );
+        });
+
+        allLogs.sort((a, b) => b.time.compareTo(a.time));
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Recent Activity', style: Theme.of(context).textTheme.titleMedium),
+                    IconButton(
+                      icon: const Icon(Icons.history_outlined, size: 20, color: Colors.blue),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(builder: (context) => const LogsHistoryPage()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (allLogs.isEmpty)
+                  const Text('No logs found.', style: TextStyle(color: Colors.grey))
+                else
+                  Column(
+                    children: allLogs.take(5).map((log) {
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          radius: 18,
+                          child: Icon(log.icon, size: 18, color: Theme.of(context).colorScheme.primary),
+                        ),
+                        title: Text(log.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        subtitle: log.isManual
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _MiniMetric(Icons.water_drop, log.moist!),
+                                      _MiniMetric(Icons.thermostat, log.temp!),
+                                      _MiniMetric(Icons.grass, log.n!),
+                                      _MiniMetric(Icons.spa, log.p!),
+                                      _MiniMetric(Icons.eco, log.k!),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Text(log.subtitle ?? '', style: const TextStyle(fontSize: 12)),
+                        trailing: Text(
+                          '${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
+                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
+
+  DateTime _parseDate(dynamic val) {
+    if (val is String) {
+      try { return DateTime.parse(val); } catch(_) {}
+    }
+    return DateTime.now();
+  }
+}
+
+class _MiniMetric extends StatelessWidget {
+  const _MiniMetric(this.icon, this.value);
+  final IconData icon;
+  final String value;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey[600]),
+          const SizedBox(width: 3),
+          Text(value, style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogItem {
+  final DateTime time;
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final bool isManual;
+  final String? n, p, k, moist, temp;
+
+  _LogItem({
+    required this.time,
+    required this.title,
+    this.subtitle,
+    required this.icon,
+    this.isManual = false,
+    this.n, this.p, this.k, this.moist, this.temp,
+  });
+}
+
+class _PumpsSnapshot extends StatelessWidget {
+  const _PumpsSnapshot({required this.database});
+  final FirebaseDatabase database;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DatabaseEvent>(
+      stream: database.ref('${FarmPayload.rootPath}/actions/pumps').onValue,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final Map<String, dynamic> pumps = _toMap(snapshot.data?.snapshot.value);
+        return _PumpsCard(
+          water: pumps['water'] == true,
+          fert: pumps['fert'] == true,
+          auto: pumps['auto'] == true,
+        );
+      },
+    );
+  }
+}
+
+Map<String, dynamic> _toMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
 }
 
 class _HeaderCard extends StatelessWidget {
@@ -159,58 +371,37 @@ class _HeaderCard extends StatelessWidget {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  _appIconAsset,
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.asset(_appIconAsset, width: 28, height: 28, fit: BoxFit.cover),
               ),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
                   'Live Farm Dashboard',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                  ),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            'Last update: $time',
-            style: const TextStyle(color: Colors.white),
-          ),
+          Text('Last update: $time', style: const TextStyle(color: Colors.white)),
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
               const Icon(Icons.health_and_safety_outlined, color: Colors.white),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  'Leaf status: $leafStatus',
-                  style: const TextStyle(color: Colors.white),
-                ),
+                child: Text('Leaf status: $leafStatus', style: const TextStyle(color: Colors.white)),
               ),
               Chip(
                 backgroundColor: Colors.white,
                 label: Text(needsFix ? 'Needs Fix' : 'Good'),
-                avatar: Icon(
-                  needsFix ? Icons.warning_amber_outlined : Icons.check_circle,
-                  size: 18,
-                ),
+                avatar: Icon(needsFix ? Icons.warning_amber_outlined : Icons.check_circle, size: 18),
               ),
             ],
           ),
           if (needsFix && reuploadAt.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
-            Text(
-              'Next upload at: $reuploadAt',
-              style: const TextStyle(color: Colors.white),
-            ),
+            Text('Next upload at: $reuploadAt', style: const TextStyle(color: Colors.white)),
           ],
         ],
       ),
@@ -219,12 +410,7 @@ class _HeaderCard extends StatelessWidget {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
-
+  const _MetricCard({required this.title, required this.value, required this.icon});
   final String title;
   final String value;
   final IconData icon;
@@ -250,15 +436,8 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _PumpsCard extends StatelessWidget {
-  const _PumpsCard({
-    required this.water,
-    required this.fert,
-    required this.auto,
-  });
-
-  final bool water;
-  final bool fert;
-  final bool auto;
+  const _PumpsCard({required this.water, required this.fert, required this.auto});
+  final bool water, fert, auto;
 
   @override
   Widget build(BuildContext context) {
@@ -268,10 +447,7 @@ class _PumpsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              'Pump Controls',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Pump Controls', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 10),
             Wrap(
               spacing: 10,
@@ -291,33 +467,21 @@ class _PumpsCard extends StatelessWidget {
 
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.label, required this.active});
-
   final String label;
   final bool active;
-
   @override
   Widget build(BuildContext context) {
     return Chip(
-      avatar: Icon(
-        active ? Icons.check_circle : Icons.pause_circle_outline,
-        size: 18,
-      ),
+      avatar: Icon(active ? Icons.check_circle : Icons.pause_circle_outline, size: 18),
       label: Text('$label: ${active ? 'ON' : 'OFF'}'),
     );
   }
 }
 
 class _MessageView extends StatelessWidget {
-  const _MessageView({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
+  const _MessageView({required this.icon, required this.title, required this.subtitle});
   final IconData icon;
-  final String title;
-  final String subtitle;
-
+  final String title, subtitle;
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -329,12 +493,7 @@ class _MessageView extends StatelessWidget {
             if (icon == Icons.cloud_off_outlined)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  _appIconAsset,
-                  width: 52,
-                  height: 52,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.asset(_appIconAsset, width: 52, height: 52, fit: BoxFit.cover),
               )
             else
               Icon(icon, size: 52),
