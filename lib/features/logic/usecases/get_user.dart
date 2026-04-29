@@ -1,0 +1,9 @@
+import 'package:smart_cucumber_agriculture_system/data/models/auth_user_model.dart';
+import 'package:smart_cucumber_agriculture_system/logic/repositories/auth_repo.dart';
+
+class GetUser {
+  GetUser(this._repo);
+  final AuthRepository _repo;
+
+  Future<AuthUser?> call() => _repo.getCurrentUser();
+}
