@@ -140,8 +140,8 @@ Each notification shows:
 **Modified:**
 - `lib/main.dart` - Added NotificationsCubit provider
 - `lib/features/app_shell/ui/app_shell_page.dart` - Added NotificationBadge
-- `lib/features/disease_detection/cubit/disease_detection_cubit.dart` - Calls addNotification()
-- `lib/features/firebase_data/models/farm_payload.dart` - Added notifications structure
+- `lib/features/ai_detection/cubit/diagnosis_cubit.dart` - Calls addNotification()
+- `lib/features/dashboard/models/farm_payload.dart` - Added notifications structure
 - `pubspec.yaml` - Added uuid package
 
 ---
@@ -149,7 +149,7 @@ Each notification shows:
 ## 🔗 Related Docs
 
 - [Notifications Feature Complete Guide](notifications_feature.md)
-- [Disease Detection Debug Guide](firebase_disease_detection_debug.md)
+- [Disease Detection Debug Guide](firebase_diagnosis_debug.md)
 - [Null Safety Handling](null_safety_handling.md)
 
 ---

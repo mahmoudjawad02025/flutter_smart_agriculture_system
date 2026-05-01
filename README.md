@@ -75,23 +75,15 @@ The project strictly adheres to **Clean Architecture** principles to guarantee m
 
 ```text
 lib/
-├── core/                    # App-wide utilities
-│   ├── di/                  # Dependency Injection setup
-│   ├── error/               # Global error handling and exceptions
-│   ├── network/             # Core network clients and interceptors
-│   └── theme/               # App styling, colors, and typography
-├── data/                    # Data/Network layer
-│   ├── datasources/         # Remote (Firebase/IoT) and local data sources
-│   ├── models/              # Data Transfer Objects (DTOs) and serialization
-│   └── repositories/        # Implementations of abstract repositories
-├── logic/                   # Core business logic (Domain layer)
-│   ├── entities/            # Pure enterprise business objects
-│   ├── repositories/        # Abstract repository interfaces
-│   └── usecases/            # Application-specific business rules
-├── ui/                      # Presentation layer
-│   ├── bloc/                # BLoC/Cubit state managers
-│   ├── pages/               # App screens and views
-│   └── widgets/             # Reusable UI components
+├── core/                    # App-wide utilities, theme, and DI
+├── features/                # Feature-first domain modules
+│   ├── auth/                # Secure access & authentication
+│   ├── dashboard/           # Live monitoring & hardware controls
+│   ├── diagnosis/           # AI leaf health analysis
+│   ├── management/          # Admin & user management
+│   ├── inventory/           # Crop & asset tracking
+│   ├── notifications/       # Real-time system alerts
+│   └── shared/              # Common UI components & widgets
 └── main.dart                # Application entry point
 ```
 

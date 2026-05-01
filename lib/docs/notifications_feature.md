@@ -75,7 +75,7 @@ class NotificationsState {
 
 **Methods:**
 ```dart
-addNotification(FarmNotification)     // Called from DiseaseDetectionCubit
+addNotification(FarmNotification)     // Called from AiDetectionCubit
 markAsRead(String notificationId)     // Decrease unread count
 deleteNotification(String notificationId)
 clearAll()                            // Clear all
@@ -100,7 +100,7 @@ When analyzing a cucumber image:
 
 ```dart
 // Disease Detection Cubit
-final result = await _diseaseDetectionService.analyzeSavedImage(imagePath);
+final result = await _aiDetectionService.analyzeSavedImage(imagePath);
 
 // Check if diseased
 if (!isHealthy && result.detectedLabels.isNotEmpty) {
@@ -195,7 +195,7 @@ context.read<NotificationsCubit>().markAsRead(notificationId);
 ## 📱 Real-Time Behavior
 
 ### **When Notification is Added:**
-1. DiseaseDetectionCubit calls `addNotification()`
+1. AiDetectionCubit calls `addNotification()`
 2. NotificationsCubit emits new state
 3. All BlocBuilders listening to NotificationsCubit rebuild
 4. Badge updates immediately
@@ -285,7 +285,7 @@ This value is used when creating "next_upload" timestamp.
 ```
 ┌─────────────────────────────────────┐
 │  Disease Detected                   │
-│  (DiseaseDetectionCubit)            │
+│  (AiDetectionCubit)            │
 └──────────────────┬──────────────────┘
                    │
                    ↓

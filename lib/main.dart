@@ -7,11 +7,11 @@ import 'core/config/app_access_control.dart';
 import 'core/config/app_runtime_config.dart';
 import 'core/di/app_di.dart';
 import 'core/theme/app_theme.dart';
-import 'features/ui/bloc/auth_bloc.dart';
-import 'features/ui/bloc/disease_detection_bloc.dart';
-import 'features/ui/bloc/firebase_data_bloc.dart';
-import 'features/ui/bloc/notifications_bloc.dart';
-import 'features/ui/pages/auth_wrapper.dart';
+import 'features/auth/ui/bloc/auth_bloc.dart';
+import 'features/ai_detection/ui/bloc/ai_detection_bloc.dart';
+import 'features/dashboard/ui/bloc/dashboard_bloc.dart';
+import 'features/notifications/ui/bloc/notifications_bloc.dart';
+import 'features/auth/ui/pages/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,16 +36,16 @@ class MyApp extends StatelessWidget {
             notificationsService: AppDi.provideNotificationsRepository(),
           ),
         ),
-        BlocProvider<DiseaseDetectionCubit>(
+        BlocProvider<AiDetectionCubit>(
           create: (context) {
-            return DiseaseDetectionCubit(
-              diseaseDetectionService: AppDi.provideDiseaseRepository(),
+            return AiDetectionCubit(
+              aiDetectionService: AppDi.provideAiDetectionRepository(),
               notificationsCubit: context.read<NotificationsCubit>(),
             );
           },
         ),
-        BlocProvider<FirebaseDataCubit>(
-          create: (_) => FirebaseDataCubit(
+        BlocProvider<DashboardCubit>(
+          create: (_) => DashboardCubit(
             writeSampleData: AppDi.provideWriteSampleDataUsecase(),
             readNitrogen: AppDi.provideReadNitrogenUsecase(),
             pushTestNotification: AppDi.providePushTestNotificationUsecase(),
@@ -61,3 +61,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

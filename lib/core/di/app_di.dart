@@ -4,20 +4,20 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:smart_cucumber_agriculture_system/core/config/roboflow_config.dart';
 import 'package:smart_cucumber_agriculture_system/core/network/dio_client.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/datasources/auth_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/datasources/disease_detection_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/datasources/notifications_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/repositories/auth_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/repositories/disease_detection_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/repositories/firebase_data_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/features/data/repositories/notifications_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/write_sample_data.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/get_farm_data_once.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/watch_farm_data.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/watch_logs.dart';
-import 'package:smart_cucumber_agriculture_system/features/logic/usecases/update_crop_targets.dart';
+import 'package:smart_cucumber_agriculture_system/features/auth/data/datasources/auth_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/datasources/ai_detection_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/notifications/data/datasources/notifications_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/auth/data/repositories/auth_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/repositories/ai_detection_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/data/repositories/dashboard_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/notifications/data/repositories/notifications_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/write_sample_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/read_nitrogen.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/push_test_notification.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/logic/usecases/get_farm_data_once.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/logic/usecases/watch_farm_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/logic/usecases/watch_logs.dart';
+import 'package:smart_cucumber_agriculture_system/features/configurations/logic/usecases/update_crop_targets.dart';
 
 class AppDi {
   const AppDi._();
@@ -37,46 +37,47 @@ class AppDi {
     return NotificationsRepositoryImpl(ds);
   }
 
-  static DiseaseDetectionRepositoryImpl provideDiseaseRepository() {
-    final DiseaseDetectionService ds = DiseaseDetectionService(
+  static AiDetectionRepositoryImpl provideAiDetectionRepository() {
+    final AiDetectionService ds = AiDetectionService(
       imagePicker: ImagePicker(),
       dio: DioClient.create(),
       database: FirebaseDatabase.instance,
       config: const RoboflowConfig(),
     );
-    return DiseaseDetectionRepositoryImpl(ds);
+    return AiDetectionRepositoryImpl(ds);
   }
 
-  static FirebaseDataRepositoryImpl provideFirebaseDataRepository() {
-    return FirebaseDataRepositoryImpl(database: FirebaseDatabase.instance);
+  static DashboardRepositoryImpl provideDashboardRepository() {
+    return DashboardRepositoryImpl(database: FirebaseDatabase.instance);
   }
 
   // Usecases
   static WriteSampleData provideWriteSampleDataUsecase() {
-    return WriteSampleData(provideFirebaseDataRepository());
+    return WriteSampleData(provideDashboardRepository());
   }
 
   static ReadNitrogen provideReadNitrogenUsecase() {
-    return ReadNitrogen(provideFirebaseDataRepository());
+    return ReadNitrogen(provideDashboardRepository());
   }
 
   static PushTestNotification providePushTestNotificationUsecase() {
-    return PushTestNotification(provideFirebaseDataRepository());
+    return PushTestNotification(provideDashboardRepository());
   }
 
   static GetFarmDataOnce provideGetFarmDataOnceUsecase() {
-    return GetFarmDataOnce(provideFirebaseDataRepository());
+    return GetFarmDataOnce(provideDashboardRepository());
   }
 
   static WatchFarmData provideWatchFarmDataUsecase() {
-    return WatchFarmData(provideFirebaseDataRepository());
+    return WatchFarmData(provideDashboardRepository());
   }
 
   static WatchLogs provideWatchLogsUsecase() {
-    return WatchLogs(provideFirebaseDataRepository());
+    return WatchLogs(provideDashboardRepository());
   }
 
   static UpdateCropTargets provideUpdateCropTargetsUsecase() {
-    return UpdateCropTargets(provideFirebaseDataRepository());
+    return UpdateCropTargets(provideDashboardRepository());
   }
 }
+

@@ -8,7 +8,7 @@ When AI analysis fails (bad image quality, no disease detected, or Firebase conn
 
 ## Current Implementation
 
-### 1. **Service Layer** (`disease_detection_service.dart`)
+### 1. **Service Layer** (`diagnosis_service.dart`)
 
 #### `analyzeSavedImage()` - API Handling
 - Checks if image file exists before sending to Roboflow
@@ -37,17 +37,17 @@ if (labels.isEmpty) {
 }
 ```
 
-### 2. **Cubit Layer** (`disease_detection_cubit.dart`)
+### 2. **Cubit Layer** (`diagnosis_cubit.dart`)
 
 #### `analyzeImage()` - Composite Error Handling
 ```dart
 try {
-  final result = await _diseaseDetectionService.analyzeSavedImage(imagePath);
+  final result = await _aiDetectionService.analyzeSavedImage(imagePath);
   
   // TRY Firebase update separately
   String? firebaseError;
   try {
-    await _diseaseDetectionService.updateLeafStatusInFirebase(result);
+    await _aiDetectionService.updateLeafStatusInFirebase(result);
   } catch (firebaseErr) {
     // Store error but DON'T FAIL - analysis succeeded
     firebaseError = 'Firebase sync failed (non-critical): $firebaseErr';
@@ -55,14 +55,14 @@ try {
   
   // Always emit SUCCESS if analysis worked, even if Firebase failed
   emit(state.copyWith(
-    status: DiseaseDetectionStatus.success,
+    status: AiDetectionStatus.success,
     result: result,
     errorMessage: firebaseError,  // Show warning, not error
   ));
 } catch (error) {
   // CRITICAL error: API call failed
   emit(state.copyWith(
-    status: DiseaseDetectionStatus.error,
+    status: AiDetectionStatus.error,
     errorMessage: 'API Analysis failed: $error\n\nTips:\n'
         '• Check image quality\n'
         '• Ensure good lighting\n'
@@ -76,16 +76,16 @@ try {
 - ✅ API succeeds but Firebase fails → Show result + warning banner
 - ✅ Empty detection → Show "Unknown - Detection Failed" + next upload time
 
-### 3. **UI Layer** (`disease_detection_page.dart`)
+### 3. **UI Layer** (`ai_detection_page.dart`)
 
 The UI receives state with:
-- `status: DiseaseDetectionStatus.success` - Show analysis result
+- `status: AiDetectionStatus.success` - Show analysis result
 - `errorMessage: String` - Show warning banner if present
 - `result: DetectionResult` - Display detected classes
 
 ```dart
 // UI shows success result even with warning banner
-if (state.status == DiseaseDetectionStatus.success) {
+if (state.status == AiDetectionStatus.success) {
   return _ResultView(result: state.result);
 }
 ```
