@@ -29,6 +29,3 @@ class RoboflowConfig {
   // String get apiKey => 'i0xS9UzBPPMoZmjwDApN';
   // String get modelId => 'tomato2-xyz123/1';
 }
-
-// dart pub global activate flutterfire_cli
-// flutterfire configure --project=smart-cucumber-agriculture

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/admin_users_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/configurations_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/dashboard_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/disease_detection_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/firebase_data_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/notifications_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/settings_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/admin_users_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/configurations_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/dashboard_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/disease_detection_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/firebase_data_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/notifications_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/settings_page.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 

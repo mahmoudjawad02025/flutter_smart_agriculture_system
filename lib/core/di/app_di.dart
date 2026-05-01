@@ -4,20 +4,20 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:smart_cucumber_agriculture_system/core/config/roboflow_config.dart';
 import 'package:smart_cucumber_agriculture_system/core/network/dio_client.dart';
-import 'package:smart_cucumber_agriculture_system/data/datasources/auth_ds.dart';
-import 'package:smart_cucumber_agriculture_system/data/datasources/disease_detection_ds.dart';
-import 'package:smart_cucumber_agriculture_system/data/datasources/notifications_ds.dart';
-import 'package:smart_cucumber_agriculture_system/data/repositories/auth_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/data/repositories/disease_detection_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/data/repositories/firebase_data_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/data/repositories/notifications_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/write_sample_data.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/get_farm_data_once.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/watch_farm_data.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/watch_logs.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/update_crop_targets.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/datasources/auth_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/datasources/disease_detection_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/datasources/notifications_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/repositories/auth_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/repositories/disease_detection_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/repositories/firebase_data_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/repositories/notifications_repo_impl.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/write_sample_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/read_nitrogen.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/push_test_notification.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/get_farm_data_once.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/watch_farm_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/watch_logs.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/update_crop_targets.dart';
 
 class AppDi {
   const AppDi._();

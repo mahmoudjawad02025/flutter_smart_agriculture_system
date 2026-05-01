@@ -2,7 +2,7 @@
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:uuid/uuid.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/farm_notification_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_notification_model.dart';
 
 class NotificationsService {
   NotificationsService({required FirebaseDatabase database})

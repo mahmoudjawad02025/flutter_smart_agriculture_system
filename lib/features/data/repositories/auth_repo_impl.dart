@@ -1,6 +1,6 @@
-import 'package:smart_cucumber_agriculture_system/data/datasources/auth_ds.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/auth_user_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/auth_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/datasources/auth_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/auth_user_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/auth_repo.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._dataSource);

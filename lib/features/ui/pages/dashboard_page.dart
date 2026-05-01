@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/get_farm_data_once.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_payload_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/get_farm_data_once.dart';
 import 'package:smart_cucumber_agriculture_system/core/di/app_di.dart';
 
 import 'logs_history_page.dart';

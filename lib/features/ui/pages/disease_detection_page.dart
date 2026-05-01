@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/detection_result_model.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/disease_detection_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/disease_detection_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/detection_result_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/disease_detection_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/disease_detection_state.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 

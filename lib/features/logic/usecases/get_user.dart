@@ -1,5 +1,5 @@
-import 'package:smart_cucumber_agriculture_system/data/models/auth_user_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/auth_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/auth_user_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/auth_repo.dart';
 
 class GetUser {
   GetUser(this._repo);

@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/logic/repositories/product_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/product_repo.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   const ProductRepositoryImpl();

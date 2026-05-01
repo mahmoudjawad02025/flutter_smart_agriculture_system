@@ -7,7 +7,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/roboflow_config.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/detection_result_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/detection_result_model.dart';
 
 class DiseaseDetectionService {
   DiseaseDetectionService({

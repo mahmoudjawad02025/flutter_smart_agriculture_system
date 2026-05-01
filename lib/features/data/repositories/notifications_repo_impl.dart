@@ -1,6 +1,6 @@
-import 'package:smart_cucumber_agriculture_system/data/datasources/notifications_ds.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/farm_notification_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/notifications_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/datasources/notifications_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_notification_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/notifications_repo.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl(this._dataSource);

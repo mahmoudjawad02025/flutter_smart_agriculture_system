@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
 import 'package:smart_cucumber_agriculture_system/core/di/app_di.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/update_crop_targets.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/write_sample_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_payload_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/push_test_notification.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/read_nitrogen.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/update_crop_targets.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/write_sample_data.dart';
 
 class ConfigurationsPage extends StatefulWidget {
   const ConfigurationsPage({super.key});

@@ -7,11 +7,11 @@ import 'core/config/app_access_control.dart';
 import 'core/config/app_runtime_config.dart';
 import 'core/di/app_di.dart';
 import 'core/theme/app_theme.dart';
-import 'ui/bloc/auth_bloc.dart';
-import 'ui/bloc/disease_detection_bloc.dart';
-import 'ui/bloc/firebase_data_bloc.dart';
-import 'ui/bloc/notifications_bloc.dart';
-import 'ui/pages/auth_wrapper.dart';
+import 'features/ui/bloc/auth_bloc.dart';
+import 'features/ui/bloc/disease_detection_bloc.dart';
+import 'features/ui/bloc/firebase_data_bloc.dart';
+import 'features/ui/bloc/notifications_bloc.dart';
+import 'features/ui/pages/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

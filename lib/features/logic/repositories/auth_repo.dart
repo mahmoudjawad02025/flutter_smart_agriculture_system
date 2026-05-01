@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/data/models/auth_user_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/auth_user_model.dart';
 
 abstract class AuthRepository {
   Stream<AuthUser?> authStateChanges();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_cucumber_agriculture_system/core/di/app_di.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/watch_logs.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/watch_logs.dart';
 
 class LogsHistoryPage extends StatelessWidget {
   const LogsHistoryPage({super.key});

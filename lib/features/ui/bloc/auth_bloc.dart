@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/auth_user_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/auth_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/auth_user_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/auth_repo.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authService;

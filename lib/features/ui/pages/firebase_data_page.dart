@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/firebase_data_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/firebase_data_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_payload_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/firebase_data_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/firebase_data_state.dart';
 
 class FirebaseDataPage extends StatelessWidget {
   const FirebaseDataPage({super.key});

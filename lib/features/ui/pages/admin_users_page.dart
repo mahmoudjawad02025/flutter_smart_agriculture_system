@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/auth_user_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/auth_user_model.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -50,7 +50,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               final user = users[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: _getStatusColor(user.status).withValues(alpha: 0.1),
+                  backgroundColor: _getStatusColor(
+                    user.status,
+                  ).withValues(alpha: 0.1),
                   child: Text(
                     user.displayName?.substring(0, 1).toUpperCase() ?? 'U',
                     style: TextStyle(color: _getStatusColor(user.status)),
@@ -63,14 +65,21 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     Text(user.email, style: const TextStyle(fontSize: 12)),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: _getStatusColor(user.status),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         user.status.toUpperCase(),
-                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -79,9 +88,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     ? const Icon(Icons.admin_panel_settings, color: Colors.blue)
                     : PopupMenuButton<String>(
                         onSelected: (status) async {
-                          await context
-                              .read<AuthCubit>()
-                              .updateUserStatus(user.uid, status);
+                          await context.read<AuthCubit>().updateUserStatus(
+                            user.uid,
+                            status,
+                          );
                           _refresh();
                         },
                         itemBuilder: (context) {
@@ -117,10 +127,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'approved': return Colors.green;
-      case 'pending': return Colors.orange;
-      case 'blocked': return Colors.red;
-      default: return Colors.grey;
+      case 'approved':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'blocked':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 }

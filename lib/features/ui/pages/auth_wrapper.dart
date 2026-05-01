@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/app_shell_page.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/login_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/app_shell_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/login_page.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/app_access_control.dart';
 
 class AuthWrapper extends StatelessWidget {

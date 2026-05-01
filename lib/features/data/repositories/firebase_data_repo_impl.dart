@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/firebase_data_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_payload_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/firebase_data_repo.dart';
 
 class FirebaseDataRepositoryImpl implements FirebaseDataRepository {
   FirebaseDataRepositoryImpl({required FirebaseDatabase database})

@@ -1,6 +1,6 @@
-import 'package:smart_cucumber_agriculture_system/data/datasources/disease_detection_ds.dart';
-import 'package:smart_cucumber_agriculture_system/data/models/detection_result_model.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/disease_detection_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/datasources/disease_detection_ds.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/detection_result_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/disease_detection_repo.dart';
 
 class DiseaseDetectionRepositoryImpl implements DiseaseDetectionRepository {
   DiseaseDetectionRepositoryImpl(this._dataSource);

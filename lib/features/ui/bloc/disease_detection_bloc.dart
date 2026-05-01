@@ -3,9 +3,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
 
-import '../bloc/notifications_bloc.dart';
+import 'notifications_bloc.dart';
 import 'disease_detection_state.dart';
-import 'package:smart_cucumber_agriculture_system/logic/repositories/disease_detection_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/disease_detection_repo.dart';
 
 class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
   DiseaseDetectionCubit({

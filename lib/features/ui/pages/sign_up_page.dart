@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_state.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -67,7 +67,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final bool isSuccess = message.contains('Account created successfully');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
+        content: Text(message),
         backgroundColor: isSuccess ? Colors.green : Colors.red,
         duration: const Duration(seconds: 5),
       ),

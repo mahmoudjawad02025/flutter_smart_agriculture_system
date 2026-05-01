@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/data/models/farm_notification_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/data/models/farm_notification_model.dart';
 
 abstract class NotificationsRepository {
   Stream<List<FarmNotification>> notificationsStream();

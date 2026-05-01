@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/logic/repositories/firebase_data_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/firebase_data_repo.dart';
 
 class UpdateCropTargets {
   UpdateCropTargets(this._repo);

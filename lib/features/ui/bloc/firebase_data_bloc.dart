@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:smart_cucumber_agriculture_system/logic/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/logic/usecases/write_sample_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/push_test_notification.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/read_nitrogen.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/usecases/write_sample_data.dart';
 import 'firebase_data_state.dart';
 
 class FirebaseDataCubit extends Cubit<FirebaseDataState> {

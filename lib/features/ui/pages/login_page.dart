@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/ui/pages/sign_up_page.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_bloc.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/bloc/auth_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/ui/pages/sign_up_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   void _showSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
+        content: Text(message),
         backgroundColor: isError ? Colors.red : Colors.green,
         duration: const Duration(seconds: 4),
       ),
@@ -110,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Auto Irrigation and Fertilization and AI Disease Detection',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 14,
                     color: Color(0xFF388E3C),
                     fontWeight: FontWeight.w600,
                   ),

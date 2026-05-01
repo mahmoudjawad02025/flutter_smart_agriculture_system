@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/logic/repositories/firebase_data_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/logic/repositories/firebase_data_repo.dart';
 
 class ReadNitrogen {
   ReadNitrogen(this._repo);
