@@ -5,25 +5,30 @@ import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config
 import 'package:smart_cucumber_agriculture_system/features/notifications/ui/bloc/notifications_bloc.dart';
 
 import 'ai_detection_state.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/logic/repositories/ai_detection_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/usecases/ai_detection_usecases.dart';
 
 class AiDetectionCubit extends Cubit<AiDetectionState> {
   AiDetectionCubit({
-    required AiDetectionRepository aiDetectionService,
+    required PickAndSaveLeafImage pickAndSaveLeafImage,
+    required AnalyzeLeafImage analyzeLeafImage,
+    required UpdateLeafStatus updateLeafStatus,
     required NotificationsCubit notificationsCubit,
-  }) : _aiDetectionService = aiDetectionService,
+  }) : _pickAndSaveLeafImage = pickAndSaveLeafImage,
+       _analyzeLeafImage = analyzeLeafImage,
+       _updateLeafStatus = updateLeafStatus,
        _notificationsCubit = notificationsCubit,
        super(const AiDetectionState());
 
-  final AiDetectionRepository _aiDetectionService;
+  final PickAndSaveLeafImage _pickAndSaveLeafImage;
+  final AnalyzeLeafImage _analyzeLeafImage;
+  final UpdateLeafStatus _updateLeafStatus;
   final NotificationsCubit _notificationsCubit;
 
   Future<void> pickImageAndSave() async {
     emit(state.copyWith(status: AiDetectionStatus.idle, clearError: true));
 
     try {
-      final String? savedImagePath = await _aiDetectionService
-          .pickAndSaveLeafImage();
+      final String? savedImagePath = await _pickAndSaveLeafImage.call();
       if (savedImagePath == null) {
         emit(
           state.copyWith(
@@ -83,9 +88,7 @@ class AiDetectionCubit extends Cubit<AiDetectionState> {
 
     try {
       print('[ANALYZE_IMAGE] Calling Roboflow API...');
-      final result = await _aiDetectionService.analyzeSavedImage(
-        imagePath,
-      );
+      final result = await _analyzeLeafImage.call(imagePath);
       print(
         '[ANALYZE_IMAGE] API returned successfully: ${result.detectedLabels}',
       );
@@ -93,7 +96,7 @@ class AiDetectionCubit extends Cubit<AiDetectionState> {
       String? firebaseError;
       try {
         print('[ANALYZE_IMAGE] Updating Firebase leaf status...');
-        await _aiDetectionService.updateLeafStatusInFirebase(result);
+        await _updateLeafStatus.call(result);
         print('[ANALYZE_IMAGE] Firebase update completed!');
       } catch (firebaseErr) {
         print('[ANALYZE_IMAGE] Firebase update FAILED: $firebaseErr');

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/models/detection_result_model.dart';
+import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
 
 enum AiDetectionStatus { idle, imageReady, analyzing, success, error }
 
@@ -15,7 +15,7 @@ class AiDetectionState extends Equatable {
   final AiDetectionStatus status;
   final String? imagePath;
   final int previewRevision;
-  final DetectionResult? result;
+  final AiDetectionResult? result;
   final String? errorMessage;
 
   bool get hasImage => imagePath != null && imagePath!.isNotEmpty;
@@ -26,7 +26,7 @@ class AiDetectionState extends Equatable {
     String? imagePath,
     int? previewRevision,
     bool clearImagePath = false,
-    DetectionResult? result,
+    AiDetectionResult? result,
     bool clearResult = false,
     String? errorMessage,
     bool clearError = false,

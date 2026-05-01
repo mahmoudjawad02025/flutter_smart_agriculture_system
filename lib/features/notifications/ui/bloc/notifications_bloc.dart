@@ -5,7 +5,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/logic/repositories/notifications_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/notifications/domain/repositories/notifications_repo.dart';
 
 part 'notifications_state.dart';
 

@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/user_management/logic/repositories/user_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/user_management/domain/repositories/user_repo.dart';
 
 class UserUserManagementRepositoryImpl implements UserUserManagementRepository {
   const UserUserManagementRepositoryImpl();

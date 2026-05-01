@@ -12,7 +12,7 @@ class AuthService {
   }) : _firebaseAuth = firebaseAuth,
        _database = database;
 
-  Stream<AuthUser?> get authStateChanges {
+  Stream<AuthUserModel?> get authStateChanges {
     return _firebaseAuth.authStateChanges().asyncMap((User? user) async {
       if (user == null) return null;
       try {
@@ -25,7 +25,7 @@ class AuthService {
     });
   }
 
-  Future<AuthUser> signUp({
+  Future<AuthUserModel> signUp({
     required String email,
     required String password,
     required String displayName,
@@ -82,7 +82,7 @@ class AuthService {
     }
   }
 
-  Future<AuthUser> login({
+  Future<AuthUserModel> login({
     required String email,
     required String password,
   }) async {
@@ -119,7 +119,7 @@ class AuthService {
     }
   }
 
-  Future<AuthUser?> getCurrentUser() async {
+  Future<AuthUserModel?> getCurrentUser() async {
     final User? user = _firebaseAuth.currentUser;
     if (user == null) return null;
     final authUser = await _userFromFirebaseUser(user);
@@ -190,11 +190,11 @@ class AuthService {
     }
   }
 
-  Future<AuthUser> _userFromFirebaseUser(User user) async {
+  Future<AuthUserModel> _userFromFirebaseUser(User user) async {
     final snapshot = await _database.ref('users/${user.uid}').get();
 
     if (!snapshot.exists) {
-      return AuthUser(
+      return AuthUserModel(
         uid: user.uid,
         email: user.email ?? '',
         displayName: user.displayName,
@@ -209,7 +209,7 @@ class AuthService {
     }
 
     final data = snapshot.value as Map? ?? {};
-    return AuthUser(
+    return AuthUserModel(
       uid: user.uid,
       email: user.email ?? '',
       displayName: data['displayName'] ?? user.displayName,
@@ -223,17 +223,17 @@ class AuthService {
     await _database.ref('users/$uid/status').set(newStatus);
   }
 
-  Future<List<AuthUser>> getAllUsers() async {
+  Future<List<AuthUserModel>> getAllUsers() async {
     final snapshot = await _database.ref('users').get();
     if (!snapshot.exists) return [];
 
     final Map<dynamic, dynamic> usersMap = snapshot.value as Map;
-    final List<AuthUser> users = [];
+    final List<AuthUserModel> users = [];
 
     usersMap.forEach((key, value) {
       final data = value as Map;
       users.add(
-        AuthUser(
+        AuthUserModel(
           uid: data['uid'] ?? '',
           email: data['email'] ?? '',
           displayName: data['displayName'],

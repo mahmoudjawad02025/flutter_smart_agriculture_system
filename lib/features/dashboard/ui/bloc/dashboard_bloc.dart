@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/write_sample_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/push_test_notification.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/read_nitrogen.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/write_sample_data.dart';
 import 'dashboard_state.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {

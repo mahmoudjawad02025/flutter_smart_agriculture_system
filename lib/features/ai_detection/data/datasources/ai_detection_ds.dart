@@ -56,7 +56,7 @@ class AiDetectionService {
     return savedImage.path;
   }
 
-  Future<DetectionResult> analyzeSavedImage(String imagePath) async {
+  Future<AiDetectionResultModel> analyzeSavedImage(String imagePath) async {
     final File imageFile = File(imagePath);
     if (!await imageFile.exists()) {
       throw Exception('No saved image found. Please upload an image first.');
@@ -90,16 +90,16 @@ class AiDetectionService {
 
     final dynamic body = response.data;
     if (body is Map<String, dynamic>) {
-      return DetectionResult.fromApiResponse(body);
+      return AiDetectionResultModel.fromApiResponse(body);
     }
     if (body is Map) {
-      return DetectionResult.fromApiResponse(Map<String, dynamic>.from(body));
+      return AiDetectionResultModel.fromApiResponse(Map<String, dynamic>.from(body));
     }
 
     throw Exception('Unexpected API response format.');
   }
 
-  Future<void> updateLeafStatusInFirebase(DetectionResult result) async {
+  Future<void> updateLeafStatusInFirebase(AiDetectionResult result) async {
     try {
       final List<String> labels = result.detectedLabels;
       final bool isHealthy = _isHealthy(labels);

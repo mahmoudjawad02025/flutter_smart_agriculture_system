@@ -1,13 +1,12 @@
+import 'package:smart_cucumber_agriculture_system/features/auth/domain/entities/auth_user.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/data/datasources/auth_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/data/models/auth_user_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/logic/repositories/auth_repo.dart';
+import 'package:smart_cucumber_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._dataSource);
 
   final AuthService _dataSource;
 
-  @override
   @override
   Stream<AuthUser?> authStateChanges() => _dataSource.authStateChanges;
 

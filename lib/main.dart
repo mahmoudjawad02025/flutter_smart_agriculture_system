@@ -39,7 +39,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<AiDetectionCubit>(
           create: (context) {
             return AiDetectionCubit(
-              aiDetectionService: AppDi.provideAiDetectionRepository(),
+              pickAndSaveLeafImage: AppDi.providePickAndSaveLeafImageUsecase(),
+              analyzeLeafImage: AppDi.provideAnalyzeLeafImageUsecase(),
+              updateLeafStatus: AppDi.provideUpdateLeafStatusUsecase(),
               notificationsCubit: context.read<NotificationsCubit>(),
             );
           },

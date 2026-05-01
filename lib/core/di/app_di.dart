@@ -11,13 +11,14 @@ import 'package:smart_cucumber_agriculture_system/features/auth/data/repositorie
 import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/repositories/ai_detection_repo_impl.dart';
 import 'package:smart_cucumber_agriculture_system/features/dashboard/data/repositories/dashboard_repo_impl.dart';
 import 'package:smart_cucumber_agriculture_system/features/notifications/data/repositories/notifications_repo_impl.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/write_sample_data.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/logic/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/logic/usecases/get_farm_data_once.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/logic/usecases/watch_farm_data.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/logic/usecases/watch_logs.dart';
-import 'package:smart_cucumber_agriculture_system/features/configurations/logic/usecases/update_crop_targets.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/write_sample_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/read_nitrogen.dart';
+import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/push_test_notification.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/usecases/get_farm_data_once.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/usecases/watch_farm_data.dart';
+import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/usecases/watch_logs.dart';
+import 'package:smart_cucumber_agriculture_system/features/configurations/domain/usecases/update_crop_targets.dart';
+import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/usecases/ai_detection_usecases.dart';
 
 class AppDi {
   const AppDi._();
@@ -78,6 +79,18 @@ class AppDi {
 
   static UpdateCropTargets provideUpdateCropTargetsUsecase() {
     return UpdateCropTargets(provideDashboardRepository());
+  }
+
+  static PickAndSaveLeafImage providePickAndSaveLeafImageUsecase() {
+    return PickAndSaveLeafImage(provideAiDetectionRepository());
+  }
+
+  static AnalyzeLeafImage provideAnalyzeLeafImageUsecase() {
+    return AnalyzeLeafImage(provideAiDetectionRepository());
+  }
+
+  static UpdateLeafStatus provideUpdateLeafStatusUsecase() {
+    return UpdateLeafStatus(provideAiDetectionRepository());
   }
 }
 

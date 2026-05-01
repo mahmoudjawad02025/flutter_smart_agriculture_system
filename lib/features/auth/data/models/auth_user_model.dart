@@ -1,27 +1,21 @@
-import 'package:equatable/equatable.dart';
+import 'package:smart_cucumber_agriculture_system/features/auth/domain/entities/auth_user.dart';
 
-class AuthUser extends Equatable {
-  final String uid;
-  final String email;
-  final String? displayName;
-  final String? photoUrl;
-  final bool isAnonymous;
-  final DateTime? createdAt;
-  final String role; // 'admin', 'user'
-  final String status; // 'pending', 'approved', 'rejected', 'blocked'
-
-  const AuthUser({
-    required this.uid,
-    required this.email,
-    this.displayName,
-    this.photoUrl,
+class AuthUserModel extends AuthUser {
+  const AuthUserModel({
+    required super.uid,
+    required super.email,
+    super.displayName,
+    super.photoUrl,
+    super.role = 'user',
+    super.status = 'approved',
     this.isAnonymous = false,
     this.createdAt,
-    this.role = 'user',
-    this.status = 'approved', // default for backward compatibility
   });
 
-  AuthUser copyWith({
+  final bool isAnonymous;
+  final DateTime? createdAt;
+
+  AuthUserModel copyWith({
     String? uid,
     String? email,
     String? displayName,
@@ -31,7 +25,7 @@ class AuthUser extends Equatable {
     String? role,
     String? status,
   }) {
-    return AuthUser(
+    return AuthUserModel(
       uid: uid ?? this.uid,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
@@ -43,15 +37,15 @@ class AuthUser extends Equatable {
     );
   }
 
-  @override
-  List<Object?> get props => <Object?>[
-        uid,
-        email,
-        displayName,
-        photoUrl,
-        isAnonymous,
-        createdAt,
-        role,
-        status,
-      ];
+  factory AuthUserModel.fromMap(Map<String, dynamic> map, String uid, String email) {
+    return AuthUserModel(
+      uid: uid,
+      email: email,
+      displayName: map['displayName'] as String?,
+      photoUrl: map['photoUrl'] as String?,
+      role: map['role'] as String? ?? 'user',
+      status: map['status'] as String? ?? 'approved',
+      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'] as String) : null,
+    );
+  }
 }
