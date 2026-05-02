@@ -13,9 +13,13 @@ import 'features/dashboard/ui/bloc/dashboard_bloc.dart';
 import 'features/notifications/ui/bloc/notifications_bloc.dart';
 import 'features/auth/ui/pages/auth_wrapper.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   await AppAccessControl.instance.initialize();
   await AppRuntimeConfig.initialize();
   runApp(const MyApp());

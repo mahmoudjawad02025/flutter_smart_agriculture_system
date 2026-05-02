@@ -122,8 +122,14 @@ To meet production-grade standards, the application implements robust security a
    ```
 
 3. **Configure Integrations**
+   - Create a `.env` file in the root directory (you can copy `.env.example`).
+   - Fill in your Roboflow API keys and Model IDs:
+     ```env
+     ROBOFLOW_API_KEY=your_key
+     ROBOFLOW_MODEL_ID=your_model_id
+     ```
    - Ensure the platform-specific Firebase configuration files (`google-services.json`, `GoogleService-Info.plist`) are placed correctly.
-   - Configure your AI model endpoint and microcontroller communication protocols in the appropriate environment or config files.
+
 
 4. **Run the Application**
    ```bash
