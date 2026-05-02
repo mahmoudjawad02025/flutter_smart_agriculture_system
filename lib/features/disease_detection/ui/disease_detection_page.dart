@@ -303,9 +303,21 @@ class _ResultView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
-              child: Text(
-                topLabel,
-                style: Theme.of(context).textTheme.titleMedium,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(
+                    topLabel,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (result.confidence != null)
+                    Text(
+                      '${(result.confidence! * 100).toStringAsFixed(1)}%',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 14),

@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/config/app_runtime_config.dart';
 import '../../../core/config/roboflow_config.dart';
 import '../models/detection_result.dart';
+import 'tomato_classifier_service.dart';
 
 class DiseaseDetectionService {
   DiseaseDetectionService({
@@ -16,15 +17,18 @@ class DiseaseDetectionService {
     required Dio dio,
     required FirebaseDatabase database,
     required RoboflowConfig config,
+    required TomatoClassifierService tomatoClassifierService,
   }) : _imagePicker = imagePicker,
        _dio = dio,
        _database = database,
-       _config = config;
+       _config = config,
+       _tomatoClassifierService = tomatoClassifierService;
 
   final ImagePicker _imagePicker;
   final Dio _dio;
   final FirebaseDatabase _database;
   final RoboflowConfig _config;
+  final TomatoClassifierService _tomatoClassifierService;
 
   Future<String?> pickAndSaveLeafImage() async {
     final XFile? selectedImage = await _imagePicker.pickImage(
@@ -63,6 +67,11 @@ class DiseaseDetectionService {
       throw Exception('No saved image found. Please upload an image first.');
     }
 
+    // Local on-device TFLite inference
+    return await _tomatoClassifierService.analyzeSavedImage(imagePath);
+
+    /*
+    // Keep Roboflow API code commented out as requested
     final Uri endpoint = Uri.parse(
       '${_config.baseUrl}/${_config.modelId}',
     ).replace(queryParameters: <String, String>{'api_key': _config.apiKey});
@@ -98,6 +107,7 @@ class DiseaseDetectionService {
     }
 
     throw Exception('Unexpected API response format.');
+    */
   }
 
   Future<void> updateLeafStatusInFirebase(DetectionResult result) async {

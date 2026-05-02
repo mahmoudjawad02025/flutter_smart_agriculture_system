@@ -17,6 +17,7 @@ import 'features/auth/ui/auth_wrapper.dart';
 import 'core/config/roboflow_config.dart';
 import 'features/disease_detection/cubit/disease_detection_cubit.dart';
 import 'features/disease_detection/services/disease_detection_service.dart';
+import 'features/disease_detection/services/tomato_classifier_service.dart';
 import 'features/firebase_data/cubit/firebase_data_cubit.dart';
 import 'features/notifications/cubit/notifications_cubit.dart';
 import 'features/notifications/services/notifications_service.dart';
@@ -70,6 +71,7 @@ class MyApp extends StatelessWidget {
               dio: Dio(),
               database: FirebaseDatabase.instance,
               config: _config,
+              tomatoClassifierService: TomatoClassifierService(),
             );
             return DiseaseDetectionCubit(
               diseaseDetectionService: service,
