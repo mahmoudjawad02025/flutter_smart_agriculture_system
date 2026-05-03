@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/ui/bloc/notifications_bloc.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_runtime_config.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/ui/bloc/notifications_bloc.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -425,4 +425,3 @@ class NotificationBadge extends StatelessWidget {
     );
   }
 }
-

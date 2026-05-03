@@ -1,5 +1,5 @@
-import 'package:smart_cucumber_agriculture_system/features/auth/data/models/auth_user_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
 
 class LoginUseCase {
   LoginUseCase(this._repo);
@@ -23,4 +23,3 @@ class GetCurrentUserUseCase {
 
   Future<AuthUser?> call() => _repo.getCurrentUser();
 }
-

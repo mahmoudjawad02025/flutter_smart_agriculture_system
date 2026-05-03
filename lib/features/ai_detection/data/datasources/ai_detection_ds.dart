@@ -5,9 +5,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/roboflow_config.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/models/detection_result_model.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_runtime_config.dart';
+import 'package:flutter_smart_agriculture_system/core/config/roboflow_config.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/data/models/ai_detection_result_model.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
 
 class AiDetectionService {
   AiDetectionService({
@@ -93,7 +94,9 @@ class AiDetectionService {
       return AiDetectionResultModel.fromApiResponse(body);
     }
     if (body is Map) {
-      return AiDetectionResultModel.fromApiResponse(Map<String, dynamic>.from(body));
+      return AiDetectionResultModel.fromApiResponse(
+        Map<String, dynamic>.from(body),
+      );
     }
 
     throw Exception('Unexpected API response format.');
@@ -161,8 +164,9 @@ class AiDetectionService {
 
     return labels.every((String label) {
       final String normalized = label.toLowerCase();
-      return keywords.any(normalized.contains);
+      return keywords.any(normalized.contains) ||
+          normalized == 'bacterialspot' ||
+          normalized == 'tomato_bacterial_spot';
     });
   }
 }
-

@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/models/detection_result_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/ui/bloc/ai_detection_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/ui/bloc/ai_detection_state.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_runtime_config.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/ui/bloc/ai_detection_bloc.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/ui/bloc/ai_detection_state.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 
@@ -17,11 +17,10 @@ class AiDetectionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: BlocConsumer<AiDetectionCubit, AiDetectionState>(
-        listenWhen:
-            (AiDetectionState previous, AiDetectionState current) {
-              return previous.errorMessage != current.errorMessage &&
-                  current.errorMessage != null;
-            },
+        listenWhen: (AiDetectionState previous, AiDetectionState current) {
+          return previous.errorMessage != current.errorMessage &&
+              current.errorMessage != null;
+        },
         listener: (BuildContext context, AiDetectionState state) {
           final String? message = state.errorMessage;
           if (message == null || message.isEmpty) {
@@ -33,8 +32,7 @@ class AiDetectionPage extends StatelessWidget {
             ..showSnackBar(SnackBar(content: Text(message)));
         },
         builder: (BuildContext context, AiDetectionState state) {
-          final AiDetectionCubit cubit = context
-              .read<AiDetectionCubit>();
+          final AiDetectionCubit cubit = context.read<AiDetectionCubit>();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -273,7 +271,7 @@ class _EmptyResultCard extends StatelessWidget {
 class _ResultView extends StatelessWidget {
   const _ResultView({required this.result});
 
-  final DetectionResult result;
+  final AiDetectionResult result;
 
   @override
   Widget build(BuildContext context) {
@@ -302,9 +300,21 @@ class _ResultView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
-              child: Text(
-                topLabel,
-                style: Theme.of(context).textTheme.titleMedium,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(
+                    topLabel,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (result.confidence != null)
+                    Text(
+                      '${(result.confidence! * 100).toStringAsFixed(1)}%',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 14),
@@ -366,4 +376,3 @@ class _ResultView extends StatelessWidget {
     );
   }
 }
-

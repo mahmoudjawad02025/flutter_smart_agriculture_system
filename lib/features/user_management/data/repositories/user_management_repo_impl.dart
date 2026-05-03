@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/user_management/domain/repositories/user_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/user_management/domain/repositories/user_management_repo.dart';
 
 class UserUserManagementRepositoryImpl implements UserUserManagementRepository {
   const UserUserManagementRepositoryImpl();
@@ -6,4 +6,3 @@ class UserUserManagementRepositoryImpl implements UserUserManagementRepository {
   @override
   Future<void> syncUser() async {}
 }
-

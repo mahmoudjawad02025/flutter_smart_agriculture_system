@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/ui/bloc/dashboard_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/ui/bloc/dashboard_state.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/data/models/farm_payload_model.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/ui/bloc/dashboard_bloc.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/ui/bloc/dashboard_state.dart';
 
 class DiagnosticsPage extends StatelessWidget {
   const DiagnosticsPage({super.key});
@@ -271,4 +271,3 @@ class _ResultDisplay extends StatelessWidget {
     );
   }
 }
-

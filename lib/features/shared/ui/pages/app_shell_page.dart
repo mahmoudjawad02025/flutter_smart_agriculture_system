@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/features/user_management/ui/pages/admin_users_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/configurations/ui/pages/configurations_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/ui/pages/dashboard_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/ui/pages/ai_detection_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/ui/pages/diagnostics_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/ui/pages/notifications_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/shared/ui/pages/settings_page.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_runtime_config.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_state.dart';
+import 'package:flutter_smart_agriculture_system/features/user_management/ui/pages/admin_users_page.dart';
+import 'package:flutter_smart_agriculture_system/features/configurations/ui/pages/configurations_page.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/ui/pages/dashboard_page.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/ui/pages/ai_detection_page.dart';
+import 'package:flutter_smart_agriculture_system/features/diagnostics/ui/pages/diagnostics_page.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/ui/pages/notifications_page.dart';
+import 'package:flutter_smart_agriculture_system/features/shared/ui/pages/settings_page.dart';
 
 const String _appIconAsset = 'lib/core/media/icons/app/app.png';
 
@@ -235,4 +235,3 @@ class _DrawerNavTile extends StatelessWidget {
     );
   }
 }
-

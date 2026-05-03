@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:smart_cucumber_agriculture_system/main.dart';
+import 'package:flutter_smart_agriculture_system/main.dart';
 
 void main() {
   testWidgets('Disease detection page renders', (WidgetTester tester) async {

@@ -1,6 +1,6 @@
-import 'package:smart_cucumber_agriculture_system/features/notifications/data/datasources/notifications_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/domain/repositories/notifications_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/data/datasources/notifications_ds.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/domain/repositories/notifications_repo.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl(this._dataSource);
@@ -39,4 +39,3 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   Future<void> deleteNotification(String id) =>
       _dataSource.deleteNotification(id);
 }
-

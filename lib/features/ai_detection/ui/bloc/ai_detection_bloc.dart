@@ -1,11 +1,11 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/ui/bloc/notifications_bloc.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_runtime_config.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/ui/bloc/notifications_bloc.dart';
 
 import 'ai_detection_state.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/usecases/ai_detection_usecases.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/domain/usecases/ai_detection_usecases.dart';
 
 class AiDetectionCubit extends Cubit<AiDetectionState> {
   AiDetectionCubit({
@@ -77,12 +77,7 @@ class AiDetectionCubit extends Cubit<AiDetectionState> {
       return;
     }
 
-    emit(
-      state.copyWith(
-        status: AiDetectionStatus.analyzing,
-        clearError: true,
-      ),
-    );
+    emit(state.copyWith(status: AiDetectionStatus.analyzing, clearError: true));
 
     print('[ANALYZE_IMAGE] Starting image analysis...');
 
@@ -165,7 +160,9 @@ class AiDetectionCubit extends Cubit<AiDetectionState> {
 
     return labels.every((String label) {
       final String normalized = label.toLowerCase();
-      return keywords.any(normalized.contains);
+      return keywords.any(normalized.contains) ||
+          normalized == 'bacterialspot' ||
+          normalized == 'tomato_bacterial_spot';
     });
   }
 }

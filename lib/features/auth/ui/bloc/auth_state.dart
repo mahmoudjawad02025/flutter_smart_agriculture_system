@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/data/models/auth_user_model.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
 
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -39,4 +39,3 @@ class AuthError extends AuthState {
   @override
   List<Object?> get props => <Object?>[message, authenticatedUser];
 }
-

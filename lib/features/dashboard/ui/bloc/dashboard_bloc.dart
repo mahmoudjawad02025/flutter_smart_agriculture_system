@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/write_sample_data.dart';
+import 'package:flutter_smart_agriculture_system/features/diagnostics/domain/usecases/push_test_notification.dart';
+import 'package:flutter_smart_agriculture_system/features/diagnostics/domain/usecases/read_nitrogen.dart';
+import 'package:flutter_smart_agriculture_system/features/diagnostics/domain/usecases/write_sample_data.dart';
 import 'dashboard_state.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
@@ -20,9 +20,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   final PushTestNotification _pushTestNotification;
 
   Future<void> writeSampleData() async {
-    emit(
-      state.copyWith(status: DashboardStatus.loading, clearMessage: true),
-    );
+    emit(state.copyWith(status: DashboardStatus.loading, clearMessage: true));
 
     try {
       await _writeSampleData.call();
@@ -44,9 +42,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> readNitrogenOnce() async {
-    emit(
-      state.copyWith(status: DashboardStatus.loading, clearMessage: true),
-    );
+    emit(state.copyWith(status: DashboardStatus.loading, clearMessage: true));
 
     try {
       final int? nitrogen = await _readNitrogen.call();
@@ -80,9 +76,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   }
 
   Future<void> pushTestNotification() async {
-    emit(
-      state.copyWith(status: DashboardStatus.loading, clearMessage: true),
-    );
+    emit(state.copyWith(status: DashboardStatus.loading, clearMessage: true));
     try {
       await _pushTestNotification.call();
 
@@ -102,4 +96,3 @@ class DashboardCubit extends Cubit<DashboardState> {
     }
   }
 }
-

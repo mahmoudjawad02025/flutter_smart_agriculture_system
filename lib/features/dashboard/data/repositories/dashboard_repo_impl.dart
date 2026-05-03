@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/data/models/farm_payload_model.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
   DashboardRepositoryImpl({required FirebaseDatabase database})
@@ -87,6 +87,56 @@ class DashboardRepositoryImpl implements DashboardRepository {
   }
 
   @override
+  Stream<Map<String, dynamic>?> watchPumps() async* {
+    await for (final DatabaseEvent event
+        in _db.ref('${FarmPayload.rootPath}/actions/pumps').onValue) {
+      final dynamic raw = event.snapshot.value;
+      if (raw is Map) {
+        yield Map<String, dynamic>.from(raw);
+      } else {
+        yield null;
+      }
+    }
+  }
+
+  @override
+  Future<void> setPumpAutoMode(bool value) async {
+    await _db.ref('${FarmPayload.rootPath}/actions/pumps/auto').set(value);
+  }
+
+  @override
+  Future<void> setManualPumpState({
+    required String pumpKey,
+    required String pumpName,
+    required bool value,
+  }) async {
+    final DataSnapshot dataSnapshot = await _db
+        .ref('${FarmPayload.rootPath}/data')
+        .get();
+    final Map<String, dynamic> currentData = _toMap(dataSnapshot.value);
+    final Map<String, dynamic> sensorsData = _toMap(currentData['sensors']);
+    final Map<String, dynamic> leafData = _toMap(currentData['leaf']);
+
+    await _db.ref('${FarmPayload.rootPath}/actions/pumps/$pumpKey').set(value);
+
+    final String logId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
+    await _db.ref('${FarmPayload.rootPath}/logs/manual_log/$logId').set({
+      'time': DateTime.now().toUtc().toIso8601String(),
+      'action': value ? 'ON' : 'OFF',
+      'pump': pumpName,
+      'state': {
+        'temp': sensorsData['temp'] ?? 0,
+        'moist': sensorsData['moist'] ?? 0,
+        'hum': sensorsData['hum'] ?? 0,
+        'n': sensorsData['n'] ?? 0,
+        'p': sensorsData['p'] ?? 0,
+        'k': sensorsData['k'] ?? 0,
+        'status': leafData['status'] ?? 'Unknown',
+      },
+    });
+  }
+
+  @override
   Future<void> updateCropTargets({
     required int moistMin,
     required int moistMax,
@@ -115,3 +165,8 @@ class DashboardRepositoryImpl implements DashboardRepository {
   }
 }
 
+Map<String, dynamic> _toMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
+}

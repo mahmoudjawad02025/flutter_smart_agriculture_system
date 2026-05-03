@@ -1,6 +1,6 @@
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/data/datasources/ai_detection_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/repositories/ai_detection_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/data/datasources/ai_detection_ds.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/domain/repositories/ai_detection_repo.dart';
 
 class AiDetectionRepositoryImpl implements AiDetectionRepository {
   AiDetectionRepositoryImpl(this._dataSource);
@@ -20,4 +20,3 @@ class AiDetectionRepositoryImpl implements AiDetectionRepository {
     return _dataSource.updateLeafStatusInFirebase(result);
   }
 }
-

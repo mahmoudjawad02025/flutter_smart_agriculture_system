@@ -2,7 +2,7 @@
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:uuid/uuid.dart';
-import 'package:smart_cucumber_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
+import 'package:flutter_smart_agriculture_system/features/notifications/data/models/farm_notification_model.dart';
 
 class NotificationsService {
   NotificationsService({required FirebaseDatabase database})
@@ -215,4 +215,3 @@ class NotificationsService {
         .map((event) => (event.snapshot.value as int?) ?? 0);
   }
 }
-

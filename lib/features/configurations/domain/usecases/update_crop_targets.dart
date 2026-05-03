@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
 
 class UpdateCropTargets {
   UpdateCropTargets(this._repo);
@@ -28,4 +28,3 @@ class UpdateCropTargets {
     );
   }
 }
-

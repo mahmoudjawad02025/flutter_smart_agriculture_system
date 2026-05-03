@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/shared/ui/pages/app_shell_page.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/pages/login_page.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_access_control.dart';
+import 'package:flutter_smart_agriculture_system/features/shared/ui/pages/app_shell_page.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_state.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/pages/login_page.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_access_control.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -72,4 +72,3 @@ class _LoadingScreen extends StatelessWidget {
     );
   }
 }
-

@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/inventory/domain/repositories/product_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/inventory/domain/repositories/inventory_repo.dart';
 
 class InventoryRepositoryImpl implements InventoryRepository {
   const InventoryRepositoryImpl();
@@ -6,4 +6,3 @@ class InventoryRepositoryImpl implements InventoryRepository {
   @override
   Future<void> syncProducts() async {}
 }
-

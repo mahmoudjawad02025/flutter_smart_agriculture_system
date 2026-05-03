@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:smart_cucumber_agriculture_system/core/config/app_runtime_config.dart';
-import 'package:smart_cucumber_agriculture_system/core/di/app_di.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/push_test_notification.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/read_nitrogen.dart';
-import 'package:smart_cucumber_agriculture_system/features/configurations/domain/usecases/update_crop_targets.dart';
-import 'package:smart_cucumber_agriculture_system/features/diagnostics/domain/usecases/write_sample_data.dart';
+import 'package:flutter_smart_agriculture_system/core/config/app_runtime_config.dart';
+import 'package:flutter_smart_agriculture_system/core/di/app_di.dart';
+import 'package:flutter_smart_agriculture_system/features/configurations/domain/usecases/pump_controls.dart';
+import 'package:flutter_smart_agriculture_system/features/configurations/domain/usecases/update_crop_targets.dart';
 
 class ConfigurationsPage extends StatefulWidget {
   const ConfigurationsPage({super.key});
@@ -16,10 +13,6 @@ class ConfigurationsPage extends StatefulWidget {
 }
 
 class _ConfigurationsPageState extends State<ConfigurationsPage> {
-  final WriteSampleData _writeSample = AppDi.provideWriteSampleDataUsecase();
-  final ReadNitrogen _readNitrogenUsecase = AppDi.provideReadNitrogenUsecase();
-  final PushTestNotification _pushTest =
-      AppDi.providePushTestNotificationUsecase();
   final UpdateCropTargets _updateCropTargets =
       AppDi.provideUpdateCropTargetsUsecase();
 
@@ -123,10 +116,13 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             ),
             FilledButton(
               onPressed: () {
-                final int? minValue = int.tryParse(minController.text.trim());
-                final int? maxValue = int.tryParse(maxController.text.trim());
-                if (minValue == null || maxValue == null) return;
-                Navigator.pop(dialogContext, <int>[minValue, maxValue]);
+                final int? minParsed = int.tryParse(minController.text.trim());
+                final int? maxParsed = int.tryParse(maxController.text.trim());
+                if (minParsed == null || maxParsed == null) {
+                  Navigator.pop(dialogContext);
+                  return;
+                }
+                Navigator.pop(dialogContext, <int>[minParsed, maxParsed]);
               },
               child: const Text('Save'),
             ),
@@ -288,37 +284,6 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     await _saveCropTargets(kMin: range[0], kMax: range[1]);
   }
 
-  Future<void> _pushNotification() async {
-    try {
-      await _pushTest.call();
-      _showSuccess('Test notification pushed!');
-    } catch (error) {
-      _showError('Push failed: $error');
-    }
-  }
-
-  Future<void> _seedData() async {
-    try {
-      await _writeSample.call();
-      _showSuccess('Sample data seeded successfully.');
-    } catch (error) {
-      _showError('Write failed: $error');
-    }
-  }
-
-  Future<void> _readNitrogen() async {
-    try {
-      final int? nitrogen = await _readNitrogenUsecase.call();
-      if (nitrogen == null) {
-        _showError('No data available.');
-        return;
-      }
-      _showSuccess('Latest nitrogen value: $nitrogen');
-    } catch (error) {
-      _showError('Read failed: $error');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -332,26 +297,8 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           ),
           const SizedBox(height: 16),
           _SectionCard(
-            title: 'Cloud Diagnostics',
-            subtitle: 'Usecases only. No direct database calls from the UI.',
-            children: <Widget>[
-              _SimpleTile(
-                label: 'Database root',
-                value: FarmPayload.rootPath,
-                icon: Icons.link,
-              ),
-              _ActionRow(label: 'Seed sample data', onTap: _seedData),
-              _ActionRow(
-                label: 'Push test notification',
-                onTap: _pushNotification,
-              ),
-              _ActionRow(label: 'Read nitrogen once', onTap: _readNitrogen),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _SectionCard(
             title: 'Crop Targets',
-            subtitle: 'Min and max ranges used by the farm system',
+            subtitle: 'Min and max ranges used by the farm system (+ to edit)',
             children: <Widget>[
               _EditableTile(
                 label: 'Moisture',
@@ -389,6 +336,8 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             ],
           ),
           const SizedBox(height: 12),
+          const _PumpControlSection(),
+          const SizedBox(height: 12),
           _SectionCard(
             title: 'Detection Rules',
             subtitle: 'User-facing controls only',
@@ -416,6 +365,99 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
       ),
     );
   }
+}
+
+class _PumpControlSection extends StatelessWidget {
+  const _PumpControlSection();
+
+  Future<void> _handleManualToggle({
+    required String pumpKey,
+    required String pumpName,
+    required bool value,
+  }) async {
+    try {
+      await AppDi.provideSetManualPumpStateUsecase().call(
+        pumpKey: pumpKey,
+        pumpName: pumpName,
+        value: value,
+      );
+    } catch (error) {
+      debugPrint('Manual log failed: $error');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final WatchPumps watchPumps = AppDi.provideWatchPumpsUsecase();
+    final SetPumpAutoMode setAutoMode = AppDi.provideSetPumpAutoModeUsecase();
+
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: watchPumps.call(),
+      builder: (context, snapshot) {
+        final Map<String, dynamic> data = _toMap(snapshot.data);
+        final bool isAuto = data['auto'] == true;
+        final bool isWater = data['water'] == true;
+        final bool isFert = data['fert'] == true;
+
+        return _SectionCard(
+          title: 'Pump & Mode Control',
+          subtitle: 'Override auto systems or toggle manual state',
+          children: <Widget>[
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Auto Control Mode'),
+              subtitle: const Text('Let the system handle pumps automatically'),
+              value: isAuto,
+              onChanged: setAutoMode.call,
+            ),
+            const Divider(),
+            Opacity(
+              opacity: isAuto ? 0.5 : 1.0,
+              child: IgnorePointer(
+                ignoring: isAuto,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Water Pump'),
+                      subtitle: const Text('Manual override for irrigation'),
+                      value: isWater,
+                      onChanged: (bool value) {
+                        _handleManualToggle(
+                          pumpKey: 'water',
+                          pumpName: 'Water',
+                          value: value,
+                        );
+                      },
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fertilizer Pump'),
+                      subtitle: const Text('Manual override for nutrients'),
+                      value: isFert,
+                      onChanged: (bool value) {
+                        _handleManualToggle(
+                          pumpKey: 'fert',
+                          pumpName: 'Fertilizer',
+                          value: value,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+Map<String, dynamic> _toMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return <String, dynamic>{};
 }
 
 class _HeaderCard extends StatelessWidget {
@@ -447,18 +489,22 @@ class _HeaderCard extends StatelessWidget {
             style: TextStyle(
               color: Colors.white,
               fontSize: 22,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Reupload delay: $diseaseReuploadDays days',
-            style: const TextStyle(color: Colors.white),
+            'Tune the detection and crop targets from one screen.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Healthy keywords: ${healthyKeywords.join(', ')}',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              _InfoChip(label: 'Reupload', value: '$diseaseReuploadDays days'),
+              _InfoChip(label: 'Healthy', value: healthyKeywords.join(' • ')),
+            ],
           ),
         ],
       ),
@@ -480,18 +526,22 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0.9,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
             Text(
-              subtitle,
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
+            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 14),
             ...children,
           ],
         ),
@@ -505,7 +555,7 @@ class _EditableTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
-    this.trailingIcon = Icons.edit,
+    this.trailingIcon = Icons.chevron_right,
   });
 
   final String label;
@@ -517,6 +567,7 @@ class _EditableTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.edit_outlined),
       title: Text(label),
       subtitle: Text(value),
       trailing: Icon(trailingIcon),
@@ -555,11 +606,12 @@ class _ChecklistTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.check_circle_outline, size: 18),
-          const SizedBox(width: 8),
+          const Icon(Icons.check, color: Color(0xFF2E7D32), size: 18),
+          const SizedBox(width: 10),
           Expanded(child: Text(text)),
         ],
       ),
@@ -567,24 +619,33 @@ class _ChecklistTile extends StatelessWidget {
   }
 }
 
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({required this.label, required this.onTap});
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label, required this.value});
 
   final String label;
-  final VoidCallback onTap;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: FilledButton.tonal(
-        onPressed: onTap,
-        child: SizedBox(
-          width: double.infinity,
-          child: Text(label, textAlign: TextAlign.center),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+          children: <InlineSpan>[
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(text: value),
+          ],
         ),
       ),
     );
   }
 }
-

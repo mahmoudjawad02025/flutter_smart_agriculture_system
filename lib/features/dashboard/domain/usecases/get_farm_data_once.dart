@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
 
 class GetFarmDataOnce {
   GetFarmDataOnce(this._repo);
@@ -6,4 +6,3 @@ class GetFarmDataOnce {
 
   Future<Map<String, dynamic>?> call() => _repo.getFarmDataOnce();
 }
-

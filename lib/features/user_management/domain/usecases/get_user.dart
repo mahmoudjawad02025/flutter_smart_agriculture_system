@@ -1,5 +1,5 @@
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/entities/auth_user.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
 
 class GetUser {
   GetUser(this._repo);
@@ -7,4 +7,3 @@ class GetUser {
 
   Future<AuthUser?> call() => _repo.getCurrentUser();
 }
-

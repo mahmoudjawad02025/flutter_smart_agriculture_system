@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/data/models/auth_user_model.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -138,4 +138,3 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     }
   }
 }
-

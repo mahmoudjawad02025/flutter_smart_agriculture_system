@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/entities/auth_user.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
 
 class AuthUserModel extends AuthUser {
   const AuthUserModel({
@@ -37,7 +37,11 @@ class AuthUserModel extends AuthUser {
     );
   }
 
-  factory AuthUserModel.fromMap(Map<String, dynamic> map, String uid, String email) {
+  factory AuthUserModel.fromMap(
+    Map<String, dynamic> map,
+    String uid,
+    String email,
+  ) {
     return AuthUserModel(
       uid: uid,
       email: email,
@@ -45,7 +49,9 @@ class AuthUserModel extends AuthUser {
       photoUrl: map['photoUrl'] as String?,
       role: map['role'] as String? ?? 'user',
       status: map['status'] as String? ?? 'approved',
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt'] as String) : null,
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'] as String)
+          : null,
     );
   }
 }

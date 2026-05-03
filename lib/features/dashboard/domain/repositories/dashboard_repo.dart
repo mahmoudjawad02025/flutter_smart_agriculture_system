@@ -5,6 +5,13 @@ abstract class DashboardRepository {
   Future<Map<String, dynamic>?> getFarmDataOnce();
   Stream<Map<String, dynamic>?> watchFarmData();
   Stream<Map<String, dynamic>?> watchLogs();
+  Stream<Map<String, dynamic>?> watchPumps();
+  Future<void> setPumpAutoMode(bool value);
+  Future<void> setManualPumpState({
+    required String pumpKey,
+    required String pumpName,
+    required bool value,
+  });
   Future<void> updateCropTargets({
     required int moistMin,
     required int moistMax,

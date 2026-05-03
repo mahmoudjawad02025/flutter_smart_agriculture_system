@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/entities/auth_user.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
 
 abstract class AuthRepository {
   Stream<AuthUser?> authStateChanges();
@@ -26,4 +26,3 @@ abstract class AuthRepository {
   Future<List<AuthUser>> getAllUsers();
   Future<void> updateUserStatus(String uid, String status);
 }
-

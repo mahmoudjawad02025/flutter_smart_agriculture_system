@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
 
 class Logout {
   Logout(this._repo);
@@ -6,4 +6,3 @@ class Logout {
 
   Future<void> call() => _repo.logout();
 }
-

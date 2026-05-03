@@ -1,6 +1,6 @@
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/entities/auth_user.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/data/datasources/auth_ds.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/entities/auth_user.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/data/datasources/auth_ds.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/domain/repositories/auth_repo.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._dataSource);
@@ -74,4 +74,3 @@ class AuthRepositoryImpl implements AuthRepository {
     return _dataSource.updateUserStatus(uid, status);
   }
 }
-

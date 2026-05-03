@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/bloc/auth_state.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/ui/pages/sign_up_page.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_bloc.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/bloc/auth_state.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/ui/pages/sign_up_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -239,4 +239,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

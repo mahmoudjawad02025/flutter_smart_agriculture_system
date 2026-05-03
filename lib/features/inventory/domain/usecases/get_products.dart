@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/inventory/domain/repositories/product_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/inventory/domain/repositories/inventory_repo.dart';
 
 class GetProducts {
   GetProducts(this._repo);
@@ -6,4 +6,3 @@ class GetProducts {
 
   Future<void> call() => _repo.syncProducts();
 }
-

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:smart_cucumber_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
+import 'package:flutter_smart_agriculture_system/features/ai_detection/domain/entities/ai_detection_result.dart';
 
 enum AiDetectionStatus { idle, imageReady, analyzing, success, error }
 
@@ -49,4 +49,3 @@ class AiDetectionState extends Equatable {
     errorMessage,
   ];
 }
-

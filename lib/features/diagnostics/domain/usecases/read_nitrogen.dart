@@ -1,4 +1,4 @@
-import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/domain/repositories/dashboard_repo.dart';
 
 class ReadNitrogen {
   ReadNitrogen(this._repo);
@@ -6,4 +6,3 @@ class ReadNitrogen {
 
   Future<int?> call() => _repo.readNitrogenOnce();
 }
-

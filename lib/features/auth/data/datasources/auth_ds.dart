@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:smart_cucumber_agriculture_system/features/auth/data/models/auth_user_model.dart';
+import 'package:flutter_smart_agriculture_system/features/auth/data/models/auth_user_model.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth;
@@ -129,8 +129,9 @@ class AuthService {
   // Security Verification Methods
   Future<void> reauthenticate(String password) async {
     final User? user = _firebaseAuth.currentUser;
-    if (user == null || user.email == null)
+    if (user == null || user.email == null) {
       throw Exception('No user logged in.');
+    }
 
     AuthCredential credential = EmailAuthProvider.credential(
       email: user.email!,
@@ -268,4 +269,3 @@ class AuthService {
     }
   }
 }
-

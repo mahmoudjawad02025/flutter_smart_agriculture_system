@@ -5,6 +5,7 @@ class RoboflowConfig {
 
   String get baseUrl => 'https://detect.roboflow.com';
 
+
   String get apiKey => dotenv.env['ROBOFLOW_API_KEY'] ?? '';
   String get modelId => dotenv.env['ROBOFLOW_MODEL_ID'] ?? '';
 }

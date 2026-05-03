@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/data/models/farm_payload_model.dart';
-import 'package:smart_cucumber_agriculture_system/features/dashboard/domain/usecases/get_farm_data_once.dart';
-import 'package:smart_cucumber_agriculture_system/core/di/app_di.dart';
+import 'package:flutter_smart_agriculture_system/core/di/app_di.dart';
+import 'package:flutter_smart_agriculture_system/features/dashboard/domain/usecases/watch_farm_data.dart';
 
 import 'logs_history_page.dart';
 
@@ -15,19 +14,19 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  late final GetFarmDataOnce _getFarmData;
+  late final WatchFarmData _watchFarmData;
 
   @override
   void initState() {
     super.initState();
-    _getFarmData = AppDi.provideGetFarmDataOnceUsecase();
+    _watchFarmData = AppDi.provideWatchFarmDataUsecase();
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: FutureBuilder<Map<String, dynamic>?>(
-        future: _getFarmData.call(),
+      child: StreamBuilder<Map<String, dynamic>?>(
+        stream: _watchFarmData.call(),
         builder:
             (
               BuildContext context,
@@ -45,8 +44,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final dynamic raw = snapshot.data;
-              if (raw is! Map) {
+              final Map<String, dynamic>? raw = snapshot.data;
+              if (raw == null) {
                 return const _MessageView(
                   icon: Icons.cloud_off_outlined,
                   title: 'No Firebase data yet',
@@ -54,7 +53,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
               }
 
-              final Map<String, dynamic> data = _toMap(raw);
+              final Map<String, dynamic> root = _toMap(raw);
+              final Map<String, dynamic> data = _toMap(root['data']);
               final Map<String, dynamic> live = _toMap(data['live']);
               final Map<String, dynamic> sensors = _toMap(data['sensors']);
               final Map<String, dynamic> source = live.isNotEmpty
@@ -68,9 +68,9 @@ class _DashboardPageState extends State<DashboardPage> {
               final String reuploadAt = '${leaf['reupload_at'] ?? ''}';
 
               final Map<String, dynamic> pumps = _toMap(
-                data['actions']?['pumps'],
+                _toMap(root['actions'])['pumps'],
               );
-              final Map<String, dynamic> logsData = _toMap(data['logs']);
+              final Map<String, dynamic> logsData = _toMap(root['logs']);
 
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -584,4 +584,3 @@ class _MessageView extends StatelessWidget {
     );
   }
 }
-
