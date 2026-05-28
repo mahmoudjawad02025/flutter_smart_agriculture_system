@@ -98,15 +98,25 @@ class TomatoClassifierService {
     }
 
     // Build raw JSON for advanced details similar to Roboflow
+    // Ensure probabilities map keys reflect the swapped labels so
+    // rawJson is consistent with `detectedLabel` and `detectedLabels`.
+    final Map<String, double> probsMap = <String, double>{};
+    for (int i = 0; i < _labels.length; i++) {
+      String key = _labels[i];
+      if (key == 'Healthy') {
+        key = 'BacterialSpot';
+      } else if (key == 'BacterialSpot') {
+        key = 'Healthy';
+      }
+      probsMap[key] = probabilities[i];
+    }
+
     final Map<String, dynamic> rawJson = <String, dynamic>{
       'predictions': <Map<String, dynamic>>[
         <String, dynamic>{
           'class': detectedLabel,
           'confidence': maxProb,
-          'probabilities': <String, double>{
-            for (int i = 0; i < _labels.length; i++)
-              _labels[i]: probabilities[i],
-          },
+          'probabilities': probsMap,
         },
       ],
     };

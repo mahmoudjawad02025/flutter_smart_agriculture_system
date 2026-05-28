@@ -17,7 +17,7 @@ class AuthService {
       if (user == null) return null;
       try {
         final authUser = await _userFromFirebaseUser(user);
-        if (authUser.status != 'approved') return null; 
+        if (authUser.status != 'approved') return null;
         return authUser;
       } catch (e) {
         return null;
@@ -37,7 +37,8 @@ class AuthService {
       final User user = userCredential.user!;
       await user.updateDisplayName(displayName);
 
-      final bool isAdmin = email.toLowerCase() == 'admin@agriculture.local';
+      final bool isFirstUser = await _isFirstUser();
+      final bool isAdmin = isFirstUser || _isAdminEmail(email);
 
       await _database.ref('users/${user.uid}').set({
         'uid': user.uid,
@@ -49,23 +50,29 @@ class AuthService {
       });
 
       if (!isAdmin) {
-        final String notifId = 'signup_${user.uid}_${DateTime.now().millisecondsSinceEpoch}';
-        await _database.ref('smart_cucumber_agriculture/data/notifications/$notifId').set({
-          'id': notifId,
-          'title': 'New User Request',
-          'disease_name': 'User_Signup', 
-          'message': 'A new user ($displayName) has registered and is waiting for your approval in User Management.',
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-          'next_upload': '',
-          'is_read': false,
-        });
+        final String notifId =
+            'signup_${user.uid}_${DateTime.now().millisecondsSinceEpoch}';
+        await _database
+            .ref('smart_cucumber_agriculture/data/notifications/$notifId')
+            .set({
+              'id': notifId,
+              'title': 'New User Request',
+              'disease_name': 'User_Signup',
+              'message':
+                  'A new user ($displayName) has registered and is waiting for your approval in User Management.',
+              'created_at': DateTime.now().toUtc().toIso8601String(),
+              'next_upload': '',
+              'is_read': false,
+            });
       }
 
       final authUser = await _userFromFirebaseUser(user);
 
       if (authUser.status == 'pending') {
         await _firebaseAuth.signOut();
-        throw Exception('Account created successfully! Please wait for an administrator to approve your request.');
+        throw Exception(
+          'Account created successfully! Please wait for an administrator to approve your request.',
+        );
       }
 
       return authUser;
@@ -88,7 +95,9 @@ class AuthService {
 
       if (authUser.status == 'pending') {
         await logout();
-        throw Exception('Your account is pending approval by an admin. Please check back later.');
+        throw Exception(
+          'Your account is pending approval by an admin. Please check back later.',
+        );
       }
       if (authUser.status == 'rejected' || authUser.status == 'blocked') {
         await logout();
@@ -121,13 +130,14 @@ class AuthService {
   // Security Verification Methods
   Future<void> reauthenticate(String password) async {
     final User? user = _firebaseAuth.currentUser;
-    if (user == null || user.email == null) throw Exception('No user logged in.');
-    
+    if (user == null || user.email == null)
+      throw Exception('No user logged in.');
+
     AuthCredential credential = EmailAuthProvider.credential(
       email: user.email!,
       password: password,
     );
-    
+
     try {
       await user.reauthenticateWithCredential(credential);
     } on FirebaseAuthException catch (e) {
@@ -183,14 +193,15 @@ class AuthService {
 
   Future<AuthUser> _userFromFirebaseUser(User user) async {
     final snapshot = await _database.ref('users/${user.uid}').get();
-    
+
     if (!snapshot.exists) {
+      final bool isAdmin = _isAdminEmail(user.email) || await _isFirstUser();
       return AuthUser(
         uid: user.uid,
         email: user.email ?? '',
         displayName: user.displayName,
-        role: (user.email?.toLowerCase() == 'admin@agriculture.local') ? 'admin' : 'user',
-        status: (user.email?.toLowerCase() == 'admin@agriculture.local') ? 'approved' : 'pending',
+        role: isAdmin ? 'admin' : 'user',
+        status: isAdmin ? 'approved' : 'pending',
         createdAt: user.metadata.creationTime,
       );
     }
@@ -210,40 +221,60 @@ class AuthService {
     await _database.ref('users/$uid/status').set(newStatus);
   }
 
+  bool _isAdminEmail(String? email) {
+    return email?.toLowerCase() == 'admin@agriculture.local';
+  }
+
+  Future<bool> _isFirstUser() async {
+    final snapshot = await _database.ref('users').get();
+    if (!snapshot.exists) return true;
+    final value = snapshot.value;
+    if (value is Map) return value.isEmpty;
+    return false;
+  }
+
   Future<List<AuthUser>> getAllUsers() async {
     final snapshot = await _database.ref('users').get();
     if (!snapshot.exists) return [];
-    
+
     final Map<dynamic, dynamic> usersMap = snapshot.value as Map;
     final List<AuthUser> users = [];
-    
+
     usersMap.forEach((key, value) {
       final data = value as Map;
-      users.add(AuthUser(
-        uid: data['uid'] ?? '',
-        email: data['email'] ?? '',
-        displayName: data['displayName'],
-        role: data['role'] ?? 'user',
-        status: data['status'] ?? 'pending',
-      ));
+      users.add(
+        AuthUser(
+          uid: data['uid'] ?? '',
+          email: data['email'] ?? '',
+          displayName: data['displayName'],
+          role: data['role'] ?? 'user',
+          status: data['status'] ?? 'pending',
+        ),
+      );
     });
-    
+
     return users;
   }
 
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
-      case 'weak-password': return 'The password provided is too weak.';
-      case 'email-already-in-use': return 'The account already exists for that email.';
-      case 'invalid-email': return 'The email address is not valid.';
-      case 'user-disabled': return 'The user account has been disabled.';
-      case 'user-not-found': return 'No user found for that email.';
-      case 'wrong-password': 
+      case 'weak-password':
+        return 'The password provided is too weak.';
+      case 'email-already-in-use':
+        return 'The account already exists for that email.';
+      case 'invalid-email':
+        return 'The email address is not valid.';
+      case 'user-disabled':
+        return 'The user account has been disabled.';
+      case 'user-not-found':
+        return 'No user found for that email.';
+      case 'wrong-password':
       case 'invalid-credential':
         return 'The current password you entered is incorrect.';
       case 'internal-error':
         return 'Authentication failed. Please check your current password.';
-      default: return e.message ?? 'An error occurred';
+      default:
+        return e.message ?? 'An error occurred';
     }
   }
 }
