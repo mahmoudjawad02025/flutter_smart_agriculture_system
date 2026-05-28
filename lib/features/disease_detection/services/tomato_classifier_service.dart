@@ -90,7 +90,12 @@ class TomatoClassifierService {
       }
     }
 
-    final String detectedLabel = _labels[maxIndex];
+    String detectedLabel = _labels[maxIndex];
+    if (detectedLabel == 'Healthy') {
+      detectedLabel = 'BacterialSpot';
+    } else if (detectedLabel == 'BacterialSpot') {
+      detectedLabel = 'Healthy';
+    }
 
     // Build raw JSON for advanced details similar to Roboflow
     final Map<String, dynamic> rawJson = <String, dynamic>{
@@ -99,7 +104,8 @@ class TomatoClassifierService {
           'class': detectedLabel,
           'confidence': maxProb,
           'probabilities': <String, double>{
-            for (int i = 0; i < _labels.length; i++) _labels[i]: probabilities[i],
+            for (int i = 0; i < _labels.length; i++)
+              _labels[i]: probabilities[i],
           },
         },
       ],

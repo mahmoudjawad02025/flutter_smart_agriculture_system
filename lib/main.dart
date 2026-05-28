@@ -123,3 +123,5 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// continue from consider BacterialSpot <=> Healthy
