@@ -19,6 +19,7 @@ import 'features/disease_detection/cubit/disease_detection_cubit.dart';
 import 'features/disease_detection/services/disease_detection_service.dart';
 import 'features/disease_detection/services/tomato_classifier_service.dart';
 import 'features/firebase_data/cubit/firebase_data_cubit.dart';
+import 'features/firebase_data/models/farm_payload.dart';
 import 'features/notifications/cubit/notifications_cubit.dart';
 import 'features/notifications/services/notifications_service.dart';
 
@@ -27,6 +28,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppAccessControl.instance.initialize();
   await AppRuntimeConfig.initialize();
+  await FarmPayload.ensureDefaults(FirebaseDatabase.instance);
   runApp(const MyApp());
 }
 

@@ -1,0 +1,49 @@
+{
+    "sensors" : {
+        "temp": 25,
+        "hum": 60,
+        "moist": 65,
+        "n": 170,
+        "p": 50,
+        "k": 200,
+        "time": "2026-04-21T13:08:52.043387Z"
+    },
+    "leaf" : {
+        
+    },
+    "config" : {
+        "pumps": {
+            "auto": true,
+            "fert": false,
+            "water": false
+        },
+        "goals": {
+            "leaf_goal": "Healthy",
+            "moist_max": 165,
+            "moist_min": 60,
+            "k_max": 250,
+            "k_min": 150,
+            "n_max": 180,
+            "n_min": 170,
+            "p_max": 80,
+            "p_min": 40
+        }
+    },
+    "users" : {
+
+    },
+    "extra" : {
+        "notifications" : {
+
+        },
+        "logs" : {
+            "manual_logs": {
+
+            }, 
+            "auto_logs": {
+
+            }
+        }
+    }
+    
+}

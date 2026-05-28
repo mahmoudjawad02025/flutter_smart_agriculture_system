@@ -19,9 +19,7 @@ class LogsHistoryPage extends StatelessWidget {
         ],
       ),
       body: StreamBuilder<DatabaseEvent>(
-        stream: FirebaseDatabase.instance
-            .ref('${FarmPayload.rootPath}/logs')
-            .onValue,
+        stream: FirebaseDatabase.instance.ref(FarmPayload.logsPath).onValue,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -41,8 +39,9 @@ class LogsHistoryPage extends StatelessWidget {
               final log = logs[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
                   child: Icon(
                     log.icon,
                     color: Theme.of(context).colorScheme.primary,
@@ -218,6 +217,11 @@ class _DetailedLogItem {
     required this.icon,
     this.leafStatus,
     this.isManual = false,
-    this.n, this.p, this.k, this.moist, this.temp, this.hum,
+    this.n,
+    this.p,
+    this.k,
+    this.moist,
+    this.temp,
+    this.hum,
   });
 }

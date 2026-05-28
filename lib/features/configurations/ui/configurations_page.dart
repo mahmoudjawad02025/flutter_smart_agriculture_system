@@ -38,9 +38,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     required int kMax,
     required String leafGoal,
   }) async {
-    final DatabaseReference goalsRef = _database.ref(
-      '${FarmPayload.rootPath}/actions/goals',
-    );
+    final DatabaseReference goalsRef = _database.ref(FarmPayload.goalsPath);
 
     await goalsRef.update(<String, dynamic>{
       'moist_min': moistMin,
@@ -405,11 +403,13 @@ class _PumpControlSection extends StatelessWidget {
   ) async {
     try {
       // 1. Capture "Before" state snapshot
-      final DataSnapshot dataSnapshot =
-          await database.ref('${FarmPayload.rootPath}/data').get();
+      final DataSnapshot dataSnapshot = await FarmPayload.rootRef(
+        database,
+      ).get();
       final Map<dynamic, dynamic> currentData =
           dataSnapshot.value as Map? ?? {};
-      final Map<dynamic, dynamic> sensors = currentData['sensors'] as Map? ?? {};
+      final Map<dynamic, dynamic> sensors =
+          currentData['sensors'] as Map? ?? {};
       final Map<dynamic, dynamic> leaf = currentData['leaf'] as Map? ?? {};
 
       // 2. Perform the toggle
@@ -417,11 +417,11 @@ class _PumpControlSection extends StatelessWidget {
 
       // 3. Push a simplified manual log
       final String logId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
-      
+
       final Map<String, dynamic> sensorsData = _toMap(currentData['sensors']);
       final Map<String, dynamic> leafData = _toMap(currentData['leaf']);
 
-      await database.ref('${FarmPayload.rootPath}/logs/manual_log/$logId').set({
+      await database.ref('${FarmPayload.manualLogsPath}/$logId').set({
         'time': DateTime.now().toUtc().toIso8601String(),
         'action': '${newValue ? 'ON' : 'OFF'}',
         'pump': pumpName,
@@ -435,7 +435,6 @@ class _PumpControlSection extends StatelessWidget {
           'status': leafData['status'] ?? 'Unknown',
         },
       });
-
     } catch (e) {
       debugPrint('Manual log failed: $e');
     }
@@ -444,7 +443,7 @@ class _PumpControlSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: database.ref('${FarmPayload.rootPath}/actions/pumps').onValue,
+      stream: database.ref(FarmPayload.pumpsPath).onValue,
       builder: (context, snapshot) {
         final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
         final bool isAuto = data['auto'] == true;
@@ -461,9 +460,7 @@ class _PumpControlSection extends StatelessWidget {
               subtitle: const Text('Let the system handle pumps automatically'),
               value: isAuto,
               onChanged: (bool value) {
-                database
-                    .ref('${FarmPayload.rootPath}/actions/pumps/auto')
-                    .set(value);
+                database.ref('${FarmPayload.pumpsPath}/auto').set(value);
               },
             ),
             const Divider(),
@@ -480,9 +477,7 @@ class _PumpControlSection extends StatelessWidget {
                       value: isWater,
                       onChanged: (bool value) {
                         _handleManualToggle(
-                          database.ref(
-                            '${FarmPayload.rootPath}/actions/pumps/water',
-                          ),
+                          database.ref('${FarmPayload.pumpsPath}/water'),
                           'Water',
                           value,
                         );
@@ -495,9 +490,7 @@ class _PumpControlSection extends StatelessWidget {
                       value: isFert,
                       onChanged: (bool value) {
                         _handleManualToggle(
-                          database.ref(
-                            '${FarmPayload.rootPath}/actions/pumps/fert',
-                          ),
+                          database.ref('${FarmPayload.pumpsPath}/fert'),
                           'Fertilizer',
                           value,
                         );
@@ -519,7 +512,6 @@ Map<String, dynamic> _toMap(dynamic value) {
   if (value is Map) return Map<String, dynamic>.from(value);
   return <String, dynamic>{};
 }
-
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({

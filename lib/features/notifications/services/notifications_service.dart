@@ -2,6 +2,7 @@
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:uuid/uuid.dart';
+import '../../firebase_data/models/farm_payload.dart';
 import '../models/farm_notification.dart';
 
 class NotificationsService {
@@ -9,9 +10,6 @@ class NotificationsService {
     : _database = database;
 
   final FirebaseDatabase _database;
-  static const String _notificationsPath =
-      'smart_cucumber_agriculture/notifications';
-  static const String _itemsPath = '$_notificationsPath/items';
 
   /// Add a new notification when disease is detected
   Future<void> addDiseaseNotification({
@@ -37,7 +35,9 @@ class NotificationsService {
       );
 
       // Write notification
-      await _database.ref('$_itemsPath/notif_$id').set(notification.toMap());
+      await _database
+          .ref('${FarmPayload.notificationItemsPath}/notif_$id')
+          .set(notification.toMap());
 
       // Increment unread count
       await _incrementUnreadCount();
@@ -54,24 +54,22 @@ class NotificationsService {
       print('[NOTIFICATIONS_SERVICE] Marking $notificationId as unread');
 
       final DataSnapshot event = await _database
-          .ref('$_itemsPath/notif_$notificationId/is_read')
+          .ref(
+            '${FarmPayload.notificationItemsPath}/notif_$notificationId/is_read',
+          )
           .get();
       final bool wasRead = event.value as bool? ?? false;
       if (!wasRead) {
         return;
       }
 
-      await _database.ref('$_itemsPath/notif_$notificationId').update(
-        <String, dynamic>{'is_read': false},
-      );
-
-      final snapshot = await _database
-          .ref('$_notificationsPath/unread_count')
-          .get();
-      final currentCount = (snapshot.value as int?) ?? 0;
       await _database
-          .ref('$_notificationsPath/unread_count')
-          .set(currentCount + 1);
+          .ref('${FarmPayload.notificationItemsPath}/notif_$notificationId')
+          .update(<String, dynamic>{'is_read': false});
+
+      final snapshot = await _database.ref(FarmPayload.unreadCountPath).get();
+      final currentCount = (snapshot.value as int?) ?? 0;
+      await _database.ref(FarmPayload.unreadCountPath).set(currentCount + 1);
 
       print('[NOTIFICATIONS_SERVICE] Notification marked as unread');
     } catch (e) {
@@ -82,20 +80,22 @@ class NotificationsService {
 
   Future<void> markAllAsRead() async {
     try {
-      final snapshot = await _database.ref(_itemsPath).get();
+      final snapshot = await _database
+          .ref(FarmPayload.notificationItemsPath)
+          .get();
       if (!snapshot.exists) {
-        await _database.ref('$_notificationsPath/unread_count').set(0);
+        await _database.ref(FarmPayload.unreadCountPath).set(0);
         return;
       }
 
       final Map<dynamic, dynamic> raw = snapshot.value as Map<dynamic, dynamic>;
       for (final MapEntry<dynamic, dynamic> entry in raw.entries) {
-        await _database.ref('$_itemsPath/${entry.key}').update(
-          <String, dynamic>{'is_read': true},
-        );
+        await _database
+            .ref('${FarmPayload.notificationItemsPath}/${entry.key}')
+            .update(<String, dynamic>{'is_read': true});
       }
-
-      await _database.ref('$_notificationsPath/unread_count').set(0);
+      await _database.ref(FarmPayload.unreadCountPath).set(0);
+      await _database.ref(FarmPayload.unreadCountPath).set(0);
       print('[NOTIFICATIONS_SERVICE] All notifications marked as read');
     } catch (e) {
       print('[NOTIFICATIONS_SERVICE] Error marking all as read: $e');
@@ -106,13 +106,9 @@ class NotificationsService {
   /// Increment unread count
   Future<void> _incrementUnreadCount() async {
     try {
-      final snapshot = await _database
-          .ref('$_notificationsPath/unread_count')
-          .get();
+      final snapshot = await _database.ref(FarmPayload.unreadCountPath).get();
       final currentCount = (snapshot.value as int?) ?? 0;
-      await _database
-          .ref('$_notificationsPath/unread_count')
-          .set(currentCount + 1);
+      await _database.ref(FarmPayload.unreadCountPath).set(currentCount + 1);
     } catch (e) {
       print('[NOTIFICATIONS_SERVICE] Error incrementing unread count: $e');
     }
@@ -124,25 +120,23 @@ class NotificationsService {
       print('[NOTIFICATIONS_SERVICE] Marking $notificationId as read');
 
       final DataSnapshot event = await _database
-          .ref('$_itemsPath/notif_$notificationId/is_read')
+          .ref(
+            '${FarmPayload.notificationItemsPath}/notif_$notificationId/is_read',
+          )
           .get();
       final bool wasRead = event.value as bool? ?? false;
       if (wasRead) {
         return;
       }
 
-      await _database.ref('$_itemsPath/notif_$notificationId').update(
-        <String, dynamic>{'is_read': true},
-      );
+      await _database
+          .ref('${FarmPayload.notificationItemsPath}/notif_$notificationId')
+          .update(<String, dynamic>{'is_read': true});
 
-      final snapshot = await _database
-          .ref('$_notificationsPath/unread_count')
-          .get();
+      final snapshot = await _database.ref(FarmPayload.unreadCountPath).get();
       final currentCount = (snapshot.value as int?) ?? 0;
       if (currentCount > 0) {
-        await _database
-            .ref('$_notificationsPath/unread_count')
-            .set(currentCount - 1);
+        await _database.ref(FarmPayload.unreadCountPath).set(currentCount - 1);
       }
 
       print('[NOTIFICATIONS_SERVICE] Notification marked as read');
@@ -159,21 +153,25 @@ class NotificationsService {
 
       // Check if was unread before deleting
       final snapshot = await _database
-          .ref('$_itemsPath/notif_$notificationId/is_read')
+          .ref(
+            '${FarmPayload.notificationItemsPath}/notif_$notificationId/is_read',
+          )
           .get();
       final wasRead = snapshot.value as bool? ?? true;
 
-      await _database.ref('$_itemsPath/notif_$notificationId').remove();
+      await _database
+          .ref('${FarmPayload.notificationItemsPath}/notif_$notificationId')
+          .remove();
 
       // Decrement unread count if it was unread
       if (!wasRead) {
         final countSnapshot = await _database
-            .ref('$_notificationsPath/unread_count')
+            .ref(FarmPayload.unreadCountPath)
             .get();
         final currentCount = (countSnapshot.value as int?) ?? 0;
         if (currentCount > 0) {
           await _database
-              .ref('$_notificationsPath/unread_count')
+              .ref(FarmPayload.unreadCountPath)
               .set(currentCount - 1);
         }
       }
@@ -187,7 +185,9 @@ class NotificationsService {
 
   /// Get real-time stream of all notifications
   Stream<List<FarmNotification>> getNotificationsStream() {
-    return _database.ref(_itemsPath).onValue.map((event) {
+    return _database.ref(FarmPayload.notificationItemsPath).onValue.map((
+      event,
+    ) {
       if (!event.snapshot.exists) {
         return <FarmNotification>[];
       }
@@ -210,7 +210,7 @@ class NotificationsService {
   /// Get real-time stream of unread count
   Stream<int> getUnreadCountStream() {
     return _database
-        .ref('$_notificationsPath/unread_count')
+        .ref(FarmPayload.unreadCountPath)
         .onValue
         .map((event) => (event.snapshot.value as int?) ?? 0);
   }

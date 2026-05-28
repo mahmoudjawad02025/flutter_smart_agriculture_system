@@ -20,7 +20,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _dataRef = FirebaseDatabase.instance.ref('${FarmPayload.rootPath}/data');
+    _dataRef = FarmPayload.rootRef(FirebaseDatabase.instance);
     _dataStream = _dataRef.onValue;
   }
 
@@ -131,13 +131,15 @@ class _LogsSnapshot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: database.ref('${FarmPayload.rootPath}/logs').onValue,
+      stream: database.ref(FarmPayload.logsPath).onValue,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
           return const SizedBox.shrink();
         }
 
-        final Map<String, dynamic> logsData = _toMap(snapshot.data?.snapshot.value);
+        final Map<String, dynamic> logsData = _toMap(
+          snapshot.data?.snapshot.value,
+        );
         final List<_LogItem> allLogs = [];
 
         // Parse Fertilizer Logs
@@ -209,12 +211,21 @@ class _LogsSnapshot extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Recent Activity', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Recent Activity',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     IconButton(
-                      icon: const Icon(Icons.history_outlined, size: 20, color: Colors.blue),
+                      icon: const Icon(
+                        Icons.history_outlined,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
                       onPressed: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute<void>(builder: (context) => const LogsHistoryPage()),
+                          MaterialPageRoute<void>(
+                            builder: (context) => const LogsHistoryPage(),
+                          ),
                         );
                       },
                     ),
@@ -222,18 +233,33 @@ class _LogsSnapshot extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 if (allLogs.isEmpty)
-                  const Text('No logs found.', style: TextStyle(color: Colors.grey))
+                  const Text(
+                    'No logs found.',
+                    style: TextStyle(color: Colors.grey),
+                  )
                 else
                   Column(
                     children: allLogs.take(5).map((log) {
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
                           radius: 18,
-                          child: Icon(log.icon, size: 18, color: Theme.of(context).colorScheme.primary),
+                          child: Icon(
+                            log.icon,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
-                        title: Text(log.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        title: Text(
+                          log.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         subtitle: log.isManual
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 4),
@@ -250,10 +276,16 @@ class _LogsSnapshot extends StatelessWidget {
                                   ),
                                 ),
                               )
-                            : Text(log.subtitle ?? '', style: const TextStyle(fontSize: 12)),
+                            : Text(
+                                log.subtitle ?? '',
+                                style: const TextStyle(fontSize: 12),
+                              ),
                         trailing: Text(
                           '${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                          ),
                         ),
                       );
                     }).toList(),
@@ -268,7 +300,9 @@ class _LogsSnapshot extends StatelessWidget {
 
   DateTime _parseDate(dynamic val) {
     if (val is String) {
-      try { return DateTime.parse(val); } catch(_) {}
+      try {
+        return DateTime.parse(val);
+      } catch (_) {}
     }
     return DateTime.now();
   }
@@ -287,7 +321,14 @@ class _MiniMetric extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: Colors.grey[600]),
           const SizedBox(width: 3),
-          Text(value, style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w500)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -308,7 +349,11 @@ class _LogItem {
     this.subtitle,
     required this.icon,
     this.isManual = false,
-    this.n, this.p, this.k, this.moist, this.temp,
+    this.n,
+    this.p,
+    this.k,
+    this.moist,
+    this.temp,
   });
 }
 
@@ -319,10 +364,12 @@ class _PumpsSnapshot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: database.ref('${FarmPayload.rootPath}/actions/pumps').onValue,
+      stream: database.ref(FarmPayload.pumpsPath).onValue,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
-        final Map<String, dynamic> pumps = _toMap(snapshot.data?.snapshot.value);
+        final Map<String, dynamic> pumps = _toMap(
+          snapshot.data?.snapshot.value,
+        );
         return _PumpsCard(
           water: pumps['water'] == true,
           fert: pumps['fert'] == true,
@@ -371,37 +418,58 @@ class _HeaderCard extends StatelessWidget {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(_appIconAsset, width: 28, height: 28, fit: BoxFit.cover),
+                child: Image.asset(
+                  _appIconAsset,
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.cover,
+                ),
               ),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
                   'Live Farm Dashboard',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text('Last update: $time', style: const TextStyle(color: Colors.white)),
+          Text(
+            'Last update: $time',
+            style: const TextStyle(color: Colors.white),
+          ),
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
               const Icon(Icons.health_and_safety_outlined, color: Colors.white),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('Leaf status: $leafStatus', style: const TextStyle(color: Colors.white)),
+                child: Text(
+                  'Leaf status: $leafStatus',
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
               Chip(
                 backgroundColor: Colors.white,
                 label: Text(needsFix ? 'Needs Fix' : 'Good'),
-                avatar: Icon(needsFix ? Icons.warning_amber_outlined : Icons.check_circle, size: 18),
+                avatar: Icon(
+                  needsFix ? Icons.warning_amber_outlined : Icons.check_circle,
+                  size: 18,
+                ),
               ),
             ],
           ),
           if (needsFix && reuploadAt.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
-            Text('Next upload at: $reuploadAt', style: const TextStyle(color: Colors.white)),
+            Text(
+              'Next upload at: $reuploadAt',
+              style: const TextStyle(color: Colors.white),
+            ),
           ],
         ],
       ),
@@ -410,7 +478,11 @@ class _HeaderCard extends StatelessWidget {
 }
 
 class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.title, required this.value, required this.icon});
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
   final String title;
   final String value;
   final IconData icon;
@@ -436,7 +508,11 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _PumpsCard extends StatelessWidget {
-  const _PumpsCard({required this.water, required this.fert, required this.auto});
+  const _PumpsCard({
+    required this.water,
+    required this.fert,
+    required this.auto,
+  });
   final bool water, fert, auto;
 
   @override
@@ -447,7 +523,10 @@ class _PumpsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Pump Controls', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Pump Controls',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 10,
@@ -472,14 +551,21 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(
-      avatar: Icon(active ? Icons.check_circle : Icons.pause_circle_outline, size: 18),
+      avatar: Icon(
+        active ? Icons.check_circle : Icons.pause_circle_outline,
+        size: 18,
+      ),
       label: Text('$label: ${active ? 'ON' : 'OFF'}'),
     );
   }
 }
 
 class _MessageView extends StatelessWidget {
-  const _MessageView({required this.icon, required this.title, required this.subtitle});
+  const _MessageView({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
   final IconData icon;
   final String title, subtitle;
   @override
@@ -493,7 +579,12 @@ class _MessageView extends StatelessWidget {
             if (icon == Icons.cloud_off_outlined)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(_appIconAsset, width: 52, height: 52, fit: BoxFit.cover),
+                child: Image.asset(
+                  _appIconAsset,
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.cover,
+                ),
               )
             else
               Icon(icon, size: 52),

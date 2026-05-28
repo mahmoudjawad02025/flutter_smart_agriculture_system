@@ -17,9 +17,9 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
     );
 
     try {
-      final DatabaseReference ref = _database.ref(FarmPayload.rootPath);
-
-      await ref.set(FarmPayload.sampleData());
+      final DatabaseReference ref = FarmPayload.rootRef(_database);
+      final Map<String, dynamic> data = await FarmPayload.sampleData();
+      await ref.set(data);
 
       emit(
         state.copyWith(
@@ -81,12 +81,12 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
   }
 
   Future<void> pushTestNotification() async {
-    emit(state.copyWith(status: FirebaseDataStatus.loading, clearMessage: true));
+    emit(
+      state.copyWith(status: FirebaseDataStatus.loading, clearMessage: true),
+    );
     try {
       final String id = 'test_notif_${DateTime.now().millisecondsSinceEpoch}';
-      final ref = _database.ref(
-        '${FarmPayload.rootPath}/notifications/items/$id',
-      );
+      final ref = _database.ref('${FarmPayload.notificationItemsPath}/$id');
 
       await ref.set({
         'title': 'System Test Alert',
@@ -100,9 +100,7 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
       });
 
       // Update unread count
-      final countRef = _database.ref(
-        '${FarmPayload.rootPath}/notifications/unread_count',
-      );
+      final countRef = _database.ref(FarmPayload.unreadCountPath);
       final current = await countRef.get();
       final currentVal = (current.value as int? ?? 0);
       await countRef.set(currentVal + 1);

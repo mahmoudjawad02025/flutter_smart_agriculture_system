@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
 import '../../../core/config/app_runtime_config.dart';
 import '../../../core/config/roboflow_config.dart';
@@ -144,14 +145,12 @@ class DiseaseDetectionService {
       print('[DISEASE_DETECTION]   needs_fix: ${!isHealthy}');
       print('[DISEASE_DETECTION]   reupload_at: $reuploadAt');
 
-      await _database
-          .ref('smart_cucumber_agriculture/data/leaf')
-          .update(<String, dynamic>{
-            'status': leafStatus,
-            'needs_fix': !isHealthy,
-            'reupload_at': reuploadAt,
-            'last_updated': DateTime.now().toUtc().toIso8601String(),
-          });
+      await _database.ref(FarmPayload.leafPath).update(<String, dynamic>{
+        'status': leafStatus,
+        'needs_fix': !isHealthy,
+        'reupload_at': reuploadAt,
+        'last_updated': DateTime.now().toUtc().toIso8601String(),
+      });
 
       print('[DISEASE_DETECTION] Firebase update successful!');
     } catch (e) {

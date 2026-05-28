@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/models/auth_user.dart';
+import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth;
@@ -38,9 +39,9 @@ class AuthService {
       await user.updateDisplayName(displayName);
 
       final bool isFirstUser = await _isFirstUser();
-      final bool isAdmin = isFirstUser || _isAdminEmail(email);
+      final bool isAdmin = isFirstUser;
 
-      await _database.ref('users/${user.uid}').set({
+      await _database.ref('${FarmPayload.usersPath}/${user.uid}').set({
         'uid': user.uid,
         'email': user.email,
         'displayName': displayName,
@@ -53,7 +54,7 @@ class AuthService {
         final String notifId =
             'signup_${user.uid}_${DateTime.now().millisecondsSinceEpoch}';
         await _database
-            .ref('smart_cucumber_agriculture/data/notifications/$notifId')
+            .ref('${FarmPayload.notificationItemsPath}/notif_$notifId')
             .set({
               'id': notifId,
               'title': 'New User Request',
@@ -154,7 +155,7 @@ class AuthService {
       await user.updateDisplayName(displayName);
       if (photoUrl != null) await user.updatePhotoURL(photoUrl);
 
-      await _database.ref('users/${user.uid}').update({
+      await _database.ref('${FarmPayload.usersPath}/${user.uid}').update({
         'displayName': displayName,
         'photoUrl': photoUrl,
       });
@@ -172,7 +173,9 @@ class AuthService {
       final User user = _firebaseAuth.currentUser!;
       // Firebase verifyBeforeUpdateEmail sends a link to the NEW email
       await user.verifyBeforeUpdateEmail(newEmail);
-      await _database.ref('users/${user.uid}/email').set(newEmail);
+      await _database
+          .ref('${FarmPayload.usersPath}/${user.uid}/email')
+          .set(newEmail);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }
@@ -192,10 +195,13 @@ class AuthService {
   }
 
   Future<AuthUser> _userFromFirebaseUser(User user) async {
-    final snapshot = await _database.ref('users/${user.uid}').get();
+    final snapshot = await _database
+        .ref('${FarmPayload.usersPath}/${user.uid}')
+        .get();
 
     if (!snapshot.exists) {
-      final bool isAdmin = _isAdminEmail(user.email) || await _isFirstUser();
+      final bool isAdmin = await _isFirstUser();
+      await _ensureUserRecord(user: user, isAdmin: isAdmin);
       return AuthUser(
         uid: user.uid,
         email: user.email ?? '',
@@ -218,15 +224,25 @@ class AuthService {
   }
 
   Future<void> updateUserStatus(String uid, String newStatus) async {
-    await _database.ref('users/$uid/status').set(newStatus);
+    await _database.ref('${FarmPayload.usersPath}/$uid/status').set(newStatus);
   }
 
-  bool _isAdminEmail(String? email) {
-    return email?.toLowerCase() == 'admin@agriculture.local';
+  Future<void> _ensureUserRecord({
+    required User user,
+    required bool isAdmin,
+  }) async {
+    await _database.ref('${FarmPayload.usersPath}/${user.uid}').set({
+      'uid': user.uid,
+      'email': user.email,
+      'displayName': user.displayName,
+      'role': isAdmin ? 'admin' : 'user',
+      'status': isAdmin ? 'approved' : 'pending',
+      'createdAt': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<bool> _isFirstUser() async {
-    final snapshot = await _database.ref('users').get();
+    final snapshot = await _database.ref(FarmPayload.usersPath).get();
     if (!snapshot.exists) return true;
     final value = snapshot.value;
     if (value is Map) return value.isEmpty;
@@ -234,7 +250,7 @@ class AuthService {
   }
 
   Future<List<AuthUser>> getAllUsers() async {
-    final snapshot = await _database.ref('users').get();
+    final snapshot = await _database.ref(FarmPayload.usersPath).get();
     if (!snapshot.exists) return [];
 
     final Map<dynamic, dynamic> usersMap = snapshot.value as Map;
