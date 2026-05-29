@@ -3,6 +3,7 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:uuid/uuid.dart';
 import '../../firebase_data/models/farm_payload.dart';
+import '../../../core/services/firebase_streams.dart';
 import '../models/farm_notification.dart';
 
 class NotificationsService {
@@ -23,7 +24,7 @@ class NotificationsService {
       final FarmNotification notification = FarmNotification(
         id: id,
         title: 'Disease Detected',
-        message: '$diseaseName detected on your cucumber leaf',
+        message: '$diseaseName detected on your tomato leaf',
         diseaseName: diseaseName,
         nextUpload: nextUpload,
         isRead: false,
@@ -186,9 +187,8 @@ class NotificationsService {
 
   /// Get real-time stream of all notifications
   Stream<List<FarmNotification>> getNotificationsStream() {
-    return _database.ref(FarmPayload.notificationItemsPath).onValue.map((
-      event,
-    ) {
+    return FirebaseStreams.notificationItemsStream.map(
+      (event) {
       if (!event.snapshot.exists) {
         return <FarmNotification>[];
       }
@@ -210,9 +210,6 @@ class NotificationsService {
 
   /// Get real-time stream of unread count
   Stream<int> getUnreadCountStream() {
-    return _database
-        .ref(FarmPayload.unreadCountPath)
-        .onValue
-        .map((event) => (event.snapshot.value as int?) ?? 0);
+    return FirebaseStreams.unreadCountStream.map((event) => (event.snapshot.value as int?) ?? 0);
   }
 }

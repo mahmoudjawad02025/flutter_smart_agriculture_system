@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/tomato_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/firebase_options.dart';
@@ -105,7 +106,14 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Smart Cucumber Agriculture',
+        title: 'نظام الزراعة الذكية',
+        locale: const Locale('ar'),
+        localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const <Locale>[Locale('ar')],
         theme: ThemeData(
           colorScheme: colorScheme,
           useMaterial3: true,

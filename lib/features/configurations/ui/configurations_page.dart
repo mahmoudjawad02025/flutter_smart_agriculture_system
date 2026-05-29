@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/config/app_runtime_config.dart';
 import '../../firebase_data/models/farm_payload.dart';
+import '../../../core/services/firebase_streams.dart';
 
 class ConfigurationsPage extends StatefulWidget {
   const ConfigurationsPage({super.key});
@@ -13,7 +14,7 @@ class ConfigurationsPage extends StatefulWidget {
 }
 
 class _ConfigurationsPageState extends State<ConfigurationsPage> {
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
+    final FirebaseDatabase _database = FirebaseDatabase.instance;
 
   void _showError(String message) {
     ScaffoldMessenger.of(context)
@@ -25,6 +26,33 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _displayLeafStatus(String status) {
+    final String normalized = status.toLowerCase().replaceAll(
+      RegExp(r'[_\s-]'),
+      '',
+    );
+    switch (normalized) {
+      case 'healthy':
+        return 'سليم';
+      case 'unknown':
+        return 'غير معروف';
+      case 'bacterialspot':
+        return 'بقعة بكتيرية';
+      case 'lateblight':
+        return 'تعفن متأخر';
+      case 'earlyblight':
+        return 'تعفن مبكر';
+      case 'yellowleafcurl':
+        return 'لف الورقة الأصفر';
+      case 'septoria':
+        return 'سِبتوريا';
+      case 'powderymildew':
+        return 'سوس العفن';
+      default:
+        return status;
+    }
   }
 
   Future<int?> _showBoundedNumberDialog({
@@ -57,14 +85,14 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: const Text('إلغاء'),
             ),
             FilledButton(
               onPressed: () {
                 final int? value = int.tryParse(controller.text.trim());
                 Navigator.pop(dialogContext, value);
               },
-              child: const Text('Save'),
+              child: const Text('حفظ'),
             ),
           ],
         );
@@ -121,7 +149,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: const Text('إلغاء'),
             ),
             FilledButton(
               onPressed: () {
@@ -133,7 +161,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
                 }
                 Navigator.pop(dialogContext, <int>[minParsed, maxParsed]);
               },
-              child: const Text('Save'),
+              child: const Text('حفظ'),
             ),
           ],
         );
@@ -235,7 +263,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.moistUpperBound,
         )) {
       _showError(
-        'Please keep temperature/humidity/moisture inside valid bounds and min <= max.',
+        'يرجى الحفاظ على درجة الحرارة والرطوبة والرطوبة داخل الحدود الصالحة وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
       );
       return;
     }
@@ -257,7 +285,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
         moistMinValue: moistMinValue,
         moistMaxValue: moistMaxValue,
       );
-      _showSuccess('Auto water config saved and synced.');
+      _showSuccess('تم حفظ إعدادات الري التلقائي ومزامنتها.');
     } catch (error) {
       _showError('Firebase sync failed: $error');
     }
@@ -297,7 +325,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.nutrientLowerBound,
           AppRuntimeConfig.nutrientUpperBound,
         )) {
-      _showError('Please keep N/P/K inside valid bounds and min <= max.');
+      _showError(
+        'يرجى الحفاظ على N/P/K داخل الحدود الصالحة وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+      );
       return;
     }
 
@@ -320,7 +350,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
         kMaxValue: kMaxValue,
         leafGoalValue: leafGoalValue,
       );
-      _showSuccess('Auto fertilizer config saved and synced.');
+      _showSuccess('تم حفظ إعدادات التسميد التلقائي ومزامنتها.');
     } catch (error) {
       _showError('Firebase sync failed: $error');
     }
@@ -328,9 +358,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editTempRange() async {
     final List<int>? range = await _showBoundedRangeDialog(
-      title: 'Auto water temperature range',
-      minLabel: 'Temperature min (C)',
-      maxLabel: 'Temperature max (C)',
+      title: 'نطاق درجة حرارة الري التلقائي',
+      minLabel: 'الحد الأدنى لدرجة الحرارة (°م)',
+      maxLabel: 'الحد الأقصى لدرجة الحرارة (°م)',
       minValue: AppRuntimeConfig.tempMin.value,
       maxValue: AppRuntimeConfig.tempMax.value,
       minAllowed: AppRuntimeConfig.tempLowerBound,
@@ -345,7 +375,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.tempUpperBound,
         )) {
       if (range != null) {
-        _showError('Please keep temperature within bounds and min <= max.');
+        _showError(
+          'يرجى الحفاظ على درجة الحرارة داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+        );
       }
       return;
     }
@@ -355,9 +387,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editHumidityRange() async {
     final List<int>? range = await _showBoundedRangeDialog(
-      title: 'Auto water humidity range',
-      minLabel: 'Humidity min (%)',
-      maxLabel: 'Humidity max (%)',
+      title: 'نطاق رطوبة الري التلقائي',
+      minLabel: 'الحد الأدنى للرطوبة (%)',
+      maxLabel: 'الحد الأقصى للرطوبة (%)',
       minValue: AppRuntimeConfig.humMin.value,
       maxValue: AppRuntimeConfig.humMax.value,
       minAllowed: AppRuntimeConfig.humLowerBound,
@@ -372,7 +404,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.humUpperBound,
         )) {
       if (range != null) {
-        _showError('Please keep humidity within bounds and min <= max.');
+        _showError(
+          'يرجى الحفاظ على الرطوبة داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+        );
       }
       return;
     }
@@ -382,9 +416,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editMoistureRange() async {
     final List<int>? range = await _showBoundedRangeDialog(
-      title: 'Auto water moisture range',
-      minLabel: 'Moisture min (%)',
-      maxLabel: 'Moisture max (%)',
+      title: 'نطاق رطوبة التربة للري التلقائي',
+      minLabel: 'الحد الأدنى لرطوبة التربة (%)',
+      maxLabel: 'الحد الأقصى لرطوبة التربة (%)',
       minValue: AppRuntimeConfig.moistMin.value,
       maxValue: AppRuntimeConfig.moistMax.value,
       minAllowed: AppRuntimeConfig.moistLowerBound,
@@ -399,7 +433,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.moistUpperBound,
         )) {
       if (range != null) {
-        _showError('Please keep moisture within bounds and min <= max.');
+        _showError(
+          'يرجى الحفاظ على الرطوبة داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+        );
       }
       return;
     }
@@ -409,9 +445,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editNitrogenRange() async {
     final List<int>? range = await _showBoundedRangeDialog(
-      title: 'Auto fertilizer nitrogen range',
-      minLabel: 'Nitrogen min',
-      maxLabel: 'Nitrogen max',
+      title: 'نطاق النيتروجين في التسميد التلقائي',
+      minLabel: 'الحد الأدنى للنيتروجين',
+      maxLabel: 'الحد الأقصى للنيتروجين',
       minValue: AppRuntimeConfig.nMin.value,
       maxValue: AppRuntimeConfig.nMax.value,
       minAllowed: AppRuntimeConfig.nutrientLowerBound,
@@ -426,7 +462,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.nutrientUpperBound,
         )) {
       if (range != null) {
-        _showError('Please keep nitrogen within bounds and min <= max.');
+        _showError(
+          'يرجى الحفاظ على النيتروجين داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+        );
       }
       return;
     }
@@ -436,9 +474,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editPhosphorusRange() async {
     final List<int>? range = await _showBoundedRangeDialog(
-      title: 'Auto fertilizer phosphorus range',
-      minLabel: 'Phosphorus min',
-      maxLabel: 'Phosphorus max',
+      title: 'نطاق الفوسفور في التسميد التلقائي',
+      minLabel: 'الحد الأدنى للفوسفور',
+      maxLabel: 'الحد الأقصى للفوسفور',
       minValue: AppRuntimeConfig.pMin.value,
       maxValue: AppRuntimeConfig.pMax.value,
       minAllowed: AppRuntimeConfig.nutrientLowerBound,
@@ -453,7 +491,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.nutrientUpperBound,
         )) {
       if (range != null) {
-        _showError('Please keep phosphorus within bounds and min <= max.');
+        _showError(
+          'يرجى الحفاظ على الفوسفور داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+        );
       }
       return;
     }
@@ -463,9 +503,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editPotassiumRange() async {
     final List<int>? range = await _showBoundedRangeDialog(
-      title: 'Auto fertilizer potassium range',
-      minLabel: 'Potassium min',
-      maxLabel: 'Potassium max',
+      title: 'نطاق البوتاسيوم في التسميد التلقائي',
+      minLabel: 'الحد الأدنى للبوتاسيوم',
+      maxLabel: 'الحد الأقصى للبوتاسيوم',
       minValue: AppRuntimeConfig.kMin.value,
       maxValue: AppRuntimeConfig.kMax.value,
       minAllowed: AppRuntimeConfig.nutrientLowerBound,
@@ -480,7 +520,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           AppRuntimeConfig.nutrientUpperBound,
         )) {
       if (range != null) {
-        _showError('Please keep potassium within bounds and min <= max.');
+        _showError(
+          'يرجى الحفاظ على البوتاسيوم داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
+        );
       }
       return;
     }
@@ -490,12 +532,12 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
 
   Future<void> _editReuploadDelay() async {
     final int? value = await _showBoundedNumberDialog(
-      title: 'Edit reupload delay',
-      label: 'Days',
+      title: 'تعديل مدة إعادة الرفع',
+      label: 'أيام',
       initialValue: AppRuntimeConfig.diseaseReuploadDelayDays.value,
       minAllowed: 1,
       maxAllowed: 365,
-      hintText: 'Enter 1 to 365 days',
+      hintText: 'أدخل 1 إلى 365 يوم',
     );
 
     if (value == null) {
@@ -517,43 +559,74 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     try {
       await _database.ref(FarmPayload.leafPath).update({'status': status});
       if (mounted) {
-        _showSuccess('Leaf status updated to: $status');
+        _showSuccess('تم تحديث حالة الورقة إلى: ${_displayLeafStatus(status)}');
       }
     } catch (e) {
       if (mounted) {
-        _showError('Failed to update status: $e');
+        _showError('فشل تحديث الحالة: $e');
       }
     }
   }
 
   Future<String?> _showStatusDialog() async {
-    final TextEditingController controller = TextEditingController();
+    String selectedStatus = 'Healthy';
 
     return showDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Edit Leaf Status'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Status',
-              hintText: 'e.g., Healthy, LateBlight, EarlyBlight',
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final String value = controller.text.trim();
-                Navigator.pop(dialogContext, value.isNotEmpty ? value : null);
-              },
-              child: const Text('Save'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('تعديل حالة الورقة'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  RadioListTile<String>(
+                    title: const Text('سليم'),
+                    value: 'Healthy',
+                    groupValue: selectedStatus,
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() => selectedStatus = value);
+                      }
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('تعفن متأخر'),
+                    value: 'LateBlight',
+                    groupValue: selectedStatus,
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() => selectedStatus = value);
+                      }
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('بقعة بكتيرية'),
+                    value: 'BacterialSpot',
+                    groupValue: selectedStatus,
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        setState(() => selectedStatus = value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('إلغاء'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, selectedStatus);
+                  },
+                  child: const Text('حفظ'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -566,7 +639,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
         padding: const EdgeInsets.all(16),
         children: <Widget>[
           StreamBuilder<DatabaseEvent>(
-            stream: _database.ref(FarmPayload.leafPath).onValue,
+            stream: FirebaseStreams.leafStream,
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
                 final String leafStatus = 'Healthy';
@@ -583,10 +656,11 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
               final Map<String, dynamic> leaf = _toMap(
                 snapshot.data!.snapshot.value,
               );
-              final String leafStatus = '${leaf['status'] ?? 'Healthy'}';
+              final String rawLeafStatus = '${leaf['status'] ?? 'Healthy'}';
+              final String leafStatus = _displayLeafStatus(rawLeafStatus);
               final bool hasDisease =
-                  leafStatus.toLowerCase() != 'healthy' &&
-                  leafStatus.isNotEmpty;
+                  rawLeafStatus.toLowerCase() != 'healthy' &&
+                  rawLeafStatus.isNotEmpty;
               return _HeaderCard(
                 diseaseReuploadDays:
                     AppRuntimeConfig.diseaseReuploadDelayDays.value,
@@ -600,25 +674,25 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           ),
           const SizedBox(height: 16),
           _SectionCard(
-            title: 'Auto Water Config',
-            subtitle: 'Temperature, humidity, and moisture limits for watering',
+            title: 'إعدادات الري التلقائي',
+            subtitle: 'حدود درجة الحرارة والرطوبة ورطوبة التربة للري',
             children: <Widget>[
               _EditableTile(
-                label: 'Temperature',
+                label: 'درجة الحرارة',
                 value:
-                    '${AppRuntimeConfig.tempMin.value} C - ${AppRuntimeConfig.tempMax.value} C',
+                    '${AppRuntimeConfig.tempMin.value} °م - ${AppRuntimeConfig.tempMax.value} °م',
                 onTap: _editTempRange,
                 trailingIcon: Icons.add,
               ),
               _EditableTile(
-                label: 'Humidity',
+                label: 'الرطوبة',
                 value:
                     '${AppRuntimeConfig.humMin.value}% - ${AppRuntimeConfig.humMax.value}%',
                 onTap: _editHumidityRange,
                 trailingIcon: Icons.add,
               ),
               _EditableTile(
-                label: 'Moisture',
+                label: 'رطوبة التربة',
                 value:
                     '${AppRuntimeConfig.moistMin.value}% - ${AppRuntimeConfig.moistMax.value}%',
                 onTap: _editMoistureRange,
@@ -628,58 +702,60 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           ),
           const SizedBox(height: 12),
           _SectionCard(
-            title: 'Auto Fertilizer Config',
-            subtitle: 'N, P, K limits with leaf goal shown read-only',
+            title: 'إعدادات التسميد التلقائي',
+            subtitle: 'حدود N و P و K مع هدف الورقة للعرض فقط',
             children: <Widget>[
               _EditableTile(
-                label: 'Nitrogen (N)',
+                label: 'النيتروجين (N)',
                 value:
                     '${AppRuntimeConfig.nMin.value} - ${AppRuntimeConfig.nMax.value}',
                 onTap: _editNitrogenRange,
                 trailingIcon: Icons.add,
               ),
               _EditableTile(
-                label: 'Phosphorus (P)',
+                label: 'الفوسفور (P)',
                 value:
                     '${AppRuntimeConfig.pMin.value} - ${AppRuntimeConfig.pMax.value}',
                 onTap: _editPhosphorusRange,
                 trailingIcon: Icons.add,
               ),
               _EditableTile(
-                label: 'Potassium (K)',
+                label: 'البوتاسيوم (K)',
                 value:
                     '${AppRuntimeConfig.kMin.value} - ${AppRuntimeConfig.kMax.value}',
                 onTap: _editPotassiumRange,
                 trailingIcon: Icons.add,
               ),
               const _SimpleTile(
-                label: 'Leaf goal',
-                value: 'Healthy (read-only)',
+                label: 'هدف الورقة',
+                value: 'سليم (للقراءة فقط)',
                 icon: Icons.lock_outline,
               ),
             ],
           ),
           const SizedBox(height: 12),
           StreamBuilder<DatabaseEvent>(
-            stream: _database.ref(FarmPayload.leafPath).onValue,
+            stream: FirebaseStreams.leafStream,
             builder: (context, snapshot) {
               final Map<String, dynamic> leaf = _toMap(
                 snapshot.data?.snapshot.value,
               );
-              final String currentStatus = '${leaf['status'] ?? 'Healthy'}';
+              final String currentStatus = _displayLeafStatus(
+                '${leaf['status'] ?? 'Healthy'}',
+              );
               return _SectionCard(
-                title: 'Detection Rules',
-                subtitle: 'User-facing controls only',
+                title: 'قواعد الكشف',
+                subtitle: 'عناصر تحكم واجهة المستخدم فقط',
                 children: <Widget>[
                   _EditableTile(
-                    label: 'Leaf Status',
+                    label: 'حالة الورقة',
                     value: currentStatus,
                     onTap: _editLeafStatus,
                   ),
                   _EditableTile(
-                    label: 'Disease reupload delay',
+                    label: 'مدة إعادة رفع المرض',
                     value:
-                        '${AppRuntimeConfig.diseaseReuploadDelayDays.value} days',
+                        '${AppRuntimeConfig.diseaseReuploadDelayDays.value} أيام',
                     onTap: _editReuploadDelay,
                   ),
                 ],
@@ -690,13 +766,17 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
           _PumpControlSection(database: _database),
           const SizedBox(height: 12),
           _SectionCard(
-            title: 'What You Need',
-            subtitle: 'Minimal checklist for a clean farm workflow',
+            title: 'ما تحتاجه',
+            subtitle: 'قائمة مرجعية أساسية لسير عمل مزرعة نظيفة',
             children: const <Widget>[
-              _ChecklistTile(text: 'Firebase Realtime Database connected'),
-              _ChecklistTile(text: 'Cucumber leaf images clear enough for AI'),
-              _ChecklistTile(text: 'Correct min and max crop thresholds'),
-              _ChecklistTile(text: 'Notifications enabled for disease alerts'),
+              _ChecklistTile(
+                text: 'قاعدة بيانات Firebase في الوقت الفعلي متصلة',
+              ),
+              _ChecklistTile(
+                text: 'صور أوراق البندورة واضحة بما يكفي للذكاء الاصطناعي',
+              ),
+              _ChecklistTile(text: 'حدود المحصول الدنيا والقصوى صحيحة'),
+              _ChecklistTile(text: 'تم تفعيل الإشعارات لتنبيهات الأمراض'),
             ],
           ),
         ],
@@ -705,9 +785,16 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
   }
 }
 
-class _PumpControlSection extends StatelessWidget {
+class _PumpControlSection extends StatefulWidget {
   const _PumpControlSection({required this.database});
   final FirebaseDatabase database;
+
+  @override
+  State<_PumpControlSection> createState() => _PumpControlSectionState();
+}
+
+class _PumpControlSectionState extends State<_PumpControlSection> {
+  late final Stream<DatabaseEvent> _pumpsStream = FirebaseStreams.pumpsStream;
 
   Future<void> _handleManualToggle(
     DatabaseReference pumpRef,
@@ -717,7 +804,7 @@ class _PumpControlSection extends StatelessWidget {
     try {
       // 1. Capture "Before" state snapshot
       final DataSnapshot dataSnapshot = await FarmPayload.rootRef(
-        database,
+        widget.database,
       ).get();
       final Map<dynamic, dynamic> currentData =
           dataSnapshot.value as Map? ?? {};
@@ -734,7 +821,7 @@ class _PumpControlSection extends StatelessWidget {
       final Map<String, dynamic> sensorsData = _toMap(currentData['sensors']);
       final Map<String, dynamic> leafData = _toMap(currentData['leaf']);
 
-      await database.ref('${FarmPayload.manualLogsPath}/$logId').set({
+      await widget.database.ref('${FarmPayload.manualLogsPath}/$logId').set({
         'time': DateTime.now().toUtc().toIso8601String(),
         'action': '${newValue ? 'ON' : 'OFF'}',
         'pump': pumpName,
@@ -756,7 +843,7 @@ class _PumpControlSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: database.ref(FarmPayload.pumpsPath).onValue,
+      stream: _pumpsStream,
       builder: (context, snapshot) {
         final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
         final bool isAuto = data['auto'] == true;
@@ -765,16 +852,16 @@ class _PumpControlSection extends StatelessWidget {
         final bool isFert2 = data['fert2'] == true;
 
         return _SectionCard(
-          title: 'Pump & Mode Control',
-          subtitle: 'Override auto systems or toggle manual state',
+          title: 'التحكم بالمضخة والوضع',
+          subtitle: 'تجاوز الأنظمة التلقائية أو تبديل الحالة اليدوية',
           children: <Widget>[
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Auto Control Mode'),
-              subtitle: const Text('Let the system handle pumps automatically'),
+              title: const Text('وضع التحكم التلقائي'),
+              subtitle: const Text('دع النظام يتحكم بالمضخات تلقائيًا'),
               value: isAuto,
               onChanged: (bool value) {
-                database.ref('${FarmPayload.pumpsPath}/auto').set(value);
+                widget.database.ref('${FarmPayload.pumpsPath}/auto').set(value);
               },
             ),
             const Divider(),
@@ -786,12 +873,12 @@ class _PumpControlSection extends StatelessWidget {
                   children: [
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Water Pump'),
-                      subtitle: const Text('Manual override for irrigation'),
+                      title: const Text('مضخة المياه'),
+                      subtitle: const Text('تجاوز يدوي للري'),
                       value: isWater,
                       onChanged: (bool value) {
                         _handleManualToggle(
-                          database.ref('${FarmPayload.pumpsPath}/water'),
+                          widget.database.ref('${FarmPayload.pumpsPath}/water'),
                           'Water',
                           value,
                         );
@@ -799,12 +886,12 @@ class _PumpControlSection extends StatelessWidget {
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Fertilizer Pump 1'),
-                      subtitle: const Text('Manual override for nutrients (1)'),
+                      title: const Text('مضخة السماد 1'),
+                      subtitle: const Text('تجاوز يدوي للمغذيات (1)'),
                       value: isFert1,
                       onChanged: (bool value) {
                         _handleManualToggle(
-                          database.ref('${FarmPayload.pumpsPath}/fert1'),
+                          widget.database.ref('${FarmPayload.pumpsPath}/fert1'),
                           'Fertilizer 1',
                           value,
                         );
@@ -812,12 +899,12 @@ class _PumpControlSection extends StatelessWidget {
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Fertilizer Pump 2'),
-                      subtitle: const Text('Manual override for nutrients (2)'),
+                      title: const Text('مضخة السماد 2'),
+                      subtitle: const Text('تجاوز يدوي للمغذيات (2)'),
                       value: isFert2,
                       onChanged: (bool value) {
                         _handleManualToggle(
-                          database.ref('${FarmPayload.pumpsPath}/fert2'),
+                          widget.database.ref('${FarmPayload.pumpsPath}/fert2'),
                           'Fertilizer 2',
                           value,
                         );
@@ -871,7 +958,7 @@ class _HeaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const Text(
-            'Farm Configurations',
+            'تكوينات المزرعة',
             style: TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -880,7 +967,7 @@ class _HeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tune the detection and crop targets from one screen.',
+            'اضبط إعدادات الكشف وحدود المحصول من شاشة واحدة.',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 14),
@@ -888,9 +975,9 @@ class _HeaderCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: <Widget>[
-              _InfoChip(label: 'Reupload', value: '$diseaseReuploadDays days'),
+              _InfoChip(label: 'إعادة رفع', value: '$diseaseReuploadDays أيام'),
               _InfoChip(
-                label: hasDisease ? 'Disease' : 'Status',
+                label: hasDisease ? 'المرض' : 'الحالة',
                 value: leafStatus,
               ),
             ],

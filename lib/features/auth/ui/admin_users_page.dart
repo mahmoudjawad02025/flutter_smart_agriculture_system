@@ -29,7 +29,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Management'),
+        title: const Text('إدارة المستخدمين'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refresh),
         ],
@@ -58,7 +58,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                     style: TextStyle(color: _getStatusColor(user.status)),
                   ),
                 ),
-                title: Text(user.displayName ?? 'Unknown'),
+                title: Text(user.displayName ?? 'غير معروف'),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -99,11 +99,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             return [
                               const PopupMenuItem(
                                 value: 'approved',
-                                child: Text('Approve'),
+                                child: Text('قبول'),
                               ),
                               const PopupMenuItem(
                                 value: 'rejected',
-                                child: Text('Reject'),
+                                child: Text('رفض'),
                               ),
                             ];
                           } else {
@@ -111,7 +111,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             return [
                               PopupMenuItem(
                                 value: isBlocked ? 'approved' : 'blocked',
-                                child: Text(isBlocked ? 'Unblock' : 'Block'),
+                                child: Text(isBlocked ? 'إلغاء الحظر' : 'حظر'),
                               ),
                             ];
                           }

@@ -12,7 +12,7 @@ class NotificationsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: const Text('الإشعارات'),
         actions: <Widget>[
           BlocBuilder<NotificationsCubit, NotificationsState>(
             builder: (context, state) {
@@ -24,14 +24,13 @@ class NotificationsPage extends StatelessWidget {
                     backgroundColor: Colors.white24,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed:
-                      state.unreadCount == 0
-                          ? null
-                          : () {
-                            context.read<NotificationsCubit>().markAllAsRead();
-                          },
+                  onPressed: state.unreadCount == 0
+                      ? null
+                      : () {
+                          context.read<NotificationsCubit>().markAllAsRead();
+                        },
                   icon: const Icon(Icons.done_all_outlined, size: 18),
-                  label: const Text('Clear All'),
+                  label: const Text('مسح الكل'),
                 ),
               );
             },
@@ -53,7 +52,7 @@ class NotificationsPage extends StatelessWidget {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'No notifications yet',
+                    'لا توجد إشعارات حتى الآن',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey,
@@ -62,7 +61,7 @@ class NotificationsPage extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'We will alert you here if we find issues.',
+                    'سننبهك هنا إذا وجدنا مشاكل.',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -104,15 +103,16 @@ class _NotificationCard extends StatelessWidget {
         builder: (context, isStrongAlert, _) {
           final bool isTest = notification.diseaseName == 'Manual_Test';
           final bool isSignup = notification.diseaseName == 'User_Signup';
-          
-          final Color accentColor =
-              notification.isRead
-                  ? Colors.grey[500]!
-                  : isSignup
-                    ? Colors.deepPurple
-                    : isTest 
-                      ? Colors.blue 
-                      : (isStrongAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32));
+
+          final Color accentColor = notification.isRead
+              ? Colors.grey[500]!
+              : isSignup
+              ? Colors.deepPurple
+              : isTest
+              ? Colors.blue
+              : (isStrongAlert
+                    ? const Color(0xFFD32F2F)
+                    : const Color(0xFF2E7D32));
 
           return Container(
             decoration: BoxDecoration(
@@ -132,10 +132,10 @@ class _NotificationCard extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.all(10),
                       child: Icon(
-                        isSignup 
-                          ? Icons.person_add_rounded
-                          : isTest 
-                            ? Icons.cloud_done_rounded 
+                        isSignup
+                            ? Icons.person_add_rounded
+                            : isTest
+                            ? Icons.cloud_done_rounded
                             : Icons.warning_amber_rounded,
                         color: accentColor,
                         size: 22,
@@ -155,10 +155,9 @@ class _NotificationCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
-                                    color:
-                                        notification.isRead
-                                            ? Colors.grey[700]
-                                            : Colors.black87,
+                                    color: notification.isRead
+                                        ? Colors.grey[700]
+                                        : Colors.black87,
                                   ),
                                 ),
                               ),
@@ -202,7 +201,7 @@ class _NotificationCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 13, color: Colors.black87),
                     children: [
                       const TextSpan(
-                        text: 'Detected: ',
+                        text: 'كشف: ',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
@@ -248,7 +247,7 @@ class _NotificationCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Next re-upload: ${notification.nextUpload == "" ? "N/A" : _formatTimestamp(DateTime.tryParse(notification.nextUpload) ?? DateTime.now())}',
+                              'إعادة رفع لاحقة: ${notification.nextUpload == "" ? "N/A" : _formatTimestamp(DateTime.tryParse(notification.nextUpload) ?? DateTime.now())}',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.blue,
@@ -261,10 +260,9 @@ class _NotificationCard extends StatelessWidget {
                     Row(
                       children: [
                         _ActionButton(
-                          icon:
-                              notification.isRead
-                                  ? Icons.mark_email_unread_outlined
-                                  : Icons.mark_email_read_outlined,
+                          icon: notification.isRead
+                              ? Icons.mark_email_unread_outlined
+                              : Icons.mark_email_read_outlined,
                           onPressed: () {
                             if (notification.isRead) {
                               context.read<NotificationsCubit>().markAsUnread(
@@ -276,15 +274,17 @@ class _NotificationCard extends StatelessWidget {
                               );
                             }
                           },
-                          color: notification.isRead ? Colors.blue : Colors.orange,
+                          color: notification.isRead
+                              ? Colors.blue
+                              : Colors.orange,
                         ),
                         const SizedBox(width: 4),
                         _ActionButton(
                           icon: Icons.delete_outline,
                           onPressed: () {
-                            context.read<NotificationsCubit>().deleteNotification(
-                              notification.id,
-                            );
+                            context
+                                .read<NotificationsCubit>()
+                                .deleteNotification(notification.id);
                           },
                           color: Colors.red[700]!,
                         ),
@@ -376,7 +376,7 @@ class _SummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const Text(
-                  'Quick Update',
+                  'تحديث سريع',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -386,8 +386,8 @@ class _SummaryCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   unreadCount == 0
-                      ? 'No new alerts. Your crops are being monitored.'
-                      : 'You have $unreadCount unread issues that need attention.',
+                      ? 'لا توجد تنبيهات جديدة. تتم مراقبة محاصيلك.'
+                      : 'لديك $unreadCount تنبيهات غير مقروءة تحتاج إلى انتباهك.',
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ],
@@ -412,7 +412,7 @@ class NotificationBadge extends StatelessWidget {
           offset: const Offset(-2, 2),
           child: IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            tooltip: 'View Notifications',
+            tooltip: 'عرض الإشعارات',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(

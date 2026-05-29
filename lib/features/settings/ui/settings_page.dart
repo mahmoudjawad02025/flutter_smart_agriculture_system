@@ -30,23 +30,27 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Change Email'),
+        title: const Text('تغيير البريد الإلكتروني'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'A verification link will be sent to the new email address.',
+              'سيتم إرسال رابط التحقق إلى البريد الإلكتروني الجديد.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(labelText: 'New Email'),
+              decoration: const InputDecoration(
+                labelText: 'البريد الإلكتروني الجديد',
+              ),
               keyboardType: TextInputType.emailAddress,
             ),
             TextField(
               controller: passController,
-              decoration: const InputDecoration(labelText: 'Current Password'),
+              decoration: const InputDecoration(
+                labelText: 'كلمة المرور الحالية',
+              ),
               obscureText: true,
             ),
           ],
@@ -54,7 +58,7 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('إلغاء'),
           ),
           TextButton(
             onPressed: () {
@@ -62,11 +66,11 @@ class _SettingsPageState extends State<SettingsPage> {
               final pass = passController.text;
 
               if (email.isEmpty || !email.contains('@')) {
-                _showSnackBar('Please enter a valid email address.');
+                _showSnackBar('يرجى إدخال بريد إلكتروني صالح.');
                 return;
               }
               if (pass.isEmpty) {
-                _showSnackBar('Please enter your current password to verify.');
+                _showSnackBar('يرجى إدخال كلمة المرور الحالية للتحقق.');
                 return;
               }
 
@@ -76,7 +80,7 @@ class _SettingsPageState extends State<SettingsPage> {
               );
               Navigator.pop(context);
             },
-            child: const Text('Verify & Change'),
+            child: const Text('تأكيد وتغيير'),
           ),
         ],
       ),
@@ -90,20 +94,22 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
+        title: const Text('تغيير كلمة المرور'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: currentPassController,
-              decoration: const InputDecoration(labelText: 'Current Password'),
+              decoration: const InputDecoration(
+                labelText: 'كلمة المرور الحالية',
+              ),
               obscureText: true,
             ),
             TextField(
               controller: newPassController,
               decoration: const InputDecoration(
-                labelText: 'New Password',
-                hintText: 'Minimum 6 characters',
+                labelText: 'كلمة المرور الجديدة',
+                hintText: 'الحد الأدنى 6 أحرف',
               ),
               obscureText: true,
             ),
@@ -112,7 +118,7 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('إلغاء'),
           ),
           TextButton(
             onPressed: () {
@@ -120,11 +126,13 @@ class _SettingsPageState extends State<SettingsPage> {
               final newPass = newPassController.text;
 
               if (current.isEmpty) {
-                _showSnackBar('Current password is required.');
+                _showSnackBar('كلمة المرور الحالية مطلوبة.');
                 return;
               }
               if (newPass.length < 6) {
-                _showSnackBar('New password must be at least 6 characters.');
+                _showSnackBar(
+                  'يجب أن تكون كلمة المرور الجديدة ستة أحرف على الأقل.',
+                );
                 return;
               }
 
@@ -134,7 +142,7 @@ class _SettingsPageState extends State<SettingsPage> {
               );
               Navigator.pop(context);
             },
-            child: const Text('Update'),
+            child: const Text('تحديث'),
           ),
         ],
       ),
@@ -170,7 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    'Settings',
+                    'الإعدادات',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -179,7 +187,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Customize how the app behaves and alerts you.',
+                    'قم بتخصيص سلوك التطبيق وإشعاراته.',
                     style: TextStyle(color: Colors.white70),
                   ),
                 ],
@@ -187,23 +195,23 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 16),
             _SettingsCard(
-              title: 'Security',
+              title: 'الأمان',
               children: <Widget>[
                 ListTile(
                   leading: const Icon(Icons.email_outlined),
-                  title: const Text('Change Email'),
+                  title: const Text('تغيير البريد الإلكتروني'),
                   onTap: _showChangeEmailDialog,
                 ),
                 ListTile(
                   leading: const Icon(Icons.lock_outline),
-                  title: const Text('Change Password'),
+                  title: const Text('تغيير كلمة المرور'),
                   onTap: _showChangePasswordDialog,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             _SettingsCard(
-              title: 'Notifications',
+              title: 'الإشعارات',
               children: <Widget>[
                 ValueListenableBuilder<bool>(
                   valueListenable: AppRuntimeConfig.pushNotifications,
@@ -211,10 +219,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     return SwitchListTile(
                       value: value,
                       onChanged: AppRuntimeConfig.setPushNotifications,
-                      title: const Text('Push notifications'),
-                      subtitle: const Text(
-                        'Show alerts when disease is detected',
-                      ),
+                      title: const Text('إشعارات الدفع'),
+                      subtitle: const Text('عرض التنبيهات عند اكتشاف المرض'),
                     );
                   },
                 ),
@@ -224,10 +230,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     return SwitchListTile(
                       value: value,
                       onChanged: AppRuntimeConfig.setStrongAlertMode,
-                      title: const Text('Strong alert mode'),
-                      subtitle: const Text(
-                        'Use stronger colors for disease warnings',
-                      ),
+                      title: const Text('وضع التنبيه القوي'),
+                      subtitle: const Text('استخدم ألوان أقوى لتحذيرات المرض'),
                     );
                   },
                 ),
@@ -235,7 +239,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 12),
             _SettingsCard(
-              title: 'Analysis',
+              title: 'التحليل',
               children: <Widget>[
                 ValueListenableBuilder<bool>(
                   valueListenable: AppRuntimeConfig.autoAnalyze,
@@ -243,8 +247,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     return SwitchListTile(
                       value: value,
                       onChanged: AppRuntimeConfig.setAutoAnalyze,
-                      title: const Text('Auto analyze after upload'),
-                      subtitle: const Text('Run disease detection immediately'),
+                      title: const Text('التحليل التلقائي بعد الرفع'),
+                      subtitle: const Text('تشغيل كشف المرض فورًا'),
                     );
                   },
                 ),
@@ -254,9 +258,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     return SwitchListTile(
                       value: value,
                       onChanged: AppRuntimeConfig.setShowAdvancedDetails,
-                      title: const Text('Show analysis details'),
+                      title: const Text('عرض تفاصيل التحليل'),
                       subtitle: const Text(
-                        'Display AI confidence and raw labels',
+                        'عرض الثقة والملصقات الخام من الذكاء الاصطناعي',
                       ),
                     );
                   },
@@ -267,22 +271,24 @@ class _SettingsPageState extends State<SettingsPage> {
             // Developer cloud tools removed from settings
             const SizedBox(height: 12),
             _SettingsCard(
-              title: 'About',
+              title: 'حول',
               children: const <Widget>[
                 ListTile(
                   leading: Icon(Icons.info_outline),
-                  title: Text('App version'),
+                  title: Text('إصدار التطبيق'),
                   subtitle: Text('1.0.0'),
                 ),
                 ListTile(
                   leading: Icon(Icons.science_outlined),
-                  title: Text('Model source'),
-                  subtitle: Text('Cloud AI Cucumber Disease Detection'),
+                  title: Text('مصدر النموذج'),
+                  subtitle: Text(
+                    'كشف أمراض البندورة باستخدام الذكاء الاصطناعي السحابي',
+                  ),
                 ),
                 ListTile(
                   leading: Icon(Icons.storage_outlined),
-                  title: Text('Storage'),
-                  subtitle: Text('Firebase Realtime Database'),
+                  title: Text('التخزين'),
+                  subtitle: Text('قاعدة بيانات Firebase في الوقت الفعلي'),
                 ),
               ],
             ),

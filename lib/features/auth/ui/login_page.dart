@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _handleLogin() {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showSnackBar('Please fill in all fields', isError: true);
+      _showSnackBar('يرجى ملء جميع الحقول', isError: true);
       return;
     }
 
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Smart Cucumber Agriculture',
+                  'نظام زراعة البندورة الذكي',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -107,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Auto Irrigation and Fertilization and AI Disease Detection',
+                  'الري التلقائي، التسميد، وكشف الأمراض بالذكاء الاصطناعي',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 48),
                 const Text(
-                  'Welcome Back',
+                  'مرحباً بعودتك',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -128,8 +128,8 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
+                    labelText: 'البريد الإلكتروني',
+                    hintText: 'أدخل بريدك الإلكتروني',
                     prefixIcon: const Icon(Icons.email),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -146,8 +146,8 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
+                    labelText: 'كلمة المرور',
+                    hintText: 'أدخل كلمة المرور',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -193,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           )
                         : const Text(
-                            'Login',
+                            'تسجيل الدخول',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -207,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     const Text(
-                      "Don't have an account? ",
+                      'ليس لديك حساب؟ ',
                       style: TextStyle(color: Colors.grey),
                     ),
                     TextButton(
@@ -222,7 +222,7 @@ class _LoginPageState extends State<LoginPage> {
                               );
                             },
                       child: const Text(
-                        'Sign Up',
+                        'التسجيل',
                         style: TextStyle(
                           color: Color(0xFF2E7D32),
                           fontWeight: FontWeight.w600,

@@ -26,10 +26,10 @@ class _AppShellPageState extends State<AppShellPage> {
   int _currentIndex = 0;
 
   static const List<String> _titles = <String>[
-    'Farm Dashboard',
-    'AI Disease Detection',
-    'Farm Configurations',
-    'Settings',
+    'لوحة تحكم المزرعة',
+    'كشف الأمراض بالذكاء الاصطناعي',
+    'تكوين المزرعة',
+    'الإعدادات',
   ];
 
   late final List<Widget> _pages = <Widget>[
@@ -101,7 +101,7 @@ class _AppShellPageState extends State<AppShellPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Smart Argitechture System',
+                      'نظام الزراعة الذكية',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],
@@ -109,22 +109,22 @@ class _AppShellPageState extends State<AppShellPage> {
               ),
               _DrawerNavTile(
                 icon: Icons.dashboard_outlined,
-                label: 'Dashboard',
+                label: 'لوحة التحكم',
                 onTap: () => _goToPage(0),
               ),
               _DrawerNavTile(
                 icon: Icons.auto_awesome_outlined,
-                label: 'AI Detection',
+                label: 'كشف الأمراض',
                 onTap: () => _goToPage(1),
               ),
               _DrawerNavTile(
                 icon: Icons.tune_outlined,
-                label: 'Configurations',
+                label: 'تكوين',
                 onTap: () => _goToPage(2),
               ),
               _DrawerNavTile(
                 icon: Icons.settings_outlined,
-                label: 'Settings',
+                label: 'الإعدادات',
                 onTap: () => _goToPage(3),
               ),
               BlocBuilder<NotificationsCubit, NotificationsState>(
@@ -132,7 +132,7 @@ class _AppShellPageState extends State<AppShellPage> {
                   final int unread = state.unreadCount;
                   return _DrawerNavTile(
                     icon: Icons.notifications_outlined,
-                    label: 'Notifications',
+                    label: 'الإشعارات',
                     trailing: unread > 0
                         ? Container(
                             padding: const EdgeInsets.symmetric(
@@ -167,7 +167,7 @@ class _AppShellPageState extends State<AppShellPage> {
                       state.user.role == 'admin') {
                     return _DrawerNavTile(
                       icon: Icons.people_outline,
-                      label: 'User Management',
+                      label: 'إدارة المستخدمين',
                       onTap: () {
                         Navigator.of(context).pop();
                         Navigator.push(
@@ -184,7 +184,7 @@ class _AppShellPageState extends State<AppShellPage> {
               ),
               _DrawerNavTile(
                 icon: Icons.logout,
-                label: 'Log Out',
+                label: 'تسجيل الخروج',
                 onTap: () => context.read<AuthCubit>().logout(),
               ),
             ],
@@ -199,22 +199,22 @@ class _AppShellPageState extends State<AppShellPage> {
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+            label: 'لوحة التحكم',
           ),
           NavigationDestination(
             icon: Icon(Icons.auto_awesome_outlined),
             selectedIcon: Icon(Icons.auto_awesome),
-            label: 'AI',
+            label: 'الذكاء الاصطناعي',
           ),
           NavigationDestination(
             icon: Icon(Icons.tune_outlined),
             selectedIcon: Icon(Icons.tune),
-            label: 'Config',
+            label: 'تكوين',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
+            label: 'الإعدادات',
           ),
         ],
       ),

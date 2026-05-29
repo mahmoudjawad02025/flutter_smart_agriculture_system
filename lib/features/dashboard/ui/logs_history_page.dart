@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 import '../../firebase_data/models/farm_payload.dart';
+import '../../../core/services/firebase_streams.dart';
 
 class LogsHistoryPage extends StatelessWidget {
   const LogsHistoryPage({super.key});
@@ -10,7 +11,7 @@ class LogsHistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('System Logs History'),
+        title: const Text('سجل نظام الأحداث'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -19,14 +20,14 @@ class LogsHistoryPage extends StatelessWidget {
         ],
       ),
       body: StreamBuilder<DatabaseEvent>(
-        stream: FirebaseDatabase.instance.ref(FarmPayload.logsPath).onValue,
+        stream: FirebaseStreams.logsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
-            return const Center(child: Text('No logs found.'));
+            return const Center(child: Text('لا توجد سجلات.'));
           }
 
           final logs = _parseAllLogs(snapshot.data!.snapshot.value);
@@ -74,7 +75,7 @@ class LogsHistoryPage extends StatelessWidget {
                       Text(log.subtitle ?? ''),
                     const SizedBox(height: 4),
                     Text(
-                      'Status: ${log.leafStatus ?? 'Unknown'}',
+                      'الحالة: ${log.leafStatus ?? 'غير معروف'}',
                       style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
                   ],
@@ -102,8 +103,8 @@ class LogsHistoryPage extends StatelessWidget {
       allLogs.add(
         _DetailedLogItem(
           time: _parseDate(data['time']),
-          title: 'Fertilizer: ${data['type'] ?? 'Apply'}',
-          subtitle: 'Value: ${data['val'] ?? '-'}',
+          title: 'التسميد: ${data['type'] ?? 'تطبيق'}',
+          subtitle: 'القيمة: ${data['val'] ?? '-'}',
           icon: Icons.science_outlined,
         ),
       );
@@ -115,8 +116,8 @@ class LogsHistoryPage extends StatelessWidget {
       allLogs.add(
         _DetailedLogItem(
           time: _parseDate(data['time']),
-          title: 'Watering Session',
-          subtitle: 'Irrigation pump activated',
+          title: 'جلسة ري',
+          subtitle: 'تم تشغيل مضخة الري',
           icon: Icons.water_drop_outlined,
         ),
       );
@@ -128,8 +129,8 @@ class LogsHistoryPage extends StatelessWidget {
       allLogs.add(
         _DetailedLogItem(
           time: _parseDate(data['time']),
-          title: 'AI Scan Result',
-          subtitle: 'Detection: ${data['res'] ?? 'Healthy'}',
+          title: 'نتيجة فحص الذكاء الاصطناعي',
+          subtitle: 'الكشف: ${data['res'] ?? 'سليم'}',
           icon: Icons.auto_awesome_outlined,
           leafStatus: data['res']?.toString(),
         ),
@@ -143,7 +144,7 @@ class LogsHistoryPage extends StatelessWidget {
       allLogs.add(
         _DetailedLogItem(
           time: _parseDate(data['time']),
-          title: 'Manual ${data['pump']}: ${data['action']}',
+          title: 'يدوي ${data['pump']}: ${data['action']}',
           icon: Icons.touch_app_outlined,
           isManual: true,
           leafStatus: state['status']?.toString(),

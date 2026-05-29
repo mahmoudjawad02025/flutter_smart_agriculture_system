@@ -42,17 +42,17 @@ class _SignUpPageState extends State<SignUpPage> {
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
-      _showSnackBar('Please fill in all fields');
+      _showSnackBar('يرجى ملء جميع الحقول');
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showSnackBar('Passwords do not match');
+      _showSnackBar('كلمات المرور غير متطابقة');
       return;
     }
 
     if (_passwordController.text.length < 6) {
-      _showSnackBar('Password must be at least 6 characters');
+      _showSnackBar('يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل');
       return;
     }
 
@@ -108,7 +108,7 @@ class _SignUpPageState extends State<SignUpPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 const Text(
-                  'Create Account',
+                  'إنشاء حساب',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -117,15 +117,15 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Join Smart Cucumber Agriculture System',
+                  'انضم إلى نظام زراعة البندورة الذكي',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
                 TextField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    hintText: 'Enter your full name',
+                    labelText: 'الاسم الكامل',
+                    hintText: 'أدخل اسمك الكامل',
                     prefixIcon: const Icon(Icons.person),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -141,8 +141,8 @@ class _SignUpPageState extends State<SignUpPage> {
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
+                    labelText: 'البريد الإلكتروني',
+                    hintText: 'أدخل بريدك الإلكتروني',
                     prefixIcon: const Icon(Icons.email),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -159,8 +159,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter password (min 6 chars)',
+                    labelText: 'كلمة المرور',
+                    hintText: 'أدخل كلمة مرور (6 أحرف على الأقل)',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -187,8 +187,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    hintText: 'Re-enter password',
+                    labelText: 'تأكيد كلمة المرور',
+                    hintText: 'أعد إدخال كلمة المرور',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -237,7 +237,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           )
                         : const Text(
-                            'Create Account',
+                            'إنشاء حساب',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -251,7 +251,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     const Text(
-                      'Already have an account? ',
+                      'هل لديك حساب بالفعل؟ ',
                       style: TextStyle(color: Colors.grey),
                     ),
                     TextButton(
@@ -259,7 +259,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           ? null
                           : () => Navigator.pop(context),
                       child: const Text(
-                        'Login',
+                        'تسجيل الدخول',
                         style: TextStyle(
                           color: Color(0xFF2E7D32),
                           fontWeight: FontWeight.w600,
