@@ -31,7 +31,8 @@ class AuthUnauthenticated extends AuthState {
 
 class AuthError extends AuthState {
   final String message;
-  final AuthUser? authenticatedUser; // Optional: if the error occurred while user was logged in
+  final AuthUser?
+  authenticatedUser; // Optional: if the error occurred while user was logged in
 
   const AuthError(this.message, {this.authenticatedUser});
 

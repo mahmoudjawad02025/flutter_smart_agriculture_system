@@ -10,6 +10,10 @@ class AppRuntimeConfig {
   static const String _confirmedDiseaseLabelsKey = 'confirmed_disease_labels';
   static const String _moistMinKey = 'goal_moist_min';
   static const String _moistMaxKey = 'goal_moist_max';
+  static const String _tempMinKey = 'goal_temp_min';
+  static const String _tempMaxKey = 'goal_temp_max';
+  static const String _humMinKey = 'goal_hum_min';
+  static const String _humMaxKey = 'goal_hum_max';
   static const String _nMinKey = 'goal_n_min';
   static const String _nMaxKey = 'goal_n_max';
   static const String _pMinKey = 'goal_p_min';
@@ -35,6 +39,10 @@ class AppRuntimeConfig {
 
   static final ValueNotifier<int> moistMin = ValueNotifier<int>(30);
   static final ValueNotifier<int> moistMax = ValueNotifier<int>(65);
+  static final ValueNotifier<int> tempMin = ValueNotifier<int>(18);
+  static final ValueNotifier<int> tempMax = ValueNotifier<int>(35);
+  static final ValueNotifier<int> humMin = ValueNotifier<int>(40);
+  static final ValueNotifier<int> humMax = ValueNotifier<int>(90);
   static final ValueNotifier<int> nMin = ValueNotifier<int>(100);
   static final ValueNotifier<int> nMax = ValueNotifier<int>(180);
   static final ValueNotifier<int> pMin = ValueNotifier<int>(40);
@@ -45,13 +53,26 @@ class AppRuntimeConfig {
     'Healthy',
   );
 
+  static const int tempLowerBound = -20;
+  static const int tempUpperBound = 60;
+  static const int humLowerBound = 0;
+  static const int humUpperBound = 100;
+  static const int moistLowerBound = 0;
+  static const int moistUpperBound = 100;
+  static const int nutrientLowerBound = 0;
+  static const int nutrientUpperBound = 1000;
+
   static final ValueNotifier<bool> autoAnalyze = ValueNotifier<bool>(true);
   static final ValueNotifier<bool> showAdvancedDetails = ValueNotifier<bool>(
     true,
   );
-  static final ValueNotifier<bool> pushNotifications = ValueNotifier<bool>(true);
+  static final ValueNotifier<bool> pushNotifications = ValueNotifier<bool>(
+    true,
+  );
   static final ValueNotifier<bool> strongAlertMode = ValueNotifier<bool>(false);
-  static final ValueNotifier<bool> showDeveloperTools = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> showDeveloperTools = ValueNotifier<bool>(
+    false,
+  );
 
   static const bool enableDebugLogging = true;
 
@@ -66,6 +87,10 @@ class AppRuntimeConfig {
         preferences.getStringList(_confirmedDiseaseLabelsKey) ?? <String>[];
     moistMin.value = preferences.getInt(_moistMinKey) ?? 30;
     moistMax.value = preferences.getInt(_moistMaxKey) ?? 65;
+    tempMin.value = preferences.getInt(_tempMinKey) ?? 18;
+    tempMax.value = preferences.getInt(_tempMaxKey) ?? 35;
+    humMin.value = preferences.getInt(_humMinKey) ?? 40;
+    humMax.value = preferences.getInt(_humMaxKey) ?? 90;
     nMin.value = preferences.getInt(_nMinKey) ?? 100;
     nMax.value = preferences.getInt(_nMaxKey) ?? 180;
     pMin.value = preferences.getInt(_pMinKey) ?? 40;
@@ -77,7 +102,8 @@ class AppRuntimeConfig {
     autoAnalyze.value = preferences.getBool(_autoAnalyzeKey) ?? true;
     showAdvancedDetails.value =
         preferences.getBool(_showAdvancedDetailsKey) ?? true;
-    pushNotifications.value = preferences.getBool(_pushNotificationsKey) ?? true;
+    pushNotifications.value =
+        preferences.getBool(_pushNotificationsKey) ?? true;
     strongAlertMode.value = preferences.getBool(_strongAlertModeKey) ?? false;
     showDeveloperTools.value =
         preferences.getBool(_showDeveloperToolsKey) ?? false;
@@ -155,6 +181,57 @@ class AppRuntimeConfig {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setInt(_moistMinKey, moistMinValue);
     await preferences.setInt(_moistMaxKey, moistMaxValue);
+    await preferences.setInt(_nMinKey, nMinValue);
+    await preferences.setInt(_nMaxKey, nMaxValue);
+    await preferences.setInt(_pMinKey, pMinValue);
+    await preferences.setInt(_pMaxKey, pMaxValue);
+    await preferences.setInt(_kMinKey, kMinValue);
+    await preferences.setInt(_kMaxKey, kMaxValue);
+    await preferences.setString(_leafGoalKey, leafGoalValue);
+  }
+
+  static Future<void> setAutoWaterTargets({
+    required int tempMinValue,
+    required int tempMaxValue,
+    required int humMinValue,
+    required int humMaxValue,
+    required int moistMinValue,
+    required int moistMaxValue,
+  }) async {
+    tempMin.value = tempMinValue;
+    tempMax.value = tempMaxValue;
+    humMin.value = humMinValue;
+    humMax.value = humMaxValue;
+    moistMin.value = moistMinValue;
+    moistMax.value = moistMaxValue;
+
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setInt(_tempMinKey, tempMinValue);
+    await preferences.setInt(_tempMaxKey, tempMaxValue);
+    await preferences.setInt(_humMinKey, humMinValue);
+    await preferences.setInt(_humMaxKey, humMaxValue);
+    await preferences.setInt(_moistMinKey, moistMinValue);
+    await preferences.setInt(_moistMaxKey, moistMaxValue);
+  }
+
+  static Future<void> setAutoFertilizerTargets({
+    required int nMinValue,
+    required int nMaxValue,
+    required int pMinValue,
+    required int pMaxValue,
+    required int kMinValue,
+    required int kMaxValue,
+    required String leafGoalValue,
+  }) async {
+    nMin.value = nMinValue;
+    nMax.value = nMaxValue;
+    pMin.value = pMinValue;
+    pMax.value = pMaxValue;
+    kMin.value = kMinValue;
+    kMax.value = kMaxValue;
+    leafGoal.value = leafGoalValue;
+
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setInt(_nMinKey, nMinValue);
     await preferences.setInt(_nMaxKey, nMaxValue);
     await preferences.setInt(_pMinKey, pMinValue);

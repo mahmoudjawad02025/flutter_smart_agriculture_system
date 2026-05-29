@@ -22,7 +22,8 @@ class AuthWrapper extends StatelessWidget {
         return BlocBuilder<AuthCubit, AuthState>(
           builder: (BuildContext context, AuthState state) {
             // 1. Authenticated or Error with user preserved -> Stay in App
-            if (state is AuthAuthenticated || (state is AuthError && state.authenticatedUser != null)) {
+            if (state is AuthAuthenticated ||
+                (state is AuthError && state.authenticatedUser != null)) {
               return const AppShellPage();
             }
 
@@ -64,9 +65,7 @@ class _LoadingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Color(0xFF2E7D32),
-              ),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
             ),
           ],
         ),

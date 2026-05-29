@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   void _showSnackBar(String message, {bool isError = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
+        content: Text(message),
         backgroundColor: isError ? Colors.red : Colors.green,
         duration: const Duration(seconds: 4),
       ),
@@ -110,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Auto Irrigation and Fertilization and AI Disease Detection',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14, 
+                    fontSize: 14,
                     color: Color(0xFF388E3C),
                     fontWeight: FontWeight.w600,
                   ),

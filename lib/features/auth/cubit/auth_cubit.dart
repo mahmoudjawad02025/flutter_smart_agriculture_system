@@ -97,16 +97,18 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     final user = _currentUser;
     try {
-      // Don't emit loading here to avoid screen flickering, 
+      // Don't emit loading here to avoid screen flickering,
       // or at least capture the user
       await _authService.changeEmail(
         currentPassword: currentPassword,
         newEmail: newEmail,
       );
-      emit(AuthError(
-        'Verification email sent to $newEmail. Please confirm to finish change.',
-        authenticatedUser: user,
-      ));
+      emit(
+        AuthError(
+          'Verification email sent to $newEmail. Please confirm to finish change.',
+          authenticatedUser: user,
+        ),
+      );
     } catch (e) {
       emit(AuthError(_cleanError(e), authenticatedUser: user));
     }
@@ -122,7 +124,9 @@ class AuthCubit extends Cubit<AuthState> {
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
-      emit(AuthError('Password updated successfully.', authenticatedUser: user));
+      emit(
+        AuthError('Password updated successfully.', authenticatedUser: user),
+      );
     } catch (e) {
       emit(AuthError(_cleanError(e), authenticatedUser: user));
     }

@@ -5,12 +5,12 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/tomato_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
 import '../../../core/config/app_runtime_config.dart';
 import '../../../core/config/roboflow_config.dart';
 import '../models/detection_result.dart';
-import 'tomato_classifier_service.dart';
 
 class DiseaseDetectionService {
   DiseaseDetectionService({
@@ -18,18 +18,18 @@ class DiseaseDetectionService {
     required Dio dio,
     required FirebaseDatabase database,
     required RoboflowConfig config,
-    required TomatoClassifierService tomatoClassifierService,
+    required CucumberClassifierService cucumberClassifierService,
   }) : _imagePicker = imagePicker,
        _dio = dio,
        _database = database,
        _config = config,
-       _tomatoClassifierService = tomatoClassifierService;
+       _cucumberClassifierService = cucumberClassifierService;
 
   final ImagePicker _imagePicker;
   final Dio _dio;
   final FirebaseDatabase _database;
   final RoboflowConfig _config;
-  final TomatoClassifierService _tomatoClassifierService;
+  final CucumberClassifierService _cucumberClassifierService;
 
   Future<String?> pickAndSaveLeafImage() async {
     final XFile? selectedImage = await _imagePicker.pickImage(
@@ -69,7 +69,7 @@ class DiseaseDetectionService {
     }
 
     // Local on-device TFLite inference
-    return await _tomatoClassifierService.analyzeSavedImage(imagePath);
+    return await _cucumberClassifierService.analyzeSavedImage(imagePath);
 
     /*
     // Keep Roboflow API code commented out as requested

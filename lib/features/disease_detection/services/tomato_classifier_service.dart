@@ -6,8 +6,8 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 
 import '../models/detection_result.dart';
 
-class TomatoClassifierService {
-  TomatoClassifierService() {
+class CucumberClassifierService {
+  CucumberClassifierService() {
     _initModel();
   }
 

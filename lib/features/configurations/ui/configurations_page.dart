@@ -27,36 +27,12 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _syncGoalsToRealtimeDatabase({
-    required int moistMin,
-    required int moistMax,
-    required int nMin,
-    required int nMax,
-    required int pMin,
-    required int pMax,
-    required int kMin,
-    required int kMax,
-    required String leafGoal,
-  }) async {
-    final DatabaseReference goalsRef = _database.ref(FarmPayload.goalsPath);
-
-    await goalsRef.update(<String, dynamic>{
-      'moist_min': moistMin,
-      'moist_max': moistMax,
-      'n_min': nMin,
-      'n_max': nMax,
-      'p_min': pMin,
-      'p_max': pMax,
-      'k_min': kMin,
-      'k_max': kMax,
-      'leaf_goal': leafGoal,
-    });
-  }
-
-  Future<int?> _showPositiveNumberDialog({
+  Future<int?> _showBoundedNumberDialog({
     required String title,
     required String label,
     required int initialValue,
+    required int minAllowed,
+    required int maxAllowed,
     String? hintText,
   }) async {
     final TextEditingController controller = TextEditingController(
@@ -72,7 +48,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly,
+              FilteringTextInputFormatter.allow(
+                RegExp(minAllowed < 0 ? r'^-?\d*$' : r'^\d*$'),
+              ),
             ],
             decoration: InputDecoration(labelText: label, hintText: hintText),
           ),
@@ -94,12 +72,14 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     );
   }
 
-  Future<List<int>?> _showPositiveRangeDialog({
+  Future<List<int>?> _showBoundedRangeDialog({
     required String title,
     required String minLabel,
     required String maxLabel,
     required int minValue,
     required int maxValue,
+    required int minAllowed,
+    required int maxAllowed,
   }) async {
     final TextEditingController minController = TextEditingController(
       text: minValue.toString(),
@@ -120,7 +100,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
                 controller: minController,
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
+                  FilteringTextInputFormatter.allow(
+                    RegExp(minAllowed < 0 ? r'^-?\d*$' : r'^\d*$'),
+                  ),
                 ],
                 decoration: InputDecoration(labelText: minLabel),
               ),
@@ -128,7 +110,9 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
                 controller: maxController,
                 keyboardType: TextInputType.number,
                 inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
+                  FilteringTextInputFormatter.allow(
+                    RegExp(minAllowed < 0 ? r'^-?\d*$' : r'^\d*$'),
+                  ),
                 ],
                 decoration: InputDecoration(labelText: maxLabel),
               ),
@@ -157,9 +141,129 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     );
   }
 
-  Future<void> _saveCropTargets({
+  int? _parseAndValidateBoundedValue(
+    String raw,
+    int minAllowed,
+    int maxAllowed,
+  ) {
+    final int? value = int.tryParse(raw.trim());
+    if (value == null) return null;
+    if (value < minAllowed || value > maxAllowed) return null;
+    return value;
+  }
+
+  bool _validateRangeValues(
+    int minValue,
+    int maxValue,
+    int minAllowed,
+    int maxAllowed,
+  ) {
+    if (minValue < minAllowed || maxValue > maxAllowed) return false;
+    if (minValue > maxValue) return false;
+    return true;
+  }
+
+  Future<void> _syncAutoWaterToRealtimeDatabase({
+    required int tempMin,
+    required int tempMax,
+    required int humMin,
+    required int humMax,
+    required int moistMin,
+    required int moistMax,
+  }) async {
+    await _database.ref(FarmPayload.autoWaterPath).set(<String, dynamic>{
+      'temp_min': tempMin,
+      'temp_max': tempMax,
+      'hum_min': humMin,
+      'hum_max': humMax,
+      'moist_min': moistMin,
+      'moist_max': moistMax,
+    });
+  }
+
+  Future<void> _syncAutoFertilizerToRealtimeDatabase({
+    required int nMin,
+    required int nMax,
+    required int pMin,
+    required int pMax,
+    required int kMin,
+    required int kMax,
+    required String leafGoal,
+  }) async {
+    await _database.ref(FarmPayload.autoFertilizerPath).set(<String, dynamic>{
+      'n_min': nMin,
+      'n_max': nMax,
+      'p_min': pMin,
+      'p_max': pMax,
+      'k_min': kMin,
+      'k_max': kMax,
+      'leaf_goal': leafGoal,
+    });
+  }
+
+  Future<void> _saveAutoWaterConfig({
+    int? tempMin,
+    int? tempMax,
+    int? humMin,
+    int? humMax,
     int? moistMin,
     int? moistMax,
+  }) async {
+    final int tempMinValue = tempMin ?? AppRuntimeConfig.tempMin.value;
+    final int tempMaxValue = tempMax ?? AppRuntimeConfig.tempMax.value;
+    final int humMinValue = humMin ?? AppRuntimeConfig.humMin.value;
+    final int humMaxValue = humMax ?? AppRuntimeConfig.humMax.value;
+    final int moistMinValue = moistMin ?? AppRuntimeConfig.moistMin.value;
+    final int moistMaxValue = moistMax ?? AppRuntimeConfig.moistMax.value;
+
+    if (!_validateRangeValues(
+          tempMinValue,
+          tempMaxValue,
+          AppRuntimeConfig.tempLowerBound,
+          AppRuntimeConfig.tempUpperBound,
+        ) ||
+        !_validateRangeValues(
+          humMinValue,
+          humMaxValue,
+          AppRuntimeConfig.humLowerBound,
+          AppRuntimeConfig.humUpperBound,
+        ) ||
+        !_validateRangeValues(
+          moistMinValue,
+          moistMaxValue,
+          AppRuntimeConfig.moistLowerBound,
+          AppRuntimeConfig.moistUpperBound,
+        )) {
+      _showError(
+        'Please keep temperature/humidity/moisture inside valid bounds and min <= max.',
+      );
+      return;
+    }
+
+    try {
+      await _syncAutoWaterToRealtimeDatabase(
+        tempMin: tempMinValue,
+        tempMax: tempMaxValue,
+        humMin: humMinValue,
+        humMax: humMaxValue,
+        moistMin: moistMinValue,
+        moistMax: moistMaxValue,
+      );
+      await AppRuntimeConfig.setAutoWaterTargets(
+        tempMinValue: tempMinValue,
+        tempMaxValue: tempMaxValue,
+        humMinValue: humMinValue,
+        humMaxValue: humMaxValue,
+        moistMinValue: moistMinValue,
+        moistMaxValue: moistMaxValue,
+      );
+      _showSuccess('Auto water config saved and synced.');
+    } catch (error) {
+      _showError('Firebase sync failed: $error');
+    }
+  }
+
+  Future<void> _saveAutoFertilizerConfig({
     int? nMin,
     int? nMax,
     int? pMin,
@@ -167,8 +271,6 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     int? kMin,
     int? kMax,
   }) async {
-    final int moistMinValue = moistMin ?? AppRuntimeConfig.moistMin.value;
-    final int moistMaxValue = moistMax ?? AppRuntimeConfig.moistMax.value;
     final int nMinValue = nMin ?? AppRuntimeConfig.nMin.value;
     final int nMaxValue = nMax ?? AppRuntimeConfig.nMax.value;
     final int pMinValue = pMin ?? AppRuntimeConfig.pMin.value;
@@ -177,10 +279,30 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     final int kMaxValue = kMax ?? AppRuntimeConfig.kMax.value;
     const String leafGoalValue = 'Healthy';
 
+    if (!_validateRangeValues(
+          nMinValue,
+          nMaxValue,
+          AppRuntimeConfig.nutrientLowerBound,
+          AppRuntimeConfig.nutrientUpperBound,
+        ) ||
+        !_validateRangeValues(
+          pMinValue,
+          pMaxValue,
+          AppRuntimeConfig.nutrientLowerBound,
+          AppRuntimeConfig.nutrientUpperBound,
+        ) ||
+        !_validateRangeValues(
+          kMinValue,
+          kMaxValue,
+          AppRuntimeConfig.nutrientLowerBound,
+          AppRuntimeConfig.nutrientUpperBound,
+        )) {
+      _showError('Please keep N/P/K inside valid bounds and min <= max.');
+      return;
+    }
+
     try {
-      await _syncGoalsToRealtimeDatabase(
-        moistMin: moistMinValue,
-        moistMax: moistMaxValue,
+      await _syncAutoFertilizerToRealtimeDatabase(
         nMin: nMinValue,
         nMax: nMaxValue,
         pMin: pMinValue,
@@ -189,10 +311,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
         kMax: kMaxValue,
         leafGoal: leafGoalValue,
       );
-
-      await AppRuntimeConfig.setCropTargets(
-        moistMinValue: moistMinValue,
-        moistMaxValue: moistMaxValue,
+      await AppRuntimeConfig.setAutoFertilizerTargets(
         nMinValue: nMinValue,
         nMaxValue: nMaxValue,
         pMinValue: pMinValue,
@@ -201,29 +320,185 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
         kMaxValue: kMaxValue,
         leafGoalValue: leafGoalValue,
       );
-
-      _showSuccess('Saved and synced to Realtime Database.');
+      _showSuccess('Auto fertilizer config saved and synced.');
     } catch (error) {
       _showError('Firebase sync failed: $error');
     }
+  }
 
-    if (mounted) {
-      setState(() {});
+  Future<void> _editTempRange() async {
+    final List<int>? range = await _showBoundedRangeDialog(
+      title: 'Auto water temperature range',
+      minLabel: 'Temperature min (C)',
+      maxLabel: 'Temperature max (C)',
+      minValue: AppRuntimeConfig.tempMin.value,
+      maxValue: AppRuntimeConfig.tempMax.value,
+      minAllowed: AppRuntimeConfig.tempLowerBound,
+      maxAllowed: AppRuntimeConfig.tempUpperBound,
+    );
+
+    if (range == null ||
+        !_validateRangeValues(
+          range[0],
+          range[1],
+          AppRuntimeConfig.tempLowerBound,
+          AppRuntimeConfig.tempUpperBound,
+        )) {
+      if (range != null) {
+        _showError('Please keep temperature within bounds and min <= max.');
+      }
+      return;
     }
+
+    await _saveAutoWaterConfig(tempMin: range[0], tempMax: range[1]);
+  }
+
+  Future<void> _editHumidityRange() async {
+    final List<int>? range = await _showBoundedRangeDialog(
+      title: 'Auto water humidity range',
+      minLabel: 'Humidity min (%)',
+      maxLabel: 'Humidity max (%)',
+      minValue: AppRuntimeConfig.humMin.value,
+      maxValue: AppRuntimeConfig.humMax.value,
+      minAllowed: AppRuntimeConfig.humLowerBound,
+      maxAllowed: AppRuntimeConfig.humUpperBound,
+    );
+
+    if (range == null ||
+        !_validateRangeValues(
+          range[0],
+          range[1],
+          AppRuntimeConfig.humLowerBound,
+          AppRuntimeConfig.humUpperBound,
+        )) {
+      if (range != null) {
+        _showError('Please keep humidity within bounds and min <= max.');
+      }
+      return;
+    }
+
+    await _saveAutoWaterConfig(humMin: range[0], humMax: range[1]);
+  }
+
+  Future<void> _editMoistureRange() async {
+    final List<int>? range = await _showBoundedRangeDialog(
+      title: 'Auto water moisture range',
+      minLabel: 'Moisture min (%)',
+      maxLabel: 'Moisture max (%)',
+      minValue: AppRuntimeConfig.moistMin.value,
+      maxValue: AppRuntimeConfig.moistMax.value,
+      minAllowed: AppRuntimeConfig.moistLowerBound,
+      maxAllowed: AppRuntimeConfig.moistUpperBound,
+    );
+
+    if (range == null ||
+        !_validateRangeValues(
+          range[0],
+          range[1],
+          AppRuntimeConfig.moistLowerBound,
+          AppRuntimeConfig.moistUpperBound,
+        )) {
+      if (range != null) {
+        _showError('Please keep moisture within bounds and min <= max.');
+      }
+      return;
+    }
+
+    await _saveAutoWaterConfig(moistMin: range[0], moistMax: range[1]);
+  }
+
+  Future<void> _editNitrogenRange() async {
+    final List<int>? range = await _showBoundedRangeDialog(
+      title: 'Auto fertilizer nitrogen range',
+      minLabel: 'Nitrogen min',
+      maxLabel: 'Nitrogen max',
+      minValue: AppRuntimeConfig.nMin.value,
+      maxValue: AppRuntimeConfig.nMax.value,
+      minAllowed: AppRuntimeConfig.nutrientLowerBound,
+      maxAllowed: AppRuntimeConfig.nutrientUpperBound,
+    );
+
+    if (range == null ||
+        !_validateRangeValues(
+          range[0],
+          range[1],
+          AppRuntimeConfig.nutrientLowerBound,
+          AppRuntimeConfig.nutrientUpperBound,
+        )) {
+      if (range != null) {
+        _showError('Please keep nitrogen within bounds and min <= max.');
+      }
+      return;
+    }
+
+    await _saveAutoFertilizerConfig(nMin: range[0], nMax: range[1]);
+  }
+
+  Future<void> _editPhosphorusRange() async {
+    final List<int>? range = await _showBoundedRangeDialog(
+      title: 'Auto fertilizer phosphorus range',
+      minLabel: 'Phosphorus min',
+      maxLabel: 'Phosphorus max',
+      minValue: AppRuntimeConfig.pMin.value,
+      maxValue: AppRuntimeConfig.pMax.value,
+      minAllowed: AppRuntimeConfig.nutrientLowerBound,
+      maxAllowed: AppRuntimeConfig.nutrientUpperBound,
+    );
+
+    if (range == null ||
+        !_validateRangeValues(
+          range[0],
+          range[1],
+          AppRuntimeConfig.nutrientLowerBound,
+          AppRuntimeConfig.nutrientUpperBound,
+        )) {
+      if (range != null) {
+        _showError('Please keep phosphorus within bounds and min <= max.');
+      }
+      return;
+    }
+
+    await _saveAutoFertilizerConfig(pMin: range[0], pMax: range[1]);
+  }
+
+  Future<void> _editPotassiumRange() async {
+    final List<int>? range = await _showBoundedRangeDialog(
+      title: 'Auto fertilizer potassium range',
+      minLabel: 'Potassium min',
+      maxLabel: 'Potassium max',
+      minValue: AppRuntimeConfig.kMin.value,
+      maxValue: AppRuntimeConfig.kMax.value,
+      minAllowed: AppRuntimeConfig.nutrientLowerBound,
+      maxAllowed: AppRuntimeConfig.nutrientUpperBound,
+    );
+
+    if (range == null ||
+        !_validateRangeValues(
+          range[0],
+          range[1],
+          AppRuntimeConfig.nutrientLowerBound,
+          AppRuntimeConfig.nutrientUpperBound,
+        )) {
+      if (range != null) {
+        _showError('Please keep potassium within bounds and min <= max.');
+      }
+      return;
+    }
+
+    await _saveAutoFertilizerConfig(kMin: range[0], kMax: range[1]);
   }
 
   Future<void> _editReuploadDelay() async {
-    final int? value = await _showPositiveNumberDialog(
+    final int? value = await _showBoundedNumberDialog(
       title: 'Edit reupload delay',
       label: 'Days',
       initialValue: AppRuntimeConfig.diseaseReuploadDelayDays.value,
-      hintText: 'Enter positive number of days',
+      minAllowed: 1,
+      maxAllowed: 365,
+      hintText: 'Enter 1 to 365 days',
     );
 
-    if (value == null || value < 1) {
-      if (value != null) {
-        _showError('Please enter a positive number.');
-      }
+    if (value == null) {
       return;
     }
 
@@ -233,80 +508,55 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     }
   }
 
-  Future<void> _editMoistureRange() async {
-    final List<int>? range = await _showPositiveRangeDialog(
-      title: 'Edit moisture range',
-      minLabel: 'Moisture min (%)',
-      maxLabel: 'Moisture max (%)',
-      minValue: AppRuntimeConfig.moistMin.value,
-      maxValue: AppRuntimeConfig.moistMax.value,
-    );
-
-    if (range == null || range[0] < 1 || range[1] < 1 || range[0] > range[1]) {
-      if (range != null) {
-        _showError('Please enter positive values and ensure min <= max.');
-      }
+  Future<void> _editLeafStatus() async {
+    final String? status = await _showStatusDialog();
+    if (status == null) {
       return;
     }
 
-    await _saveCropTargets(moistMin: range[0], moistMax: range[1]);
+    try {
+      await _database.ref(FarmPayload.leafPath).update({'status': status});
+      if (mounted) {
+        _showSuccess('Leaf status updated to: $status');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to update status: $e');
+      }
+    }
   }
 
-  Future<void> _editNitrogenRange() async {
-    final List<int>? range = await _showPositiveRangeDialog(
-      title: 'Edit nitrogen range',
-      minLabel: 'Nitrogen min',
-      maxLabel: 'Nitrogen max',
-      minValue: AppRuntimeConfig.nMin.value,
-      maxValue: AppRuntimeConfig.nMax.value,
+  Future<String?> _showStatusDialog() async {
+    final TextEditingController controller = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Edit Leaf Status'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Status',
+              hintText: 'e.g., Healthy, LateBlight, EarlyBlight',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final String value = controller.text.trim();
+                Navigator.pop(dialogContext, value.isNotEmpty ? value : null);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
-
-    if (range == null || range[0] < 1 || range[1] < 1 || range[0] > range[1]) {
-      if (range != null) {
-        _showError('Please enter positive values and ensure min <= max.');
-      }
-      return;
-    }
-
-    await _saveCropTargets(nMin: range[0], nMax: range[1]);
-  }
-
-  Future<void> _editPhosphorusRange() async {
-    final List<int>? range = await _showPositiveRangeDialog(
-      title: 'Edit phosphorus range',
-      minLabel: 'Phosphorus min',
-      maxLabel: 'Phosphorus max',
-      minValue: AppRuntimeConfig.pMin.value,
-      maxValue: AppRuntimeConfig.pMax.value,
-    );
-
-    if (range == null || range[0] < 1 || range[1] < 1 || range[0] > range[1]) {
-      if (range != null) {
-        _showError('Please enter positive values and ensure min <= max.');
-      }
-      return;
-    }
-
-    await _saveCropTargets(pMin: range[0], pMax: range[1]);
-  }
-
-  Future<void> _editPotassiumRange() async {
-    final List<int>? range = await _showPositiveRangeDialog(
-      title: 'Edit potassium range',
-      minLabel: 'Potassium min',
-      maxLabel: 'Potassium max',
-      minValue: AppRuntimeConfig.kMin.value,
-      maxValue: AppRuntimeConfig.kMax.value,
-    );
-
-    if (range == null || range[0] < 1 || range[1] < 1 || range[0] > range[1]) {
-      if (range != null) {
-        _showError('Please enter positive values and ensure min <= max.');
-      }
-      return;
-    }
-
-    await _saveCropTargets(kMin: range[0], kMax: range[1]);
   }
 
   @override
@@ -315,16 +565,58 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
-          _HeaderCard(
-            diseaseReuploadDays:
-                AppRuntimeConfig.diseaseReuploadDelayDays.value,
-            healthyKeywords: AppRuntimeConfig.healthyKeywords.value,
+          StreamBuilder<DatabaseEvent>(
+            stream: _database.ref(FarmPayload.leafPath).onValue,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+                final String leafStatus = 'Healthy';
+                return _HeaderCard(
+                  diseaseReuploadDays:
+                      AppRuntimeConfig.diseaseReuploadDelayDays.value,
+                  healthyKeywords: AppRuntimeConfig.healthyKeywords.value,
+                  confirmedDiseaseLabels:
+                      AppRuntimeConfig.confirmedDiseaseLabels.value,
+                  leafStatus: leafStatus,
+                  hasDisease: false,
+                );
+              }
+              final Map<String, dynamic> leaf = _toMap(
+                snapshot.data!.snapshot.value,
+              );
+              final String leafStatus = '${leaf['status'] ?? 'Healthy'}';
+              final bool hasDisease =
+                  leafStatus.toLowerCase() != 'healthy' &&
+                  leafStatus.isNotEmpty;
+              return _HeaderCard(
+                diseaseReuploadDays:
+                    AppRuntimeConfig.diseaseReuploadDelayDays.value,
+                healthyKeywords: AppRuntimeConfig.healthyKeywords.value,
+                confirmedDiseaseLabels:
+                    AppRuntimeConfig.confirmedDiseaseLabels.value,
+                leafStatus: leafStatus,
+                hasDisease: hasDisease,
+              );
+            },
           ),
           const SizedBox(height: 16),
           _SectionCard(
-            title: 'Crop Targets',
-            subtitle: 'Min and max ranges used by the farm system (+ to edit)',
+            title: 'Auto Water Config',
+            subtitle: 'Temperature, humidity, and moisture limits for watering',
             children: <Widget>[
+              _EditableTile(
+                label: 'Temperature',
+                value:
+                    '${AppRuntimeConfig.tempMin.value} C - ${AppRuntimeConfig.tempMax.value} C',
+                onTap: _editTempRange,
+                trailingIcon: Icons.add,
+              ),
+              _EditableTile(
+                label: 'Humidity',
+                value:
+                    '${AppRuntimeConfig.humMin.value}% - ${AppRuntimeConfig.humMax.value}%',
+                onTap: _editHumidityRange,
+                trailingIcon: Icons.add,
+              ),
               _EditableTile(
                 label: 'Moisture',
                 value:
@@ -332,6 +624,13 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
                 onTap: _editMoistureRange,
                 trailingIcon: Icons.add,
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _SectionCard(
+            title: 'Auto Fertilizer Config',
+            subtitle: 'N, P, K limits with leaf goal shown read-only',
+            children: <Widget>[
               _EditableTile(
                 label: 'Nitrogen (N)',
                 value:
@@ -361,17 +660,31 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             ],
           ),
           const SizedBox(height: 12),
-          _SectionCard(
-            title: 'Detection Rules',
-            subtitle: 'User-facing controls only',
-            children: <Widget>[
-              _EditableTile(
-                label: 'Disease reupload delay',
-                value:
-                    '${AppRuntimeConfig.diseaseReuploadDelayDays.value} days',
-                onTap: _editReuploadDelay,
-              ),
-            ],
+          StreamBuilder<DatabaseEvent>(
+            stream: _database.ref(FarmPayload.leafPath).onValue,
+            builder: (context, snapshot) {
+              final Map<String, dynamic> leaf = _toMap(
+                snapshot.data?.snapshot.value,
+              );
+              final String currentStatus = '${leaf['status'] ?? 'Healthy'}';
+              return _SectionCard(
+                title: 'Detection Rules',
+                subtitle: 'User-facing controls only',
+                children: <Widget>[
+                  _EditableTile(
+                    label: 'Leaf Status',
+                    value: currentStatus,
+                    onTap: _editLeafStatus,
+                  ),
+                  _EditableTile(
+                    label: 'Disease reupload delay',
+                    value:
+                        '${AppRuntimeConfig.diseaseReuploadDelayDays.value} days',
+                    onTap: _editReuploadDelay,
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           _PumpControlSection(database: _database),
@@ -448,7 +761,8 @@ class _PumpControlSection extends StatelessWidget {
         final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
         final bool isAuto = data['auto'] == true;
         final bool isWater = data['water'] == true;
-        final bool isFert = data['fert'] == true;
+        final bool isFert1 = data['fert1'] == true;
+        final bool isFert2 = data['fert2'] == true;
 
         return _SectionCard(
           title: 'Pump & Mode Control',
@@ -485,13 +799,26 @@ class _PumpControlSection extends StatelessWidget {
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Fertilizer Pump'),
-                      subtitle: const Text('Manual override for nutrients'),
-                      value: isFert,
+                      title: const Text('Fertilizer Pump 1'),
+                      subtitle: const Text('Manual override for nutrients (1)'),
+                      value: isFert1,
                       onChanged: (bool value) {
                         _handleManualToggle(
-                          database.ref('${FarmPayload.pumpsPath}/fert'),
-                          'Fertilizer',
+                          database.ref('${FarmPayload.pumpsPath}/fert1'),
+                          'Fertilizer 1',
+                          value,
+                        );
+                      },
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Fertilizer Pump 2'),
+                      subtitle: const Text('Manual override for nutrients (2)'),
+                      value: isFert2,
+                      onChanged: (bool value) {
+                        _handleManualToggle(
+                          database.ref('${FarmPayload.pumpsPath}/fert2'),
+                          'Fertilizer 2',
                           value,
                         );
                       },
@@ -517,10 +844,16 @@ class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
     required this.diseaseReuploadDays,
     required this.healthyKeywords,
+    required this.confirmedDiseaseLabels,
+    required this.leafStatus,
+    required this.hasDisease,
   });
 
   final int diseaseReuploadDays;
   final List<String> healthyKeywords;
+  final List<String> confirmedDiseaseLabels;
+  final String leafStatus;
+  final bool hasDisease;
 
   @override
   Widget build(BuildContext context) {
@@ -556,7 +889,10 @@ class _HeaderCard extends StatelessWidget {
             runSpacing: 10,
             children: <Widget>[
               _InfoChip(label: 'Reupload', value: '$diseaseReuploadDays days'),
-              _InfoChip(label: 'Healthy', value: healthyKeywords.join(' • ')),
+              _InfoChip(
+                label: hasDisease ? 'Disease' : 'Status',
+                value: leafStatus,
+              ),
             ],
           ),
         ],

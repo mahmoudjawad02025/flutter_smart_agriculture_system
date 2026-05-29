@@ -18,6 +18,8 @@ class FarmPayload {
       rootPath.isEmpty ? 'config' : '$rootPath/config';
   static String get goalsPath => '$configPath/goals';
   static String get pumpsPath => '$configPath/pumps';
+  static String get autoWaterPath => '$configPath/auto_water';
+  static String get autoFertilizerPath => '$configPath/auto_fertilizer';
 
   static String get extraPath => rootPath.isEmpty ? 'extra' : '$rootPath/extra';
   static String get notificationsPath => '$extraPath/notifications';

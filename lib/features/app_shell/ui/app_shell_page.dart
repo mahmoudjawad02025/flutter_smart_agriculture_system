@@ -5,8 +5,9 @@ import '../../../core/config/app_runtime_config.dart';
 import '../../configurations/ui/configurations_page.dart';
 import '../../dashboard/ui/dashboard_page.dart';
 import '../../disease_detection/ui/disease_detection_page.dart';
-import '../../firebase_data/ui/firebase_data_page.dart';
+// Firebase diagnostics page removed
 import '../../notifications/ui/notifications_page.dart';
+import '../../notifications/cubit/notifications_cubit.dart';
 import '../../settings/ui/settings_page.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
@@ -53,11 +54,7 @@ class _AppShellPageState extends State<AppShellPage> {
     ).push(MaterialPageRoute<void>(builder: (_) => const NotificationsPage()));
   }
 
-  void _openFirebaseTest() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const FirebaseDataPage()));
-  }
+  // Firebase diagnostics removed from release build
 
   @override
   Widget build(BuildContext context) {
@@ -90,13 +87,21 @@ class _AppShellPageState extends State<AppShellPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    CircleAvatar(
-                      radius: 34,
-                      backgroundImage: const AssetImage(_appIconAsset),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF2E7D32).withOpacity(0.08),
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      child: const Icon(
+                        Icons.agriculture,
+                        size: 44,
+                        color: Color(0xFF2E7D32),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Cucumber Pro Menu',
+                      'Smart Argitechture System',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],
@@ -122,32 +127,44 @@ class _AppShellPageState extends State<AppShellPage> {
                 label: 'Settings',
                 onTap: () => _goToPage(3),
               ),
-              _DrawerNavTile(
-                icon: Icons.notifications_outlined,
-                label: 'Notifications',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _openNotifications();
-                },
-              ),
-              ValueListenableBuilder<bool>(
-                valueListenable: AppRuntimeConfig.showDeveloperTools,
-                builder: (context, showDev, _) {
-                  if (!showDev) return const SizedBox.shrink();
+              BlocBuilder<NotificationsCubit, NotificationsState>(
+                builder: (context, state) {
+                  final int unread = state.unreadCount;
                   return _DrawerNavTile(
-                    icon: Icons.cloud_outlined,
-                    label: 'Firebase Diagnostics',
+                    icon: Icons.notifications_outlined,
+                    label: 'Notifications',
+                    trailing: unread > 0
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              unread.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                        : null,
                     onTap: () {
                       Navigator.of(context).pop();
-                      _openFirebaseTest();
+                      _openNotifications();
                     },
                   );
                 },
               ),
+              // Developer cloud tools removed
               const Divider(indent: 20, endIndent: 20),
               BlocBuilder<AuthCubit, AuthState>(
                 builder: (context, state) {
-                  if (state is AuthAuthenticated && state.user.role == 'admin') {
+                  if (state is AuthAuthenticated &&
+                      state.user.role == 'admin') {
                     return _DrawerNavTile(
                       icon: Icons.people_outline,
                       label: 'User Management',
@@ -210,11 +227,13 @@ class _DrawerNavTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.trailing,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -229,6 +248,7 @@ class _DrawerNavTile extends StatelessWidget {
         minLeadingWidth: 30,
         leading: Icon(icon),
         title: Text(label),
+        trailing: trailing,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         onTap: onTap,
       ),

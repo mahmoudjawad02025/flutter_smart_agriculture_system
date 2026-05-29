@@ -67,7 +67,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final bool isSuccess = message.contains('Account created successfully');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message), 
+        content: Text(message),
         backgroundColor: isSuccess ? Colors.green : Colors.red,
         duration: const Duration(seconds: 5),
       ),

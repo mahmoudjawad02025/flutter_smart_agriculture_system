@@ -14,7 +14,7 @@ Your app now has **real-time notifications** that automatically trigger when a d
 
 ## 🚀 Try It Now
 
-### **Step 1: Upload a Diseased Cucumber Image**
+### **Step 1: Upload a Diseased tomato Image**
 1. Open the app
 2. Go to **AI Detection** tab
 3. Upload an image with a disease (e.g., Downy Mildew)
@@ -88,7 +88,7 @@ static const int diseaseReuploadDelayDays = 7;  // 7 days instead
 ### **Notification Details**
 Each notification shows:
 - ⚠️ Disease name (red)
-- 📝 Message: "Detected on your cucumber leaf"
+- 📝 Message: "Detected on your tomato leaf"
 - 🕐 Next upload date (e.g., "in 2 days")
 - ✅ "Mark Read" action
 - 🗑️ "Delete" action

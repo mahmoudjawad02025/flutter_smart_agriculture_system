@@ -96,7 +96,7 @@ Shows on AppBar with red badge displaying unread count:
 
 ### **Step 1: Disease Detected**
 
-When analyzing a cucumber image:
+When analyzing a tomato image:
 
 ```dart
 // Disease Detection Cubit
@@ -108,7 +108,7 @@ if (!isHealthy && result.detectedLabels.isNotEmpty) {
   final notification = FarmNotification(
     id: DateTime.now().millisecondsSinceEpoch.toString(),
     title: 'Disease Detected',
-    message: 'Downy_Mildew detected on your cucumber leaf',
+    message: 'Downy_Mildew detected on your tomato leaf',
     diseaseName: 'Downy_Mildew',
     nextUpload: '2025-04-23T14:30:00.000Z',  // 2 days from now
     isRead: false,
@@ -229,7 +229,7 @@ await addDiseaseNotification(
 
 Firebase structure:
 ```
-smart_cucumber_agriculture/
+smart_tomato_agriculture/
   notifications/
     ├── unread_count: 2
     └── items/
@@ -266,7 +266,7 @@ This value is used when creating "next_upload" timestamp.
 
 1. **Start the app** - Badge shows 0 (or count from last session)
 2. **Go to AI Detection tab**
-3. **Upload cucumber with disease** (e.g., Downy_Mildew image)
+3. **Upload tomato with disease** (e.g., Downy_Mildew image)
 4. **Click Analyze**
 5. **Watch console** for:
    ```
@@ -331,7 +331,7 @@ This value is used when creating "next_upload" timestamp.
 final notification = FarmNotification(
   id: DateTime.now().millisecondsSinceEpoch.toString(),
   title: 'Disease Detected',
-  message: 'Downy_Mildew detected on your cucumber leaf',
+  message: 'Downy_Mildew detected on your tomato leaf',
   diseaseName: 'Downy_Mildew',
   nextUpload: DateTime.now()
       .toUtc()

@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/tomato_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/firebase_options.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,7 +18,6 @@ import 'features/auth/ui/auth_wrapper.dart';
 import 'core/config/roboflow_config.dart';
 import 'features/disease_detection/cubit/disease_detection_cubit.dart';
 import 'features/disease_detection/services/disease_detection_service.dart';
-import 'features/disease_detection/services/tomato_classifier_service.dart';
 import 'features/firebase_data/cubit/firebase_data_cubit.dart';
 import 'features/firebase_data/models/farm_payload.dart';
 import 'features/notifications/cubit/notifications_cubit.dart';
@@ -25,10 +25,28 @@ import 'features/notifications/services/notifications_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Local preferences should always succeed; let any failure surface clearly.
   await AppAccessControl.instance.initialize();
   await AppRuntimeConfig.initialize();
-  await FarmPayload.ensureDefaults(FirebaseDatabase.instance);
+
+  // Firebase/network problems must not stop the UI from rendering, otherwise
+  // the Windows process exits right after build with "Lost connection to
+  // device" and no visible error.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (error, stack) {
+    debugPrint('[STARTUP] Firebase.initializeApp failed: $error\n$stack');
+  }
+
+  try {
+    await FarmPayload.ensureDefaults(FirebaseDatabase.instance);
+  } catch (error, stack) {
+    debugPrint('[STARTUP] FarmPayload.ensureDefaults failed: $error\n$stack');
+  }
+
   runApp(const MyApp());
 }
 
@@ -73,7 +91,7 @@ class MyApp extends StatelessWidget {
               dio: Dio(),
               database: FirebaseDatabase.instance,
               config: _config,
-              tomatoClassifierService: TomatoClassifierService(),
+              cucumberClassifierService: CucumberClassifierService(),
             );
             return DiseaseDetectionCubit(
               diseaseDetectionService: service,

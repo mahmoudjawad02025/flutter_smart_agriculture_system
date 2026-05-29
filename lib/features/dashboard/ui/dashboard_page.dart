@@ -57,7 +57,8 @@ class _DashboardPageState extends State<DashboardPage> {
           final Map<String, dynamic> source = live.isNotEmpty ? live : sensors;
           final Map<String, dynamic> leaf = _toMap(data['leaf']);
 
-          final String time = '${source['time'] ?? '-'}';
+          final String rawTime = '${source['time'] ?? '-'}';
+          final String time = _formatDashboardTime(rawTime);
           final String leafStatus = '${leaf['status'] ?? '-'}';
           final bool needsFix = leaf['needs_fix'] == true;
           final String reuploadAt = '${leaf['reupload_at'] ?? ''}';
@@ -372,7 +373,8 @@ class _PumpsSnapshot extends StatelessWidget {
         );
         return _PumpsCard(
           water: pumps['water'] == true,
-          fert: pumps['fert'] == true,
+          fert1: pumps['fert1'] == true,
+          fert2: pumps['fert2'] == true,
           auto: pumps['auto'] == true,
         );
       },
@@ -384,6 +386,35 @@ Map<String, dynamic> _toMap(dynamic value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return Map<String, dynamic>.from(value);
   return <String, dynamic>{};
+}
+
+String _formatDashboardTime(String rawTime) {
+  if (rawTime.isEmpty || rawTime == '-') return rawTime;
+
+  // Handle ISO format with T (e.g., 2026-06-01T11:45:57.719007Z)
+  String cleanedTime = rawTime.replaceAll('T', ' ').replaceAll('Z', '').trim();
+
+  final DateTime? parsed = DateTime.tryParse(cleanedTime);
+  if (parsed != null) {
+    final DateTime local = parsed.toLocal();
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+    final List<String> monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${monthNames[local.month - 1]} ${local.day}, ${twoDigits(local.hour)}:${twoDigits(local.minute)}';
+  }
+  return rawTime;
 }
 
 class _HeaderCard extends StatelessWidget {
@@ -467,8 +498,10 @@ class _HeaderCard extends StatelessWidget {
           if (needsFix && reuploadAt.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              'Next upload at: $reuploadAt',
-              style: const TextStyle(color: Colors.white),
+              'Next: ${_formatDashboardTime(reuploadAt)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
             ),
           ],
         ],
@@ -510,10 +543,11 @@ class _MetricCard extends StatelessWidget {
 class _PumpsCard extends StatelessWidget {
   const _PumpsCard({
     required this.water,
-    required this.fert,
+    required this.fert1,
+    required this.fert2,
     required this.auto,
   });
-  final bool water, fert, auto;
+  final bool water, fert1, fert2, auto;
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +567,8 @@ class _PumpsCard extends StatelessWidget {
               runSpacing: 10,
               children: <Widget>[
                 _StatusChip(label: 'Water Pump', active: water),
-                _StatusChip(label: 'Fertilizer Pump', active: fert),
+                _StatusChip(label: 'Fertilizer Pump 1', active: fert1),
+                _StatusChip(label: 'Fertilizer Pump 2', active: fert2),
                 _StatusChip(label: 'Auto Mode', active: auto),
               ],
             ),

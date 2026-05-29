@@ -49,7 +49,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '906975937291',
     projectId: 'smart-cucumber-agriculture',
     authDomain: 'smart-cucumber-agriculture.firebaseapp.com',
-    databaseURL: 'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'smart-cucumber-agriculture.firebasestorage.app',
     measurementId: 'G-90D6Y5S6KJ',
   );
@@ -59,7 +60,8 @@ class DefaultFirebaseOptions {
     appId: '1:906975937291:android:91efed5c2b5c9a8aff580e',
     messagingSenderId: '906975937291',
     projectId: 'smart-cucumber-agriculture',
-    databaseURL: 'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'smart-cucumber-agriculture.firebasestorage.app',
   );
 
@@ -68,7 +70,8 @@ class DefaultFirebaseOptions {
     appId: '1:906975937291:ios:41ab03d90fab1964ff580e',
     messagingSenderId: '906975937291',
     projectId: 'smart-cucumber-agriculture',
-    databaseURL: 'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'smart-cucumber-agriculture.firebasestorage.app',
     iosBundleId: 'com.example.smartCucumberAgricultureSystem',
   );
@@ -79,7 +82,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '906975937291',
     projectId: 'smart-cucumber-agriculture',
     authDomain: 'smart-cucumber-agriculture.firebaseapp.com',
-    databaseURL: 'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'smart-cucumber-agriculture.firebasestorage.app',
     measurementId: 'G-HJTBSV9D27',
   );

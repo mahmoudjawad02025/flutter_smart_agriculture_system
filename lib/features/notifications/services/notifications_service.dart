@@ -67,6 +67,7 @@ class NotificationsService {
           .ref('${FarmPayload.notificationItemsPath}/notif_$notificationId')
           .update(<String, dynamic>{'is_read': false});
 
+      // Increment unread count
       final snapshot = await _database.ref(FarmPayload.unreadCountPath).get();
       final currentCount = (snapshot.value as int?) ?? 0;
       await _database.ref(FarmPayload.unreadCountPath).set(currentCount + 1);

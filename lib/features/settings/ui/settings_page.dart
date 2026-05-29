@@ -264,24 +264,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const SizedBox(height: 12),
-            _SettingsCard(
-              title: 'System',
-              children: <Widget>[
-                ValueListenableBuilder<bool>(
-                  valueListenable: AppRuntimeConfig.showDeveloperTools,
-                  builder: (context, value, child) {
-                    return SwitchListTile(
-                      value: value,
-                      onChanged: AppRuntimeConfig.setShowDeveloperTools,
-                      title: const Text('Developer cloud tools'),
-                      subtitle: const Text(
-                        'Enable Firebase testing and diagnostics',
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+            // Developer cloud tools removed from settings
             const SizedBox(height: 12),
             _SettingsCard(
               title: 'About',

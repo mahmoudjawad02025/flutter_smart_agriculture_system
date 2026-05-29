@@ -36,11 +36,11 @@ Now the app prints detailed logs to the console. When you analyze an image, look
 
 **Solution**: Check your Firebase database rules in Firebase Console
 ```
-Database Rules should allow write to `smart_cucumber_agriculture/data/leaf`:
+Database Rules should allow write to `smart_tomato_agriculture/data/leaf`:
 
 {
   "rules": {
-    "smart_cucumber_agriculture": {
+    "smart_tomato_agriculture": {
       "data": {
         "leaf": {
           ".write": true  // Allow writes (develop mode)
@@ -58,7 +58,7 @@ Database Rules should allow write to `smart_cucumber_agriculture/data/leaf`:
 
 **Solution**: Ensure your Firebase has the structure:
 ```
-smart_cucumber_agriculture/
+smart_tomato_agriculture/
   └── data/
       └── leaf/
           ├── status
@@ -86,7 +86,7 @@ smart_cucumber_agriculture/
 ### Step 1: Verify Firebase is Connected
 Go to **Firebase** tab → Click "Get Data" → Should show live data
 
-### Step 2: Analyze a Cucumber Image
+### Step 2: Analyze a tomato Image
 1. Go to **AI Detection** tab
 2. Click upload image
 3. Click analyze
@@ -98,7 +98,7 @@ After analysis, go to **Dashboard** → Should see:
 - Chip showing "Needs Fix" (in red) instead of "Good" (in green)
 
 ### Step 4: Verify in Firebase Console
-Go to Firebase Console → Realtime Database → Check `smart_cucumber_agriculture/data/leaf`:
+Go to Firebase Console → Realtime Database → Check `smart_tomato_agriculture/data/leaf`:
 ```json
 {
   "leaf": {
@@ -176,7 +176,7 @@ Build Firebase update:
   - needs_fix: boolean (true if diseased)
   - reupload_at: ISO8601 timestamp
     ↓
-Write to Firebase: smart_cucumber_agriculture/data/leaf
+Write to Firebase: smart_tomato_agriculture/data/leaf
     ↓
 [DISEASE_DETECTION] Firebase update successful!
     ↓
@@ -190,12 +190,12 @@ Dashboard updates to show: "Leaf status: Downy_Mildew" + "Needs Fix" chip
 ## 🛠️ Troubleshooting Checklist
 
 - [ ] Firebase is initialized in `main.dart`
-- [ ] Firebase Console has `smart_cucumber_agriculture` database
-- [ ] Security rules allow write to `smart_cucumber_agriculture/data/leaf`
+- [ ] Firebase Console has `smart_tomato_agriculture` database
+- [ ] Security rules allow write to `smart_tomato_agriculture/data/leaf`
 - [ ] Sample data structure exists (use "Write Sample Data" button)
 - [ ] Check Debug Console for `[DISEASE_DETECTION]` logs
 - [ ] Verify internet connection on device/emulator
-- [ ] Try uploading a known cucumber disease image (not generic photo)
+- [ ] Try uploading a known tomato disease image (not generic photo)
 - [ ] Check reupload delay isn't too long (default 2 days)
 
 ---
