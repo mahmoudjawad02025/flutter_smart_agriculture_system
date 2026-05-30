@@ -105,10 +105,10 @@ class AutoActionsScenario {
   static const double mediumBonusFactor = 0.10;
 
   /// High bonus: used when hot and dry air (aggressive water increase)
-  static const double highBonusFactor = 0.18;
+  static const double highBonusFactor = 0.15;
 
   /// Reduce water target when cold or humid (to prevent overwatering)
-  static const double humidAirReduceFactor = 0.08;
+  static const double humidAirReduceFactor = 0.10;
 
   // ============================================================================
   // WATER SCENARIO - Helper functions
@@ -161,28 +161,31 @@ class AutoActionsScenario {
     required int humMin,
     required int humMax,
   }) {
-    // Hot + Dry = aggressive watering (high bonus)
+    // Base target is 70% into the safe range
+    final double base = normalTarget(moistMin, moistMax);
+
+    // Hot + Dry = aggressive watering (high bonus applied to base)
     if (temp > tempMax && hum < humMin) {
-      return moistMin + highBonus(moistMin, moistMax);
+      return base + highBonus(moistMin, moistMax);
     }
 
-    // Just Hot = moderate watering (medium bonus)
+    // Just Hot = moderate watering (medium bonus applied to base)
     if (temp > tempMax) {
-      return moistMin + mediumBonus(moistMin, moistMax);
+      return base + mediumBonus(moistMin, moistMax);
     }
 
-    // Just Dry = slight watering (small bonus)
+    // Just Dry = slight watering (small bonus applied to base)
     if (hum < humMin) {
-      return moistMin + smallBonus(moistMin, moistMax);
+      return base + smallBonus(moistMin, moistMax);
     }
 
-    // Cold or Humid = reduce watering need
+    // Cold or Humid = reduce watering need (subtract from base)
     if (temp < tempMin || hum > humMax) {
-      return moistMin + moistureHumidAirReduce(moistMin, moistMax);
+      return base - moistureHumidAirReduce(moistMin, moistMax);
     }
 
-    // Normal conditions = middle of range
-    return normalTarget(moistMin, moistMax);
+    // Normal conditions = base (70% of range)
+    return base;
   }
 
   // ============================================================================
@@ -190,7 +193,7 @@ class AutoActionsScenario {
   // ============================================================================
 
   static double normalTarget(int moistMin, int moistMax) {
-    return (moistMin + moistMax) / 2;
+    return moistMin.toDouble() + 0.70 * (moistMax - moistMin);
   }
 
   static double smallBonus(int moistMin, int moistMax) {
