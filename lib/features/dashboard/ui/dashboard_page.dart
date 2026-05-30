@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
 import '../../../core/services/firebase_streams.dart';
+import '../../../core/localization/app_strings.dart';
 import 'package:flutter/material.dart';
 
 import 'logs_history_page.dart';
-import '../../firebase_data/models/farm_payload.dart';
 
-const String _appIconAsset = 'lib/core/media/icons/app/app.png';
+// use centralized app icon from AppStrings
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -17,7 +17,6 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  late final DatabaseReference _dataRef;
   late final Stream<DatabaseEvent> _dataStream;
   final List<_SensorSample> _dailySensorSamples = <_SensorSample>[];
   final Map<String, dynamic> _latestSource = <String, dynamic>{};
@@ -28,7 +27,6 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _dataRef = FarmPayload.rootRef(FirebaseDatabase.instance);
     _dataStream = FirebaseStreams.rootStream;
     _sampleTimer = Timer.periodic(
       const Duration(minutes: 30),
@@ -118,7 +116,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   _MetricCard(
                     title: 'درجة الحرارة',
-                    value: '${source['temp'] ?? '-'} C',
+                    value: '${source['temp'] ?? '-'}°م',
                     icon: Icons.thermostat_outlined,
                   ),
                   _MetricCard(
@@ -295,7 +293,8 @@ class _LogsSnapshot extends StatelessWidget {
             _LogItem(
               time: _parseDate(data['time']),
               title: 'نتيجة فحص الذكاء الاصطناعي',
-              subtitle: 'الكشف: ${data['res'] ?? 'Healthy'}',
+              subtitle:
+                  'الكشف: ${AppStrings.displayDiseaseName(data['res']?.toString() ?? 'Healthy')}',
               icon: Icons.auto_awesome_outlined,
             ),
           );
@@ -305,10 +304,13 @@ class _LogsSnapshot extends StatelessWidget {
         _toMap(logsData['manual_log']).forEach((key, val) {
           final data = _toMap(val);
           final state = _toMap(data['state']);
+          final String rawAction = data['action']?.toString() ?? '';
+
           allLogs.add(
             _LogItem(
               time: _parseDate(data['time']),
-              title: 'يدوي ${data['pump']}: ${data['action']}',
+              title:
+                  'يدوي ${AppStrings.displayPumpName(data['pump']?.toString() ?? '')}: ${AppStrings.displayAction(rawAction)}',
               icon: Icons.touch_app_outlined,
               isManual: true,
               n: state['n']?.toString() ?? '?',
@@ -518,20 +520,20 @@ String _formatDashboardTime(String rawTime) {
     final DateTime local = parsed.toLocal();
     String twoDigits(int value) => value.toString().padLeft(2, '0');
     final List<String> monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
     ];
-    return '${monthNames[local.month - 1]} ${local.day}, ${twoDigits(local.hour)}:${twoDigits(local.minute)}';
+    return '${local.day} ${monthNames[local.month - 1]} ${twoDigits(local.hour)}:${twoDigits(local.minute)}';
   }
   return rawTime;
 }
@@ -542,33 +544,8 @@ extension on DateTime {
   }
 }
 
-String _displayLeafStatus(String status) {
-  final String normalized = status.toLowerCase().replaceAll(
-    RegExp(r'[_\s-]'),
-    '',
-  );
-
-  switch (normalized) {
-    case 'healthy':
-      return 'سليم';
-    case 'unknown':
-      return 'غير معروف';
-    case 'bacterialspot':
-      return 'بقعة بكتيرية';
-    case 'lateblight':
-      return 'تعفن متأخر';
-    case 'earlyblight':
-      return 'تعفن مبكر';
-    case 'yellowleafcurl':
-      return 'لف الورقة الأصفر';
-    case 'septoria':
-      return 'سِبتوريا';
-    case 'powderymildew':
-      return 'سوس العفن';
-    default:
-      return status;
-  }
-}
+String _displayLeafStatus(String status) =>
+    AppStrings.displayLeafStatus(status);
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
@@ -603,7 +580,7 @@ class _HeaderCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
-                  _appIconAsset,
+                  AppStrings.appIconAsset,
                   width: 28,
                   height: 28,
                   fit: BoxFit.cover,
@@ -850,7 +827,7 @@ class _StatusChip extends StatelessWidget {
         active ? Icons.check_circle : Icons.pause_circle_outline,
         size: 18,
       ),
-      label: Text('$label: ${active ? 'ON' : 'OFF'}'),
+      label: Text('$label: ${active ? AppStrings.on : AppStrings.off}'),
     );
   }
 }
@@ -875,7 +852,7 @@ class _MessageView extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  _appIconAsset,
+                  AppStrings.appIconAsset,
                   width: 52,
                   height: 52,
                   fit: BoxFit.cover,

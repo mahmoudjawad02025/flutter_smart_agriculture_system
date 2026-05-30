@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/firebase_data_cubit.dart';
 import '../cubit/firebase_data_state.dart';
 import '../models/farm_payload.dart';
+import '../../../core/utils/ui_helpers.dart';
 
 class FirebaseDataPage extends StatelessWidget {
   const FirebaseDataPage({super.key});
@@ -12,7 +13,7 @@ class FirebaseDataPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('System Cloud Diagnostics'),
+        title: const Text('تشخيصات سحابة النظام'),
         elevation: 0,
         backgroundColor: Colors.black,
       ),
@@ -25,9 +26,7 @@ class FirebaseDataPage extends StatelessWidget {
           final String? message = state.message;
           if (message == null || message.isEmpty) return;
 
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          showLocalizedSnackBar(context, message);
         },
         builder: (BuildContext context, FirebaseDataState state) {
           final cubit = context.read<FirebaseDataCubit>();
@@ -43,35 +42,39 @@ class FirebaseDataPage extends StatelessWidget {
                 _DataPathCard(path: FarmPayload.rootPath),
                 const SizedBox(height: 12),
                 const Text(
-                  '⚠️ WARNING: Seeding sample data will OVERWRITE your entire database structure. This action is irreversible.',
-                  style: TextStyle(color: Colors.orange, fontSize: 11, fontWeight: FontWeight.bold),
+                  '⚠️ تحذير: كتابة بيانات تجريبية ستستبدل هيكل قاعدة البيانات بالكامل. هذا الإجراء لا يمكن التراجع عنه.',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 _ActionCard(
-                  title: 'Data Initialization',
-                  subtitle: 'Reset or seed the database with sample values',
+                  title: 'تهيئة البيانات',
+                  subtitle: 'إعادة تعيين أو ملء قاعدة البيانات بقيم تجريبية',
                   icon: Icons.storage_rounded,
                   onPressed: isLoading ? null : cubit.writeSampleData,
-                  label: 'Seed Sample Data',
+                  label: 'كتابة بيانات تجريبية',
                   isLoading: isLoading,
                 ),
                 const SizedBox(height: 16),
                 _ActionCard(
-                  title: 'Notification System',
-                  subtitle: 'Push one disease alert to test sync',
+                  title: 'نظام الإشعارات',
+                  subtitle: 'إرسال تنبيه مرض واحد لاختبار المزامنة',
                   icon: Icons.notifications_active_rounded,
                   onPressed: isLoading ? null : cubit.pushTestNotification,
-                  label: 'Push Test Alert',
+                  label: 'إرسال تنبيه اختبار',
                   color: const Color(0xFFD32F2F),
                   isLoading: isLoading,
                 ),
                 const SizedBox(height: 16),
                 _ActionCard(
-                  title: 'Sensor Calibration',
-                  subtitle: 'Read raw nitrogen levels once',
+                  title: 'معايرة المجسات',
+                  subtitle: 'قراءة مستوى النيتروجين الخام مرة واحدة',
                   icon: Icons.shutter_speed_rounded,
                   onPressed: isLoading ? null : cubit.readNitrogenOnce,
-                  label: 'Fetch N-Level',
+                  label: 'قراءة مستوى النيتروجين',
                   color: const Color(0xFF2E7D32),
                   isLoading: isLoading,
                 ),
@@ -95,7 +98,7 @@ class _HeaderSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Cloud Console',
+          'وحدة التحكم السحابية',
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -103,7 +106,7 @@ class _HeaderSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Manage Realtime Database connectivity and testing.',
+          'إدارة اتصال قاعدة البيانات في الوقت الفعلي والاختبارات.',
           style: TextStyle(color: Colors.grey[400], fontSize: 14),
         ),
       ],
@@ -129,7 +132,7 @@ class _DataPathCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Root Path: $path',
+              'المسار الجذري: $path',
               style: const TextStyle(
                 color: Colors.blue,
                 fontFamily: 'monospace',
@@ -190,7 +193,10 @@ class _ActionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text(subtitle, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+            Text(
+              subtitle,
+              style: TextStyle(color: Colors.grey[400], fontSize: 13),
+            ),
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
@@ -204,17 +210,16 @@ class _ActionCard extends StatelessWidget {
                   ),
                 ),
                 onPressed: onPressed,
-                child:
-                    isLoading
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : Text(label),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(label),
               ),
             ),
           ],
@@ -235,7 +240,9 @@ class _ResultDisplay extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1B5E20).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1B5E20).withValues(alpha: 0.4)),
+        border: Border.all(
+          color: const Color(0xFF1B5E20).withValues(alpha: 0.4),
+        ),
       ),
       child: Column(
         children: [

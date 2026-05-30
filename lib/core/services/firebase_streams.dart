@@ -69,6 +69,7 @@ class _SharedQueryStream {
 
   void _handleListen() {
     // Ensure we have a single underlying subscription forwarding events.
+
     if (_subscription == null) {
       _subscription = _query.onValue.listen(
         (DatabaseEvent event) {
@@ -81,6 +82,10 @@ class _SharedQueryStream {
           _controller?.addError(e, s);
         },
       );
+
+      // No seeding here — rely on the `onValue` subscription to forward
+      // the initial event. Seeding caused compatibility issues with
+      // the `DatabaseEvent` constructors across package versions.
     }
 
     // If we already have a cached event, re-emit it so new listeners

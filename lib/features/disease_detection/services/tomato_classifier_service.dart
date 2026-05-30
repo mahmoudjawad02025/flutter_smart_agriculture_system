@@ -33,14 +33,14 @@ class CucumberClassifierService {
 
     final File imageFile = File(imagePath);
     if (!await imageFile.exists()) {
-      throw Exception('Image not found.');
+      throw Exception('لم يتم العثور على الصورة.');
     }
 
     final Uint8List imageBytes = await imageFile.readAsBytes();
     final img.Image? decodedImage = img.decodeImage(imageBytes);
 
     if (decodedImage == null) {
-      throw Exception('Failed to decode image.');
+      throw Exception('فشل فك ترميز الصورة.');
     }
 
     // 1. Resize to 224x224

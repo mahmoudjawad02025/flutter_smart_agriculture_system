@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/config/app_runtime_config.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../configurations/ui/configurations_page.dart';
 import '../../dashboard/ui/dashboard_page.dart';
 import '../../disease_detection/ui/disease_detection_page.dart';
@@ -13,7 +13,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/cubit/auth_state.dart';
 import '../../auth/ui/admin_users_page.dart';
 
-const String _appIconAsset = 'lib/core/media/icons/app/app.png';
+// use centralized app icon/title from AppStrings
 
 class AppShellPage extends StatefulWidget {
   const AppShellPage({super.key});
@@ -65,7 +65,7 @@ class _AppShellPageState extends State<AppShellPage> {
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Image.asset(
-                _appIconAsset,
+                AppStrings.appIconAsset,
                 width: 24,
                 height: 24,
                 fit: BoxFit.cover,
@@ -75,7 +75,9 @@ class _AppShellPageState extends State<AppShellPage> {
             Expanded(child: Text(_titles[_currentIndex])),
           ],
         ),
-        actions: <Widget>[const NotificationBadge()],
+        actions: <Widget>[
+          Row(children: [const NotificationBadge(), const SizedBox(width: 8)]),
+        ],
       ),
       drawer: Drawer(
         child: SafeArea(
@@ -87,21 +89,18 @@ class _AppShellPageState extends State<AppShellPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF2E7D32).withOpacity(0.08),
-                      ),
-                      padding: const EdgeInsets.all(14),
-                      child: const Icon(
-                        Icons.agriculture,
-                        size: 44,
-                        color: Color(0xFF2E7D32),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(40),
+                      child: Image.asset(
+                        AppStrings.appIconAsset,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'نظام الزراعة الذكية',
+                      AppStrings.appTitle,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ],

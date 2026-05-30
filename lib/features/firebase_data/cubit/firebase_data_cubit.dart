@@ -24,14 +24,14 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
       emit(
         state.copyWith(
           status: FirebaseDataStatus.success,
-          message: 'Data written successfully.',
+          message: 'تم كتابة البيانات بنجاح.',
         ),
       );
     } catch (error) {
       emit(
         state.copyWith(
           status: FirebaseDataStatus.error,
-          message: 'Write failed: $error',
+          message: 'فشل الكتابة: $error',
         ),
       );
     }
@@ -51,7 +51,7 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
         emit(
           state.copyWith(
             status: FirebaseDataStatus.error,
-            message: 'No data available.',
+            message: 'لا توجد بيانات متاحة.',
             clearNitrogen: true,
           ),
         );
@@ -67,14 +67,14 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
         state.copyWith(
           status: FirebaseDataStatus.success,
           nitrogen: nitrogen,
-          message: 'Read completed successfully.',
+          message: 'اكتملت عملية القراءة بنجاح.',
         ),
       );
     } catch (error) {
       emit(
         state.copyWith(
           status: FirebaseDataStatus.error,
-          message: 'Read failed: $error',
+          message: 'فشل القراءة: $error',
         ),
       );
     }
@@ -108,14 +108,14 @@ class FirebaseDataCubit extends Cubit<FirebaseDataState> {
       emit(
         state.copyWith(
           status: FirebaseDataStatus.success,
-          message: 'Test notification pushed!',
+          message: 'تم إرسال إشعار الاختبار!',
         ),
       );
     } catch (e) {
       emit(
         state.copyWith(
           status: FirebaseDataStatus.error,
-          message: 'Push failed: $e',
+          message: 'فشل الإرسال: $e',
         ),
       );
     }

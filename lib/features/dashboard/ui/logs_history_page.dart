@@ -1,8 +1,8 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
-import '../../firebase_data/models/farm_payload.dart';
 import '../../../core/services/firebase_streams.dart';
+import '../../../core/localization/app_strings.dart';
 
 class LogsHistoryPage extends StatelessWidget {
   const LogsHistoryPage({super.key});
@@ -22,15 +22,18 @@ class LogsHistoryPage extends StatelessWidget {
       body: StreamBuilder<DatabaseEvent>(
         stream: FirebaseStreams.logsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
+          // If there is no data yet, show an empty state message
+          // instead of a persistent spinner so the page doesn't look
+          // like it's still loading when the DB contains no logs.
           if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
             return const Center(child: Text('لا توجد سجلات.'));
           }
 
           final logs = _parseAllLogs(snapshot.data!.snapshot.value);
+
+          if (logs.isEmpty) {
+            return const Center(child: Text('لا توجد سجلات.'));
+          }
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -63,7 +66,7 @@ class LogsHistoryPage extends StatelessWidget {
                           runSpacing: 4,
                           children: [
                             _LogMetric(Icons.water_drop, '${log.moist}%'),
-                            _LogMetric(Icons.thermostat, '${log.temp}°C'),
+                            _LogMetric(Icons.thermostat, '${log.temp}°م'),
                             _LogMetric(Icons.air, '${log.hum}%'),
                             _LogMetric(Icons.grass, '${log.n}'),
                             _LogMetric(Icons.spa, '${log.p}'),
@@ -75,7 +78,7 @@ class LogsHistoryPage extends StatelessWidget {
                       Text(log.subtitle ?? ''),
                     const SizedBox(height: 4),
                     Text(
-                      'الحالة: ${log.leafStatus ?? 'غير معروف'}',
+                      'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
                       style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
                   ],
@@ -141,10 +144,13 @@ class LogsHistoryPage extends StatelessWidget {
     _toMap(logsData['manual_log']).forEach((key, val) {
       final data = _toMap(val);
       final state = _toMap(data['state']);
+      final String rawAction = data['action']?.toString() ?? '';
+
       allLogs.add(
         _DetailedLogItem(
           time: _parseDate(data['time']),
-          title: 'يدوي ${data['pump']}: ${data['action']}',
+          title:
+              'يدوي ${AppStrings.displayPumpName(data['pump']?.toString() ?? '')}: ${AppStrings.displayAction(rawAction)}',
           icon: Icons.touch_app_outlined,
           isManual: true,
           leafStatus: state['status']?.toString(),

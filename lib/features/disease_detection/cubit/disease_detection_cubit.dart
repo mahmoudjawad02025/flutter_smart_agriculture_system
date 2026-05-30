@@ -30,7 +30,7 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
             status: state.hasImage
                 ? DiseaseDetectionStatus.imageReady
                 : DiseaseDetectionStatus.idle,
-            errorMessage: 'Image selection was cancelled.',
+            errorMessage: 'تم إلغاء اختيار الصورة.',
           ),
         );
         return;
@@ -51,11 +51,10 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
         await analyzeImage();
       }
     } catch (error) {
-
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.error,
-          errorMessage: 'Failed to save image: $error',
+          errorMessage: 'فشل حفظ الصورة: $error',
         ),
       );
     }
@@ -67,7 +66,7 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
       emit(
         state.copyWith(
           status: DiseaseDetectionStatus.error,
-          errorMessage: 'Upload an image before connecting to the API.',
+          errorMessage: 'يرجى رفع صورة قبل الاتصال بخدمة التحليل.',
         ),
       );
       return;
@@ -98,7 +97,7 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
         print('[ANALYZE_IMAGE] Firebase update completed!');
       } catch (firebaseErr) {
         print('[ANALYZE_IMAGE] Firebase update FAILED: $firebaseErr');
-        firebaseError = 'Firebase sync failed (non-critical): $firebaseErr';
+        firebaseError = 'مزامنة Firebase فشلت (غير حرجة): $firebaseErr';
       }
 
       emit(
@@ -130,10 +129,11 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
 
           print('[ANALYZE_IMAGE] Notification added for disease: $diseaseName');
         } else {
-          print('[ANALYZE_IMAGE] Push notifications are disabled. Skipping notification.');
+          print(
+            '[ANALYZE_IMAGE] Push notifications are disabled. Skipping notification.',
+          );
         }
       }
-
 
       print('[ANALYZE_IMAGE] Analysis completed successfully!');
     } catch (error) {
@@ -142,10 +142,11 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
         state.copyWith(
           status: DiseaseDetectionStatus.error,
           errorMessage:
-              'API Analysis failed: $error\n\nTips:\n'
-              '• Check image quality\n'
-              '• Ensure good lighting\n'
-              '• Verify Roboflow API key',
+              'فشل تحليل API: $error\n\n'
+              'نصائح:\n'
+              '• تحقق من جودة الصورة\n'
+              '• تأكد من وجود إضاءة جيدة\n'
+              '• تحقق من مفتاح Roboflow API',
         ),
       );
     }

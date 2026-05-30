@@ -2,33 +2,25 @@
 
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/tomato_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
 import '../../../core/config/app_runtime_config.dart';
-import '../../../core/config/roboflow_config.dart';
 import '../models/detection_result.dart';
 
 class DiseaseDetectionService {
   DiseaseDetectionService({
     required ImagePicker imagePicker,
-    required Dio dio,
     required FirebaseDatabase database,
-    required RoboflowConfig config,
     required CucumberClassifierService cucumberClassifierService,
   }) : _imagePicker = imagePicker,
-       _dio = dio,
        _database = database,
-       _config = config,
        _cucumberClassifierService = cucumberClassifierService;
 
   final ImagePicker _imagePicker;
-  final Dio _dio;
   final FirebaseDatabase _database;
-  final RoboflowConfig _config;
   final CucumberClassifierService _cucumberClassifierService;
 
   Future<String?> pickAndSaveLeafImage() async {
@@ -65,7 +57,7 @@ class DiseaseDetectionService {
   Future<DetectionResult> analyzeSavedImage(String imagePath) async {
     final File imageFile = File(imagePath);
     if (!await imageFile.exists()) {
-      throw Exception('No saved image found. Please upload an image first.');
+      throw Exception('لم يتم العثور على صورة محفوظة. يرجى رفع صورة أولاً.');
     }
 
     // Local on-device TFLite inference
@@ -95,7 +87,7 @@ class DiseaseDetectionService {
       final int? statusCode = error.response?.statusCode;
       final dynamic errorBody = error.response?.data;
       throw Exception(
-        'Roboflow model API failed. status=$statusCode body=$errorBody',
+        'فشل نموذج Roboflow. الحالة=$statusCode الجسم=$errorBody',
       );
     }
 
@@ -107,7 +99,7 @@ class DiseaseDetectionService {
       return DetectionResult.fromApiResponse(Map<String, dynamic>.from(body));
     }
 
-    throw Exception('Unexpected API response format.');
+    throw Exception('تنسيق استجابة API غير متوقع.');
     */
   }
 
@@ -122,7 +114,8 @@ class DiseaseDetectionService {
       // Handle case where detection failed or no disease detected
       final String leafStatus;
       if (labels.isEmpty) {
-        leafStatus = 'Unknown - Detection Failed';
+        // Use canonical token so UI mapping displays localized text
+        leafStatus = 'Unknown';
       } else if (isHealthy) {
         leafStatus = 'Healthy';
       } else {
@@ -156,7 +149,7 @@ class DiseaseDetectionService {
     } catch (e) {
       print('[DISEASE_DETECTION] Firebase update FAILED: $e');
       // Firebase write failed - rethrow so UI shows the error
-      throw Exception('Firebase update failed: $e');
+      throw Exception('فشل تحديث Firebase: $e');
     }
   }
 

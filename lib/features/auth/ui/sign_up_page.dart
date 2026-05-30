@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_cubit.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_state.dart';
+import '../../../core/utils/ui_helpers.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -64,14 +65,7 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _showSnackBar(String message) {
-    final bool isSuccess = message.contains('Account created successfully');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isSuccess ? Colors.green : Colors.red,
-        duration: const Duration(seconds: 5),
-      ),
-    );
+    showLocalizedSnackBar(context, message, durationSeconds: 5);
   }
 
   @override

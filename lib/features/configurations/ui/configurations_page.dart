@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/config/app_runtime_config.dart';
+import '../../../core/localization/app_strings.dart';
+import '../../../core/utils/ui_helpers.dart';
 import '../../firebase_data/models/farm_payload.dart';
 import '../../../core/services/firebase_streams.dart';
 
@@ -14,46 +16,18 @@ class ConfigurationsPage extends StatefulWidget {
 }
 
 class _ConfigurationsPageState extends State<ConfigurationsPage> {
-    final FirebaseDatabase _database = FirebaseDatabase.instance;
+  final FirebaseDatabase _database = FirebaseDatabase.instance;
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showLocalizedSnackBar(context, message, forceError: true);
   }
 
   void _showSuccess(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showLocalizedSnackBar(context, message, forceError: false);
   }
 
-  String _displayLeafStatus(String status) {
-    final String normalized = status.toLowerCase().replaceAll(
-      RegExp(r'[_\s-]'),
-      '',
-    );
-    switch (normalized) {
-      case 'healthy':
-        return 'سليم';
-      case 'unknown':
-        return 'غير معروف';
-      case 'bacterialspot':
-        return 'بقعة بكتيرية';
-      case 'lateblight':
-        return 'تعفن متأخر';
-      case 'earlyblight':
-        return 'تعفن مبكر';
-      case 'yellowleafcurl':
-        return 'لف الورقة الأصفر';
-      case 'septoria':
-        return 'سِبتوريا';
-      case 'powderymildew':
-        return 'سوس العفن';
-      default:
-        return status;
-    }
-  }
+  String _displayLeafStatus(String status) =>
+      AppStrings.displayLeafStatus(status);
 
   Future<int?> _showBoundedNumberDialog({
     required String title,
@@ -169,17 +143,6 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     );
   }
 
-  int? _parseAndValidateBoundedValue(
-    String raw,
-    int minAllowed,
-    int maxAllowed,
-  ) {
-    final int? value = int.tryParse(raw.trim());
-    if (value == null) return null;
-    if (value < minAllowed || value > maxAllowed) return null;
-    return value;
-  }
-
   bool _validateRangeValues(
     int minValue,
     int maxValue,
@@ -287,7 +250,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
       );
       _showSuccess('تم حفظ إعدادات الري التلقائي ومزامنتها.');
     } catch (error) {
-      _showError('Firebase sync failed: $error');
+      _showError('مزامنة Firebase فشلت: $error');
     }
   }
 
@@ -352,7 +315,7 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
       );
       _showSuccess('تم حفظ إعدادات التسميد التلقائي ومزامنتها.');
     } catch (error) {
-      _showError('Firebase sync failed: $error');
+      _showError('مزامنة Firebase فشلت: $error');
     }
   }
 
@@ -808,9 +771,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
       ).get();
       final Map<dynamic, dynamic> currentData =
           dataSnapshot.value as Map? ?? {};
-      final Map<dynamic, dynamic> sensors =
-          currentData['sensors'] as Map? ?? {};
-      final Map<dynamic, dynamic> leaf = currentData['leaf'] as Map? ?? {};
 
       // 2. Perform the toggle
       await pumpRef.set(newValue);
@@ -823,7 +783,7 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
 
       await widget.database.ref('${FarmPayload.manualLogsPath}/$logId').set({
         'time': DateTime.now().toUtc().toIso8601String(),
-        'action': '${newValue ? 'ON' : 'OFF'}',
+        'action': newValue ? 'ON' : 'OFF',
         'pump': pumpName,
         'state': {
           'temp': sensorsData['temp'] ?? 0,
@@ -879,7 +839,7 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/water'),
-                          'Water',
+                          'مضخة المياه',
                           value,
                         );
                       },
@@ -892,7 +852,7 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/fert1'),
-                          'Fertilizer 1',
+                          'مضخة السماد 1',
                           value,
                         );
                       },
@@ -905,7 +865,7 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/fert2'),
-                          'Fertilizer 2',
+                          'مضخة السماد 2',
                           value,
                         );
                       },

@@ -1,15 +1,16 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/app_runtime_config.dart';
+import '../../../core/localization/app_strings.dart';
+import '../../../core/utils/ui_helpers.dart';
 import '../cubit/disease_detection_cubit.dart';
 import '../cubit/disease_detection_state.dart';
 import '../models/detection_result.dart';
 
-const String _appIconAsset = 'lib/core/media/icons/app/app.png';
+// use centralized app icon from AppStrings
 
 class DiseaseDetectionPage extends StatelessWidget {
   const DiseaseDetectionPage({super.key});
@@ -29,9 +30,7 @@ class DiseaseDetectionPage extends StatelessWidget {
             return;
           }
 
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          showLocalizedSnackBar(context, message);
         },
         builder: (BuildContext context, DiseaseDetectionState state) {
           final DiseaseDetectionCubit cubit = context
@@ -210,7 +209,7 @@ class _AiHeroCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.asset(
-              _appIconAsset,
+              AppStrings.appIconAsset,
               width: 44,
               height: 44,
               fit: BoxFit.cover,
@@ -233,7 +232,7 @@ class _AiHeroCard extends StatelessWidget {
                 Text(
                   isAnalyzing
                       ? 'النموذج يحلل صورتك...'
-                      : 'ارفع صورة واضحة للورقة للحصول على نتائج سريعة من AI.',
+                      : 'ارفع صورة واضحة للورقة للحصول على نتائج سريعة من الذكاء الاصطناعي.',
                   style: const TextStyle(color: Colors.white),
                 ),
               ],
@@ -614,9 +613,6 @@ class _ResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String prettyJson = const JsonEncoder.withIndent(
-      '  ',
-    ).convert(result.rawJson);
     final String topLabel = result.detectedLabels.isEmpty
         ? 'لم يتم اكتشاف فئة مرضية في الاستجابة الحالية.'
         : result.detectedLabels.first;

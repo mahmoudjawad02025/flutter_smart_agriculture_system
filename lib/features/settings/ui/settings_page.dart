@@ -4,6 +4,7 @@ import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_cubit
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_state.dart';
 
 import '../../../core/config/app_runtime_config.dart';
+import '../../../core/utils/ui_helpers.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -14,12 +15,11 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   void _showSnackBar(String message, {bool isError = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        duration: const Duration(seconds: 4),
-      ),
+    showLocalizedSnackBar(
+      context,
+      message,
+      durationSeconds: 4,
+      forceError: isError,
     );
   }
 
@@ -154,9 +154,15 @@ class _SettingsPageState extends State<SettingsPage> {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          final isSuccess =
-              state.message.contains('successfully') ||
-              state.message.contains('sent to');
+          final String m = state.message.toLowerCase();
+          final bool isSuccess =
+              m.contains('successfully') ||
+              m.contains('sent to') ||
+              m.contains('تم') ||
+              m.contains('تم إرسال') ||
+              m.contains('تم تحديث') ||
+              m.contains('اكتمل') ||
+              m.contains('نجاح');
           _showSnackBar(state.message, isError: !isSuccess);
         }
       },

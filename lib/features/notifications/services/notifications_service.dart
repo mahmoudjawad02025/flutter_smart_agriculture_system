@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:uuid/uuid.dart';
 import '../../firebase_data/models/farm_payload.dart';
 import '../../../core/services/firebase_streams.dart';
+import '../../../core/localization/app_strings.dart';
 import '../models/farm_notification.dart';
 
 class NotificationsService {
@@ -21,10 +22,14 @@ class NotificationsService {
     try {
       final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
 
+      final String displayName = AppStrings.displayDiseaseName(diseaseName);
+
       final FarmNotification notification = FarmNotification(
         id: id,
-        title: 'Disease Detected',
-        message: '$diseaseName detected on your tomato leaf',
+        // Store Arabic-friendly title/message so users see localized
+        // notifications when the service creates them.
+        title: 'تم اكتشاف $displayName',
+        message: 'تم اكتشاف $displayName على ورقة ${AppStrings.tomatoDefinite}',
         diseaseName: diseaseName,
         nextUpload: nextUpload,
         isRead: false,
@@ -49,6 +54,30 @@ class NotificationsService {
       rethrow;
     }
   }
+
+  /// Delete all notifications and reset unread count.
+  Future<void> deleteAllNotifications() async {
+    try {
+      final snapshot = await _database
+          .ref(FarmPayload.notificationItemsPath)
+          .get();
+      if (!snapshot.exists) {
+        await _database.ref(FarmPayload.unreadCountPath).set(0);
+        return;
+      }
+
+      // Remove all notification items and reset unread counter.
+      await _database.ref(FarmPayload.notificationItemsPath).remove();
+      await _database.ref(FarmPayload.unreadCountPath).set(0);
+
+      print('[NOTIFICATIONS_SERVICE] All notifications deleted');
+    } catch (e) {
+      print('[NOTIFICATIONS_SERVICE] Error deleting all notifications: $e');
+      rethrow;
+    }
+  }
+
+  // Use centralized display mapping in `AppStrings`.
 
   Future<void> markAsUnread(String notificationId) async {
     try {
@@ -187,8 +216,7 @@ class NotificationsService {
 
   /// Get real-time stream of all notifications
   Stream<List<FarmNotification>> getNotificationsStream() {
-    return FirebaseStreams.notificationItemsStream.map(
-      (event) {
+    return FirebaseStreams.notificationItemsStream.map((event) {
       if (!event.snapshot.exists) {
         return <FarmNotification>[];
       }
@@ -210,6 +238,8 @@ class NotificationsService {
 
   /// Get real-time stream of unread count
   Stream<int> getUnreadCountStream() {
-    return FirebaseStreams.unreadCountStream.map((event) => (event.snapshot.value as int?) ?? 0);
+    return FirebaseStreams.unreadCountStream.map(
+      (event) => (event.snapshot.value as int?) ?? 0,
+    );
   }
 }

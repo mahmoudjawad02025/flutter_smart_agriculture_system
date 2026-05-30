@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../core/localization/app_strings.dart';
 
 class FarmNotification extends Equatable {
   const FarmNotification({
@@ -22,7 +23,7 @@ class FarmNotification extends Equatable {
   factory FarmNotification.fromMap(String id, Map<String, dynamic> map) {
     return FarmNotification(
       id: id,
-      title: map['title'] as String? ?? 'Disease Detected',
+      title: map['title'] as String? ?? AppStrings.diseaseDetected,
       message: map['message'] as String? ?? '',
       diseaseName: map['disease_name'] as String? ?? '',
       nextUpload: map['next_upload'] as String? ?? '',

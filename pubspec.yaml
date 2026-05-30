@@ -53,6 +53,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: 0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -76,6 +77,12 @@ flutter:
     - lib/core/media/icons/app/app.png
     - assets/best_float32.tflite
     - lib/docs/firebase_struct.json
+
+# Configuration for generating launcher icons from the app asset.
+flutter_icons:
+  android: true
+  ios: true
+  image_path: lib/core/media/icons/app/app.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

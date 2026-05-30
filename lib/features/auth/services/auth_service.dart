@@ -57,10 +57,10 @@ class AuthService {
             .ref('${FarmPayload.notificationItemsPath}/notif_$notifId')
             .set({
               'id': notifId,
-              'title': 'New User Request',
+              'title': 'طلب مستخدم جديد',
               'disease_name': 'User_Signup',
               'message':
-                  'A new user ($displayName) has registered and is waiting for your approval in User Management.',
+                  'قام المستخدم $displayName بالتسجيل ويحتاج موافقتك في إدارة المستخدمين.',
               'created_at': DateTime.now().toUtc().toIso8601String(),
               'next_upload': '',
               'is_read': false,
@@ -72,7 +72,7 @@ class AuthService {
       if (authUser.status == 'pending') {
         await _firebaseAuth.signOut();
         throw Exception(
-          'Account created successfully! Please wait for an administrator to approve your request.',
+          'تم إنشاء الحساب بنجاح! يرجى الانتظار حتى يوافق المسؤول على طلبك.',
         );
       }
 
@@ -97,12 +97,12 @@ class AuthService {
       if (authUser.status == 'pending') {
         await logout();
         throw Exception(
-          'Your account is pending approval by an admin. Please check back later.',
+          'حسابك معلق في انتظار موافقة المسؤول. يرجى المحاولة لاحقًا.',
         );
       }
       if (authUser.status == 'rejected' || authUser.status == 'blocked') {
         await logout();
-        throw Exception('Your account access has been restricted by an admin.');
+        throw Exception('تم تقييد وصول حسابك من قبل مسؤول.');
       }
 
       return authUser;
@@ -117,7 +117,7 @@ class AuthService {
     try {
       await _firebaseAuth.signOut();
     } catch (e) {
-      throw Exception('Logout failed: ${e.toString()}');
+      throw Exception('فشل تسجيل الخروج: ${e.toString()}');
     }
   }
 
@@ -132,7 +132,7 @@ class AuthService {
   Future<void> reauthenticate(String password) async {
     final User? user = _firebaseAuth.currentUser;
     if (user == null || user.email == null)
-      throw Exception('No user logged in.');
+      throw Exception('لا يوجد مستخدم مسجل الدخول.');
 
     AuthCredential credential = EmailAuthProvider.credential(
       email: user.email!,
@@ -160,7 +160,7 @@ class AuthService {
         'photoUrl': photoUrl,
       });
     } catch (e) {
-      throw Exception('Update profile failed: ${e.toString()}');
+      throw Exception('فشل تحديث الملف الشخصي: ${e.toString()}');
     }
   }
 
@@ -275,22 +275,22 @@ class AuthService {
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'كلمة المرور المقدمة ضعيفة جدًا.';
       case 'email-already-in-use':
-        return 'The account already exists for that email.';
+        return 'يوجد حساب بالفعل لهذا البريد الإلكتروني.';
       case 'invalid-email':
-        return 'The email address is not valid.';
+        return 'عنوان البريد الإلكتروني غير صالح.';
       case 'user-disabled':
-        return 'The user account has been disabled.';
+        return 'تم تعطيل حساب المستخدم.';
       case 'user-not-found':
-        return 'No user found for that email.';
+        return 'لم يتم العثور على مستخدم بهذا البريد الإلكتروني.';
       case 'wrong-password':
       case 'invalid-credential':
-        return 'The current password you entered is incorrect.';
+        return 'كلمة المرور الحالية التي أدخلتها غير صحيحة.';
       case 'internal-error':
-        return 'Authentication failed. Please check your current password.';
+        return 'فشل المصادقة. يرجى التحقق من كلمة المرور الحالية.';
       default:
-        return e.message ?? 'An error occurred';
+        return e.message ?? 'حدث خطأ';
     }
   }
 }

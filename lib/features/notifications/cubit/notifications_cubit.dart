@@ -80,6 +80,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
+  Future<void> deleteAllNotifications() async {
+    try {
+      await _notificationsService.deleteAllNotifications();
+    } catch (e) {
+      print('[NOTIFICATIONS] Error deleting all notifications: $e');
+    }
+  }
+
   Future<void> markAllAsRead() async {
     try {
       await _notificationsService.markAllAsRead();

@@ -105,7 +105,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(
         AuthError(
-          'Verification email sent to $newEmail. Please confirm to finish change.',
+          'تم إرسال رسالة تحقق إلى $newEmail. يرجى التأكيد لإتمام التغيير.',
           authenticatedUser: user,
         ),
       );
@@ -124,9 +124,7 @@ class AuthCubit extends Cubit<AuthState> {
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
-      emit(
-        AuthError('Password updated successfully.', authenticatedUser: user),
-      );
+      emit(AuthError('تم تحديث كلمة المرور بنجاح.', authenticatedUser: user));
     } catch (e) {
       emit(AuthError(_cleanError(e), authenticatedUser: user));
     }

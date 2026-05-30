@@ -44,7 +44,7 @@ class AutoActionDecision {
     Map<String, dynamic> sensorsSnapshot = const <String, dynamic>{},
     String? leafStatus,
   }) {
-    final String label = kind == AutoActionKind.water ? 'Water' : 'Fertilizer';
+    final String label = kind == AutoActionKind.water ? 'الري' : 'التسميد';
     return AutoActionDecision(
       kind: kind,
       desiredPumpOn: false,
@@ -53,10 +53,10 @@ class AutoActionDecision {
       shouldSendNotification: false,
       reason: reason,
       targetValue: null,
-      logTitle: 'Auto $label idle',
-      logMessage: 'No action required.',
-      notificationTitle: 'Auto $label idle',
-      notificationMessage: 'No action required.',
+      logTitle: 'النظام التلقائي ($label) - خامل',
+      logMessage: 'لا يلزم أي إجراء.',
+      notificationTitle: 'النظام التلقائي ($label)',
+      notificationMessage: 'لا يوجد إجراء مطلوب.',
       createdAt: createdAt,
       sensorsSnapshot: sensorsSnapshot,
       leafStatus: leafStatus,
@@ -162,20 +162,19 @@ class AutoActionsScenario {
     bool shouldWriteLog = false;
     bool shouldSendNotification = false;
     String reason = 'soil_safe';
-    String logTitle = 'Auto Water Idle';
-    String logMessage = 'Soil moisture is within the safe range.';
-    String notificationTitle = 'Auto Water';
-    String notificationMessage = 'Soil moisture is within the safe range.';
+    String logTitle = 'النظام التلقائي (الري) - خامل';
+    String logMessage = 'رطوبة التربة ضمن النطاق الآمن.';
+    String notificationTitle = 'النظام التلقائي (الري)';
+    String notificationMessage = 'رطوبة التربة ضمن النطاق الآمن.';
     double? targetValue;
 
     if (moist >= moistMax) {
       desiredPumpOn = false;
       reason = 'emergency_stop';
-      logTitle = 'Auto Water Stopped';
-      logMessage = 'Moisture reached the upper safe limit.';
-      notificationTitle = 'Auto Water Stopped';
-      notificationMessage =
-          'Watering stopped because moisture reached the safe limit.';
+      logTitle = 'تم إيقاف الري التلقائي';
+      logMessage = 'تم إيقاف الري لأن الرطوبة وصلت إلى الحد الأعلى الآمن.';
+      notificationTitle = 'تم إيقاف الري التلقائي';
+      notificationMessage = 'توقف الري لأن الرطوبة وصلت إلى الحد الآمن الأعلى.';
       shouldWriteLog = currentPumpOn;
       shouldSendNotification = currentPumpOn;
     } else if (moist < moistMin) {
@@ -199,21 +198,21 @@ class AutoActionsScenario {
       }
 
       targetValue = _clampTarget(targetValue, moistMin, moistMax);
-      logTitle = 'Auto Water Started';
+      logTitle = 'بدأ الري التلقائي';
       logMessage =
-          'Watering started because moisture is below the safe range (target: ${targetValue.toStringAsFixed(1)}).';
-      notificationTitle = 'Auto Water Started';
+          'تم بدء الري لأن الرطوبة أقل من النطاق الآمن (الهدف: ${targetValue.toStringAsFixed(1)}).';
+      notificationTitle = 'بدأ الري التلقائي';
       notificationMessage =
-          'Watering started because moisture is low. Current moist: $moist, target: ${targetValue.toStringAsFixed(1)}.';
+          'تم بدء الري لأن الرطوبة منخفضة. الرطوبة الحالية: $moist، الهدف: ${targetValue.toStringAsFixed(1)}.';
       shouldWriteLog = !currentPumpOn;
       shouldSendNotification = !currentPumpOn;
     } else {
       desiredPumpOn = false;
       reason = 'soil_safe';
-      logTitle = 'Auto Water Stopped';
-      logMessage = 'Soil moisture is safe, so the pump stayed off.';
-      notificationTitle = 'Auto Water';
-      notificationMessage = 'Moisture is safe. Pump remains off.';
+      logTitle = 'تم إيقاف الري التلقائي';
+      logMessage = 'رطوبة التربة آمنة، لذا لم يتم تشغيل المضخة.';
+      notificationTitle = 'النظام التلقائي (الري)';
+      notificationMessage = 'الرطوبة آمنة، المضخة لم تُشغل.';
       shouldWriteLog = false;
       shouldSendNotification = false;
     }

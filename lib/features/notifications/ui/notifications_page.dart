@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/app_runtime_config.dart';
+import '../../../core/localization/app_strings.dart';
 import '../cubit/notifications_cubit.dart';
 import '../models/farm_notification.dart';
 
@@ -14,6 +15,7 @@ class NotificationsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('الإشعارات'),
         actions: <Widget>[
+          // Mark all as read
           BlocBuilder<NotificationsCubit, NotificationsState>(
             builder: (context, state) {
               return Padding(
@@ -30,11 +32,52 @@ class NotificationsPage extends StatelessWidget {
                           context.read<NotificationsCubit>().markAllAsRead();
                         },
                   icon: const Icon(Icons.done_all_outlined, size: 18),
-                  label: const Text('مسح الكل'),
+                  label: const Text('وضع الكل كمقروء'),
                 ),
               );
             },
           ),
+
+          // Delete all notifications
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                backgroundColor: Colors.white24,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (c) => AlertDialog(
+                    title: const Text('تأكيد الحذف'),
+                    content: const Text(
+                      'هل تريد حذف جميع الإشعارات؟ هذا الإجراء لا يمكن التراجع عنه.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(c).pop(false),
+                        child: const Text('إلغاء'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(c).pop(true),
+                        child: const Text('حذف'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  // ignore: use_build_context_synchronously
+                  context.read<NotificationsCubit>().deleteAllNotifications();
+                }
+              },
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('حذف الكل'),
+            ),
+          ),
+
           const SizedBox(width: 4),
         ],
       ),
@@ -114,6 +157,72 @@ class _NotificationCard extends StatelessWidget {
                     ? const Color(0xFFD32F2F)
                     : const Color(0xFF2E7D32));
 
+          // Prefer explicit diseaseName; if missing, try to detect known
+          // disease codes inside the stored title/message so legacy DB
+          // entries written in English still render Arabic labels.
+          String extractDiseaseFromText(String? text) {
+            if (text == null || text.isEmpty) return '';
+            final String normalized = text.toLowerCase().replaceAll(
+              RegExp(r'[_\s-]'),
+              '',
+            );
+            final List<String> candidates = <String>[
+              'manualtest',
+              'usersignup',
+              'healthy',
+              'lateblight',
+              'late',
+              'bacterialspot',
+              'bacterial',
+              'earlyblight',
+              'yellowleafcurl',
+              'septoria',
+              'powderymildew',
+            ];
+            for (final String c in candidates) {
+              if (normalized.contains(c)) return c;
+            }
+            return '';
+          }
+
+          String detectedCode = '';
+          if (notification.diseaseName.isNotEmpty) {
+            detectedCode = notification.diseaseName;
+          } else {
+            final String fromTitle = extractDiseaseFromText(
+              notification.title,
+            );
+            final String fromMsg = extractDiseaseFromText(
+              notification.message,
+            );
+            detectedCode = fromTitle.isNotEmpty ? fromTitle : fromMsg;
+          }
+
+          final String displayDisease = detectedCode.isNotEmpty
+              ? AppStrings.displayDiseaseName(detectedCode)
+              : '';
+
+          late final String titleText;
+          late final String bodyText;
+
+          if (detectedCode.isNotEmpty &&
+              detectedCode.toLowerCase() != 'usersignup') {
+            if (detectedCode.toLowerCase() == 'manualtest') {
+              titleText = AppStrings.displayDiseaseName(detectedCode);
+              bodyText = notification.message;
+            } else {
+              titleText = 'تم اكتشاف $displayDisease';
+              bodyText =
+                  'تم اكتشاف $displayDisease على ورقة ${AppStrings.tomatoDefinite}';
+            }
+          } else if (detectedCode.toLowerCase() == 'usersignup') {
+            titleText = AppStrings.displayDiseaseName(detectedCode);
+            bodyText = notification.message;
+          } else {
+            titleText = notification.title;
+            bodyText = notification.message;
+          }
+
           return Container(
             decoration: BoxDecoration(
               border: Border(left: BorderSide(color: accentColor, width: 5)),
@@ -151,7 +260,7 @@ class _NotificationCard extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  notification.title,
+                                  titleText,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
@@ -182,7 +291,7 @@ class _NotificationCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
-                                'NEW',
+                                'جديد',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 9,
@@ -205,7 +314,9 @@ class _NotificationCard extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text: notification.diseaseName.replaceAll('_', ' '),
+                        text: displayDisease.isNotEmpty
+                            ? displayDisease
+                            : _displayDiseaseName(notification.diseaseName),
                         style: TextStyle(
                           color: accentColor,
                           fontWeight: FontWeight.bold,
@@ -216,7 +327,7 @@ class _NotificationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  notification.message,
+                  bodyText,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[800],
@@ -247,7 +358,7 @@ class _NotificationCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'إعادة رفع لاحقة: ${notification.nextUpload == "" ? "N/A" : _formatTimestamp(DateTime.tryParse(notification.nextUpload) ?? DateTime.now())}',
+                              'إعادة رفع لاحقة: ${notification.nextUpload == "" ? "غير متوفر" : _formatTimestamp(DateTime.tryParse(notification.nextUpload) ?? DateTime.now())}',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.blue,
@@ -306,6 +417,10 @@ class _NotificationCard extends StatelessWidget {
 
   String _formatTimeOnly(DateTime dt) {
     return '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _displayDiseaseName(String name) {
+    return AppStrings.displayDiseaseName(name);
   }
 }
 

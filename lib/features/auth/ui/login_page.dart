@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_cubit.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_state.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/ui/sign_up_page.dart';
+import '../../../core/utils/ui_helpers.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,12 +45,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showSnackBar(String message, {bool isError = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        duration: const Duration(seconds: 4),
-      ),
+    showLocalizedSnackBar(
+      context,
+      message,
+      durationSeconds: 4,
+      forceError: isError,
     );
   }
 
@@ -61,7 +61,13 @@ class _LoginPageState extends State<LoginPage> {
         if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
 
         if (state is AuthError) {
-          final bool isSuccess = state.message.contains('successfully');
+          final String msg = state.message.toLowerCase();
+          final bool isSuccess =
+              msg.contains('successfully') ||
+              msg.contains('بنجاح') ||
+              msg.contains('تم إرسال') ||
+              msg.contains('تم تحديث') ||
+              msg.contains('تم تسجيل');
           _showSnackBar(state.message, isError: !isSuccess);
         }
         if (state is AuthLoading) {
