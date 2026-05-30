@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/tomato_classifier_service.dart';
+import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/plant_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/firebase_options.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'core/config/app_access_control.dart';
 import 'core/config/app_runtime_config.dart';
 import 'core/localization/app_strings.dart';
+import 'core/services/auto_actions_engine.dart';
 import 'features/auth/cubit/auth_cubit.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/ui/auth_wrapper.dart';
@@ -46,6 +48,13 @@ void main() async {
   } catch (error, stack) {
     debugPrint('[STARTUP] FarmPayload.ensureDefaults failed: $error\n$stack');
   }
+
+  // Start in-app automation: reacts to Firebase changes while the app is running.
+  // NOTE: Realtime Database does not execute Dart code on the server.
+  AutoActionsEngine.ensureStarted(
+    database: FirebaseDatabase.instance,
+    debug: kDebugMode,
+  );
 
   runApp(const MyApp());
 }
@@ -87,7 +96,7 @@ class MyApp extends StatelessWidget {
             final DiseaseDetectionService service = DiseaseDetectionService(
               imagePicker: ImagePicker(),
               database: FirebaseDatabase.instance,
-              cucumberClassifierService: CucumberClassifierService(),
+              plantClassifierService: PlantClassifierService(),
             );
             return DiseaseDetectionCubit(
               diseaseDetectionService: service,

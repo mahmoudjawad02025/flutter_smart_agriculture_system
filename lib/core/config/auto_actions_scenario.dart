@@ -94,11 +94,100 @@ class AutoActionDecision {
 class AutoActionsScenario {
   const AutoActionsScenario._();
 
-  // Editable tuning values for the water scenario.
+  // ============================================================================
+  // TUNABLE PARAMETERS - Edit these to adjust watering behavior
+  // ============================================================================
+
+  /// Small bonus: used when dry air (slight water increase)
   static const double smallBonusFactor = 0.05;
+
+  /// Medium bonus: used when hot air (moderate water increase)
   static const double mediumBonusFactor = 0.10;
+
+  /// High bonus: used when hot and dry air (aggressive water increase)
   static const double highBonusFactor = 0.18;
+
+  /// Reduce water target when cold or humid (to prevent overwatering)
   static const double humidAirReduceFactor = 0.08;
+
+  // ============================================================================
+  // WATER SCENARIO - Helper functions
+  // ============================================================================
+
+  /// Determines if water pump should START
+  /// Returns true when soil moisture drops below minimum threshold
+  static bool shouldStartWaterPump({
+    required int moist,
+    required int moistMin,
+  }) {
+    return moist < moistMin;
+  }
+
+  /// Determines if water pump should STOP
+  /// Stops when moisture reaches target OR exceeds maximum
+  /// Target adjusts based on temperature/humidity conditions
+  static bool shouldStopWaterPump({
+    required int moist,
+    required int moistMax,
+    required double targetValue,
+    required bool currentPumpOn,
+  }) {
+    // Emergency stop: moisture exceeded maximum safe level
+    if (moist >= moistMax) {
+      return true;
+    }
+
+    // Normal stop: moisture reached target value (affected by temp/hum)
+    if (currentPumpOn && moist >= targetValue) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Calculates the target moisture level based on environmental conditions
+  /// - Hot & Dry: Increase target aggressively (high bonus)
+  /// - Hot: Increase target moderately (medium bonus)
+  /// - Dry: Increase target slightly (small bonus)
+  /// - Cold/Humid: Decrease target (reduce bonus)
+  /// - Normal: Middle of safe range
+  static double calculateWaterTarget({
+    required int moistMin,
+    required int moistMax,
+    required int temp,
+    required int hum,
+    required int tempMin,
+    required int tempMax,
+    required int humMin,
+    required int humMax,
+  }) {
+    // Hot + Dry = aggressive watering (high bonus)
+    if (temp > tempMax && hum < humMin) {
+      return moistMin + highBonus(moistMin, moistMax);
+    }
+
+    // Just Hot = moderate watering (medium bonus)
+    if (temp > tempMax) {
+      return moistMin + mediumBonus(moistMin, moistMax);
+    }
+
+    // Just Dry = slight watering (small bonus)
+    if (hum < humMin) {
+      return moistMin + smallBonus(moistMin, moistMax);
+    }
+
+    // Cold or Humid = reduce watering need
+    if (temp < tempMin || hum > humMax) {
+      return moistMin + moistureHumidAirReduce(moistMin, moistMax);
+    }
+
+    // Normal conditions = middle of range
+    return normalTarget(moistMin, moistMax);
+  }
+
+  // ============================================================================
+  // HELPER CALCULATION FUNCTIONS
+  // ============================================================================
 
   static double normalTarget(int moistMin, int moistMax) {
     return (moistMin + moistMax) / 2;
@@ -119,6 +208,10 @@ class AutoActionsScenario {
   static double moistureHumidAirReduce(int moistMin, int moistMax) {
     return (moistMax - moistMin) * humidAirReduceFactor;
   }
+
+  // ============================================================================
+  // MAIN EVALUATION FUNCTION
+  // ============================================================================
 
   static AutoActionDecision evaluateWater({
     required bool autoMode,
@@ -148,6 +241,7 @@ class AutoActionsScenario {
       'moist_max': moistMax,
     };
 
+    // Auto mode disabled - no action
     if (!autoMode) {
       return AutoActionDecision.none(
         kind: AutoActionKind.water,
@@ -158,6 +252,20 @@ class AutoActionsScenario {
       );
     }
 
+    // Calculate target moisture based on current conditions
+    // This target will be used to determine when to stop watering
+    double targetValue = calculateWaterTarget(
+      moistMin: moistMin,
+      moistMax: moistMax,
+      temp: temp,
+      hum: hum,
+      tempMin: tempMin,
+      tempMax: tempMax,
+      humMin: humMin,
+      humMax: humMax,
+    );
+    targetValue = _clampTarget(targetValue, moistMin, moistMax);
+
     bool desiredPumpOn = currentPumpOn;
     bool shouldWriteLog = false;
     bool shouldSendNotification = false;
@@ -166,55 +274,63 @@ class AutoActionsScenario {
     String logMessage = 'رطوبة التربة ضمن النطاق الآمن.';
     String notificationTitle = 'النظام التلقائي (الري)';
     String notificationMessage = 'رطوبة التربة ضمن النطاق الآمن.';
-    double? targetValue;
 
-    if (moist >= moistMax) {
+    // STOP PUMP: Check if pump should stop based on target value
+    if (shouldStopWaterPump(
+      moist: moist,
+      moistMax: moistMax,
+      targetValue: targetValue,
+      currentPumpOn: currentPumpOn,
+    )) {
       desiredPumpOn = false;
-      reason = 'emergency_stop';
-      logTitle = 'تم إيقاف الري التلقائي';
-      logMessage = 'تم إيقاف الري لأن الرطوبة وصلت إلى الحد الأعلى الآمن.';
-      notificationTitle = 'تم إيقاف الري التلقائي';
-      notificationMessage = 'توقف الري لأن الرطوبة وصلت إلى الحد الآمن الأعلى.';
-      shouldWriteLog = currentPumpOn;
-      shouldSendNotification = currentPumpOn;
-    } else if (moist < moistMin) {
-      desiredPumpOn = true;
 
-      if (temp > tempMax && hum < humMin) {
-        reason = 'hot_and_dry_air';
-        targetValue = moistMin + highBonus(moistMin, moistMax);
-      } else if (temp > tempMax) {
-        reason = 'hot_air';
-        targetValue = moistMin + mediumBonus(moistMin, moistMax);
-      } else if (hum < humMin) {
-        reason = 'dry_air';
-        targetValue = moistMin + smallBonus(moistMin, moistMax);
-      } else if (temp < tempMin || hum > humMax) {
-        reason = 'cold_or_humid_air';
-        targetValue = moistMin + moistureHumidAirReduce(moistMin, moistMax);
+      if (moist >= moistMax) {
+        // Emergency: reached max moisture
+        reason = 'emergency_stop';
+        logTitle = 'تم إيقاف الري التلقائي';
+        logMessage = 'تم إيقاف الري لأن الرطوبة وصلت إلى الحد الأعلى الآمن.';
+        notificationTitle = 'تم إيقاف الري التلقائي';
+        notificationMessage =
+            'توقف الري لأن الرطوبة وصلت إلى الحد الآمن الأعلى.';
       } else {
-        reason = 'normal_climate';
-        targetValue = normalTarget(moistMin, moistMax);
+        // Normal stop: reached target moisture
+        reason = 'soil_safe';
+        logTitle = 'تم إيقاف الري التلقائي';
+        logMessage =
+            'رطوبة التربة وصلت للهدف (${targetValue.toStringAsFixed(1)})، تم إيقاف المضخة.';
+        notificationTitle = 'تم إيقاف الري التلقائي';
+        notificationMessage = 'الرطوبة وصلت للهدف. رطوبة آمنة الآن.';
       }
 
-      targetValue = _clampTarget(targetValue, moistMin, moistMax);
+      shouldWriteLog = currentPumpOn; // Only log if pump state changed
+      shouldSendNotification = currentPumpOn;
+    }
+    // START PUMP: When moisture is below minimum
+    else if (shouldStartWaterPump(moist: moist, moistMin: moistMin)) {
+      desiredPumpOn = true;
+
+      // Set reason based on climate (determines why target is what it is)
+      if (temp > tempMax && hum < humMin) {
+        reason = 'hot_and_dry_air';
+      } else if (temp > tempMax) {
+        reason = 'hot_air';
+      } else if (hum < humMin) {
+        reason = 'dry_air';
+      } else if (temp < tempMin || hum > humMax) {
+        reason = 'cold_or_humid_air';
+      } else {
+        reason = 'normal_climate';
+      }
+
       logTitle = 'بدأ الري التلقائي';
       logMessage =
           'تم بدء الري لأن الرطوبة أقل من النطاق الآمن (الهدف: ${targetValue.toStringAsFixed(1)}).';
       notificationTitle = 'بدأ الري التلقائي';
       notificationMessage =
           'تم بدء الري لأن الرطوبة منخفضة. الرطوبة الحالية: $moist، الهدف: ${targetValue.toStringAsFixed(1)}.';
-      shouldWriteLog = !currentPumpOn;
+
+      shouldWriteLog = !currentPumpOn; // Only log if pump state changed
       shouldSendNotification = !currentPumpOn;
-    } else {
-      desiredPumpOn = false;
-      reason = 'soil_safe';
-      logTitle = 'تم إيقاف الري التلقائي';
-      logMessage = 'رطوبة التربة آمنة، لذا لم يتم تشغيل المضخة.';
-      notificationTitle = 'النظام التلقائي (الري)';
-      notificationMessage = 'الرطوبة آمنة، المضخة لم تُشغل.';
-      shouldWriteLog = false;
-      shouldSendNotification = false;
     }
 
     return AutoActionDecision(
@@ -235,6 +351,12 @@ class AutoActionsScenario {
     );
   }
 
+  // ============================================================================
+  // FERTILIZER SCENARIO - Currently EMPTY (to be implemented)
+  // ============================================================================
+
+  /// Evaluates fertilizer needs
+  /// This scenario is intentionally empty until requirements are finalized
   static AutoActionDecision evaluateFertilizer({
     required bool autoMode,
     required bool currentPumpOn,
@@ -265,6 +387,7 @@ class AutoActionsScenario {
       'leaf_goal': leafGoal,
     };
 
+    // Placeholder: No fertilizer action implemented yet
     return AutoActionDecision.none(
       kind: AutoActionKind.fertilizer,
       reason: autoMode ? 'scenario_empty' : 'auto_mode_off',
@@ -274,6 +397,15 @@ class AutoActionsScenario {
     );
   }
 
+  // ============================================================================
+  // EXECUTION FUNCTIONS - Perform actual actions on Firebase
+  // ============================================================================
+
+  /// Runs the water pump scenario:
+  /// 1. Evaluates current conditions
+  /// 2. Updates pump state if needed
+  /// 3. Writes logs to Firebase
+  /// 4. Sends notifications
   static Future<AutoActionDecision> runWaterScenario({
     required FirebaseDatabase database,
     required bool autoMode,
@@ -289,7 +421,9 @@ class AutoActionsScenario {
     required int moistMax,
     String? leafStatus,
     DateTime? createdAt,
+    bool debug = false,
   }) async {
+    // Step 1: Evaluate water conditions
     final AutoActionDecision decision = evaluateWater(
       autoMode: autoMode,
       currentPumpOn: currentPumpOn,
@@ -307,23 +441,46 @@ class AutoActionsScenario {
     );
 
     if (!autoMode) {
+      // Debug: write decision even when auto mode is off
+      if (debug) {
+        final String dbgId =
+            'auto_water_debug_${DateTime.now().microsecondsSinceEpoch}';
+        final Map<String, dynamic> dbg = Map<String, dynamic>.from(
+          decision.toLogMap(),
+        );
+        dbg['debug'] = true;
+        dbg['note'] = 'auto_mode_off';
+        await database.ref('${FarmPayload.autoLogsPath}/water/$dbgId').set(dbg);
+      }
       return decision;
     }
 
+    // Step 2: Update pump state if needed
     if (decision.shouldApplyPumpChange) {
       await database
           .ref('${FarmPayload.pumpsPath}/water')
           .set(decision.desiredPumpOn);
     }
 
+    // Step 3: Write log entry
     if (decision.shouldWriteLog) {
       final String logId =
           'auto_water_${decision.createdAt.microsecondsSinceEpoch}';
       await database
           .ref('${FarmPayload.autoLogsPath}/water/$logId')
           .set(decision.toLogMap());
+    } else if (debug) {
+      // Debug: write a debug log so you can inspect the evaluated decision
+      final String dbgId =
+          'auto_water_debug_${decision.createdAt.microsecondsSinceEpoch}';
+      final Map<String, dynamic> dbg = Map<String, dynamic>.from(
+        decision.toLogMap(),
+      );
+      dbg['debug'] = true;
+      await database.ref('${FarmPayload.autoLogsPath}/water/$dbgId').set(dbg);
     }
 
+    // Step 4: Send notification
     if (decision.shouldSendNotification) {
       final String notificationId =
           'auto_water_${decision.createdAt.microsecondsSinceEpoch}';
@@ -340,6 +497,8 @@ class AutoActionsScenario {
     return decision;
   }
 
+  /// Runs the fertilizer pump scenario
+  /// Currently a placeholder - no actions performed
   static Future<AutoActionDecision> runFertilizerScenario({
     required FirebaseDatabase database,
     required bool autoMode,
@@ -357,6 +516,7 @@ class AutoActionsScenario {
     String? leafStatus,
     DateTime? createdAt,
   }) async {
+    // Evaluate fertilizer scenario (currently empty)
     final AutoActionDecision decision = evaluateFertilizer(
       autoMode: autoMode,
       currentPumpOn: currentPumpOn,
@@ -374,10 +534,15 @@ class AutoActionsScenario {
       createdAt: createdAt,
     );
 
-    // Fertilizer scenario intentionally stays empty until rules are finalized.
+    // TODO: Implement fertilizer scenario logic here
     return decision;
   }
 
+  // ============================================================================
+  // UTILITY FUNCTIONS
+  // ============================================================================
+
+  /// Clamps the target value within safe min/max range
   static double _clampTarget(double target, int minValue, int maxValue) {
     return target.clamp(minValue.toDouble(), maxValue.toDouble()).toDouble();
   }

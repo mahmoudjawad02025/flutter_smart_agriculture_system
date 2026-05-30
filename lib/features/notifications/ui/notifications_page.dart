@@ -189,12 +189,8 @@ class _NotificationCard extends StatelessWidget {
           if (notification.diseaseName.isNotEmpty) {
             detectedCode = notification.diseaseName;
           } else {
-            final String fromTitle = extractDiseaseFromText(
-              notification.title,
-            );
-            final String fromMsg = extractDiseaseFromText(
-              notification.message,
-            );
+            final String fromTitle = extractDiseaseFromText(notification.title);
+            final String fromMsg = extractDiseaseFromText(notification.message);
             detectedCode = fromTitle.isNotEmpty ? fromTitle : fromMsg;
           }
 
@@ -213,7 +209,7 @@ class _NotificationCard extends StatelessWidget {
             } else {
               titleText = 'تم اكتشاف $displayDisease';
               bodyText =
-                  'تم اكتشاف $displayDisease على ورقة ${AppStrings.tomatoDefinite}';
+                  'تم اكتشاف $displayDisease على ورقة ${AppStrings.plantDefinite}';
             }
           } else if (detectedCode.toLowerCase() == 'usersignup') {
             titleText = AppStrings.displayDiseaseName(detectedCode);
@@ -524,7 +520,7 @@ class NotificationBadge extends StatelessWidget {
         return Badge.count(
           count: state.unreadCount,
           isLabelVisible: state.unreadCount > 0,
-          offset: const Offset(-2, 2),
+          offset: const Offset(24, 7),
           child: IconButton(
             icon: const Icon(Icons.notifications_outlined),
             tooltip: 'عرض الإشعارات',

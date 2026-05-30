@@ -13,8 +13,8 @@ class AppStrings {
   static const String newLabel = 'جديد';
 
   // Canonical crop name used across the app.
-  static const String tomato = 'بندورة';
-  static const String tomatoDefinite = 'البندورة';
+  static const String plant = 'نبتة';
+  static const String plantDefinite = 'النبتة';
 
   // Disease display mapping
   static String displayDiseaseName(String name) {

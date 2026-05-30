@@ -4,7 +4,8 @@ import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/tomato_classifier_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/plant_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
 import '../../../core/config/app_runtime_config.dart';
@@ -14,44 +15,53 @@ class DiseaseDetectionService {
   DiseaseDetectionService({
     required ImagePicker imagePicker,
     required FirebaseDatabase database,
-    required CucumberClassifierService cucumberClassifierService,
+    required PlantClassifierService plantClassifierService,
   }) : _imagePicker = imagePicker,
        _database = database,
-       _cucumberClassifierService = cucumberClassifierService;
+       _plantClassifierService = plantClassifierService;
 
   final ImagePicker _imagePicker;
   final FirebaseDatabase _database;
-  final CucumberClassifierService _cucumberClassifierService;
+  final PlantClassifierService _plantClassifierService;
 
   Future<String?> pickAndSaveLeafImage() async {
-    final XFile? selectedImage = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-    );
+    try {
+      final XFile? selectedImage = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
 
-    if (selectedImage == null) {
-      return null;
+      if (selectedImage == null) {
+        return null;
+      }
+
+      // Use getApplicationDocumentsDirectory for proper Android support
+      final Directory documentsDirectory =
+          await getApplicationDocumentsDirectory();
+      final Directory uploadsDirectory = Directory(
+        '${documentsDirectory.path}${Platform.pathSeparator}uploads',
+      );
+
+      if (!await uploadsDirectory.exists()) {
+        await uploadsDirectory.create(recursive: true);
+      }
+
+      final File savedImage = File(
+        '${uploadsDirectory.path}${Platform.pathSeparator}img.jpg',
+      );
+
+      if (await savedImage.exists()) {
+        await savedImage.delete();
+      }
+
+      final List<int> bytes = await selectedImage.readAsBytes();
+      await savedImage.writeAsBytes(bytes, flush: true);
+
+      print('[DISEASE_DETECTION] Image saved to: ${savedImage.path}');
+      return savedImage.path;
+    } catch (e) {
+      print('[DISEASE_DETECTION] Error picking/saving image: $e');
+      rethrow;
     }
-
-    final Directory uploadsDirectory = Directory(
-      '${Directory.current.path}${Platform.pathSeparator}lib${Platform.pathSeparator}core${Platform.pathSeparator}uploads',
-    );
-
-    if (!await uploadsDirectory.exists()) {
-      await uploadsDirectory.create(recursive: true);
-    }
-
-    final File savedImage = File(
-      '${uploadsDirectory.path}${Platform.pathSeparator}img.jpg',
-    );
-
-    if (await savedImage.exists()) {
-      await savedImage.delete();
-    }
-
-    final List<int> bytes = await selectedImage.readAsBytes();
-    await savedImage.writeAsBytes(bytes, flush: true);
-
-    return savedImage.path;
   }
 
   Future<DetectionResult> analyzeSavedImage(String imagePath) async {
@@ -61,7 +71,7 @@ class DiseaseDetectionService {
     }
 
     // Local on-device TFLite inference
-    return await _cucumberClassifierService.analyzeSavedImage(imagePath);
+    return await _plantClassifierService.analyzeSavedImage(imagePath);
 
     /*
     // Keep Roboflow API code commented out as requested

@@ -29,7 +29,7 @@ class NotificationsService {
         // Store Arabic-friendly title/message so users see localized
         // notifications when the service creates them.
         title: 'تم اكتشاف $displayName',
-        message: 'تم اكتشاف $displayName على ورقة ${AppStrings.tomatoDefinite}',
+        message: 'تم اكتشاف $displayName على ورقة ${AppStrings.plantDefinite}',
         diseaseName: diseaseName,
         nextUpload: nextUpload,
         isRead: false,
