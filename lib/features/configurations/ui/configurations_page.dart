@@ -788,25 +788,12 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
 
   Future<void> _handleManualToggle(
     DatabaseReference pumpRef,
-    String pumpName,
     bool newValue,
   ) async {
     try {
-      // 1. Capture "Before" state snapshot
-      final DataSnapshot dataSnapshot = await FarmPayload.rootRef(
-        widget.database,
-      ).get();
-      final Map<dynamic, dynamic> currentData =
-          dataSnapshot.value as Map? ?? {};
-
-      // 2. Perform the toggle
       await pumpRef.set(newValue);
-
-      // Logging is handled centrally by `PumpChangeLogger`, which observes
-      // the pumps root and writes minimal ON/OFF entries. Do not write a
-      // manual log here to avoid duplicate entries.
     } catch (e) {
-      debugPrint('Manual log failed: $e');
+      debugPrint('Manual pump toggle failed: $e');
     }
   }
 
@@ -849,7 +836,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/water'),
-                          'مضخة المياه',
                           value,
                         );
                       },
@@ -862,7 +848,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/fert1'),
-                          'مضخة السماد 1',
                           value,
                         );
                       },
@@ -875,7 +860,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/fert2'),
-                          'مضخة السماد 2',
                           value,
                         );
                       },

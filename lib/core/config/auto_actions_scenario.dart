@@ -9,12 +9,9 @@ class AutoActionDecision {
     required this.kind,
     required this.desiredPumpOn,
     required this.shouldApplyPumpChange,
-    required this.shouldWriteLog,
     required this.shouldSendNotification,
     required this.reason,
     required this.targetValue,
-    required this.logTitle,
-    required this.logMessage,
     required this.notificationTitle,
     required this.notificationMessage,
     required this.createdAt,
@@ -25,12 +22,9 @@ class AutoActionDecision {
   final AutoActionKind kind;
   final bool desiredPumpOn;
   final bool shouldApplyPumpChange;
-  final bool shouldWriteLog;
   final bool shouldSendNotification;
   final String reason;
   final double? targetValue;
-  final String logTitle;
-  final String logMessage;
   final String notificationTitle;
   final String notificationMessage;
   final DateTime createdAt;
@@ -49,27 +43,15 @@ class AutoActionDecision {
       kind: kind,
       desiredPumpOn: false,
       shouldApplyPumpChange: false,
-      shouldWriteLog: false,
       shouldSendNotification: false,
       reason: reason,
       targetValue: null,
-      logTitle: 'النظام التلقائي ($label) - خامل',
-      logMessage: 'لا يلزم أي إجراء.',
       notificationTitle: 'النظام التلقائي ($label)',
       notificationMessage: 'لا يوجد إجراء مطلوب.',
       createdAt: createdAt,
       sensorsSnapshot: sensorsSnapshot,
       leafStatus: leafStatus,
     );
-  }
-
-  Map<String, dynamic> toLogMap() {
-    // Minimal log format: only record timestamp, pump name and action.
-    return <String, dynamic>{
-      'time': createdAt.toUtc().toIso8601String(),
-      'pump': kind == AutoActionKind.water ? 'Water' : 'Fertilizer',
-      'action': desiredPumpOn ? 'ON' : 'OFF',
-    };
   }
 
   Map<String, dynamic> toNotificationMap() {
@@ -265,11 +247,8 @@ class AutoActionsScenario {
     targetValue = _clampTarget(targetValue, moistMin, moistMax);
 
     bool desiredPumpOn = currentPumpOn;
-    bool shouldWriteLog = false;
     bool shouldSendNotification = false;
     String reason = 'soil_safe';
-    String logTitle = 'النظام التلقائي (الري) - خامل';
-    String logMessage = 'رطوبة التربة ضمن النطاق الآمن.';
     String notificationTitle = 'النظام التلقائي (الري)';
     String notificationMessage = 'رطوبة التربة ضمن النطاق الآمن.';
 
@@ -285,22 +264,16 @@ class AutoActionsScenario {
       if (moist >= moistMax) {
         // Emergency: reached max moisture
         reason = 'emergency_stop';
-        logTitle = 'تم إيقاف الري التلقائي';
-        logMessage = 'تم إيقاف الري لأن الرطوبة وصلت إلى الحد الأعلى الآمن.';
         notificationTitle = 'تم إيقاف الري التلقائي';
         notificationMessage =
             'توقف الري لأن الرطوبة وصلت إلى الحد الآمن الأعلى.';
       } else {
         // Normal stop: reached target moisture
         reason = 'soil_safe';
-        logTitle = 'تم إيقاف الري التلقائي';
-        logMessage =
-            'رطوبة التربة وصلت للهدف (${targetValue.toStringAsFixed(1)})، تم إيقاف المضخة.';
         notificationTitle = 'تم إيقاف الري التلقائي';
         notificationMessage = 'الرطوبة وصلت للهدف. رطوبة آمنة الآن.';
       }
 
-      shouldWriteLog = currentPumpOn; // Only log if pump state changed
       shouldSendNotification = currentPumpOn;
     }
     // START PUMP: When moisture is below minimum
@@ -320,14 +293,10 @@ class AutoActionsScenario {
         reason = 'normal_climate';
       }
 
-      logTitle = 'بدأ الري التلقائي';
-      logMessage =
-          'تم بدء الري لأن الرطوبة أقل من النطاق الآمن (الهدف: ${targetValue.toStringAsFixed(1)}).';
       notificationTitle = 'بدأ الري التلقائي';
       notificationMessage =
           'تم بدء الري لأن الرطوبة منخفضة. الرطوبة الحالية: $moist، الهدف: ${targetValue.toStringAsFixed(1)}.';
 
-      shouldWriteLog = !currentPumpOn; // Only log if pump state changed
       shouldSendNotification = !currentPumpOn;
     }
 
@@ -335,12 +304,9 @@ class AutoActionsScenario {
       kind: AutoActionKind.water,
       desiredPumpOn: desiredPumpOn,
       shouldApplyPumpChange: desiredPumpOn != currentPumpOn,
-      shouldWriteLog: shouldWriteLog,
       shouldSendNotification: shouldSendNotification,
       reason: reason,
       targetValue: targetValue,
-      logTitle: logTitle,
-      logMessage: logMessage,
       notificationTitle: notificationTitle,
       notificationMessage: notificationMessage,
       createdAt: now,
@@ -450,10 +416,7 @@ class AutoActionsScenario {
           .set(decision.desiredPumpOn);
     }
 
-    // Step 3: Write log entry
-    // Log writes are now centralized by `PumpChangeLogger` which listens to
-    // the pumps root and records ON/OFF events. Avoid writing auto logs here
-    // to prevent duplication.
+    // Step 3: No auto log entry is written from the scenario.
 
     // Step 4: Send notification
     if (decision.shouldSendNotification) {

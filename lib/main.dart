@@ -15,7 +15,6 @@ import 'core/localization/app_strings.dart';
 import 'features/auth/cubit/auth_cubit.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/ui/auth_wrapper.dart';
-import 'core/services/pump_change_logger.dart';
 import 'core/services/auto_actions_engine.dart';
 
 import 'features/disease_detection/cubit/disease_detection_cubit.dart';
@@ -48,12 +47,6 @@ void main() async {
     await FarmPayload.ensureDefaults(FirebaseDatabase.instance);
   } catch (error, stack) {
     debugPrint('[STARTUP] FarmPayload.ensureDefaults failed: $error\n$stack');
-  }
-
-  try {
-    PumpChangeLogger.ensureStarted(database: FirebaseDatabase.instance);
-  } catch (error, stack) {
-    debugPrint('[STARTUP] PumpChangeLogger failed to start: $error\n$stack');
   }
 
   try {
