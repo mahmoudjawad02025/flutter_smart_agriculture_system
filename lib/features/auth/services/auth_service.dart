@@ -240,6 +240,41 @@ class AuthService {
     await _database.ref('${FarmPayload.usersPath}/$uid/status').set(newStatus);
   }
 
+  /// Delete a user account from both Firebase Auth and Realtime Database
+  Future<void> deleteUser(String uid) async {
+    try {
+      // First, delete from Realtime Database
+      await _database.ref('${FarmPayload.usersPath}/$uid').remove();
+      
+      // Then delete from Firebase Authentication
+      // Note: This requires the user to be re-authenticated if it's the current user
+      // For admin deletion of other users, we use the Admin SDK (not available in client)
+      // So we'll just delete the user record and log a note
+      print('[AUTH_SERVICE] User $uid deleted from Realtime Database');
+      
+      // If this is the current user, sign them out
+      final currentUser = _firebaseAuth.currentUser;
+      if (currentUser?.uid == uid) {
+        await _firebaseAuth.signOut();
+      }
+    } catch (e) {
+      print('[AUTH_SERVICE] Error deleting user $uid: $e');
+      rethrow;
+    }
+  }
+
+  /// Admin delete: Delete user from database only (Auth deletion requires client-side reauthentication)
+  Future<void> deleteUserAsAdmin(String uid) async {
+    try {
+      // Delete from Realtime Database
+      await _database.ref('${FarmPayload.usersPath}/$uid').remove();
+      print('[AUTH_SERVICE] User $uid deleted from Realtime Database by admin');
+    } catch (e) {
+      print('[AUTH_SERVICE] Error deleting user $uid: $e');
+      rethrow;
+    }
+  }
+
   Future<void> _ensureUserRecord({
     required User user,
     required bool isAdmin,

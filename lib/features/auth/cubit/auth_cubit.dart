@@ -151,6 +151,15 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> deleteUser(String uid) async {
+    final user = _currentUser;
+    try {
+      await _authService.deleteUserAsAdmin(uid);
+    } catch (e) {
+      emit(AuthError(_cleanError(e), authenticatedUser: user));
+    }
+  }
+
   @override
   Future<void> close() async {
     await _authStateSubscription.cancel();
