@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:firebase_database/firebase_database.dart';
 import '../../../core/services/firebase_streams.dart';
 import '../../../core/localization/app_strings.dart';
@@ -18,25 +16,15 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final Stream<DatabaseEvent> _dataStream;
-  final List<_SensorSample> _dailySensorSamples = <_SensorSample>[];
-  final Map<String, dynamic> _latestSource = <String, dynamic>{};
-  DateTime _currentDay = DateTime.now();
-  DateTime? _lastSampleTimestamp;
-  Timer? _sampleTimer;
 
   @override
   void initState() {
     super.initState();
     _dataStream = FirebaseStreams.rootStream;
-    _sampleTimer = Timer.periodic(
-      const Duration(minutes: 30),
-      (_) => _sampleCurrentSource(),
-    );
   }
 
   @override
   void dispose() {
-    _sampleTimer?.cancel();
     super.dispose();
   }
 
@@ -81,14 +69,6 @@ class _DashboardPageState extends State<DashboardPage> {
           final bool needsFix = leaf['needs_fix'] == true;
           final String reuploadAt = '${leaf['reupload_at'] ?? ''}';
 
-          _resetDailySamplesIfNeeded(DateTime.now());
-          _latestSource
-            ..clear()
-            ..addAll(source);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _submitInitialSampleIfNeeded();
-          });
-
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
@@ -99,7 +79,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 reuploadAt: reuploadAt,
               ),
               const SizedBox(height: 14),
-              _DailyAverageCard(samples: _dailySensorSamples),
+              const _DailyAverageCard(),
               const SizedBox(height: 14),
               GridView.count(
                 crossAxisCount: 2,
@@ -149,95 +129,6 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         },
       ),
-    );
-  }
-
-  void _resetDailySamplesIfNeeded(DateTime now) {
-    final DateTime today = DateTime(now.year, now.month, now.day);
-    if (!today.isSameDay(_currentDay)) {
-      _dailySensorSamples.clear();
-      _currentDay = today;
-      _lastSampleTimestamp = null;
-    }
-  }
-
-  void _submitInitialSampleIfNeeded() {
-    if (_lastSampleTimestamp != null || _latestSource.isEmpty) return;
-    _sampleCurrentSource();
-  }
-
-  void _sampleCurrentSource() {
-    if (!mounted) return;
-    final DateTime now = DateTime.now();
-    _resetDailySamplesIfNeeded(now);
-    if (_latestSource.isEmpty) return;
-    if (_lastSampleTimestamp != null &&
-        now.difference(_lastSampleTimestamp!).inMinutes < 30) {
-      return;
-    }
-
-    final _SensorSample? sample = _SensorSample.fromMap(_latestSource, now);
-    if (sample == null) return;
-
-    setState(() {
-      _dailySensorSamples.add(sample);
-      _lastSampleTimestamp = now;
-    });
-  }
-}
-
-class _SensorSample {
-  _SensorSample({
-    required this.timestamp,
-    required this.moist,
-    required this.temp,
-    required this.hum,
-    required this.n,
-    required this.p,
-    required this.k,
-  });
-
-  final DateTime timestamp;
-  final double? moist;
-  final double? temp;
-  final double? hum;
-  final double? n;
-  final double? p;
-  final double? k;
-
-  static _SensorSample? fromMap(Map<String, dynamic> map, DateTime timestamp) {
-    double? parseDouble(dynamic value) {
-      if (value is num) return value.toDouble();
-      if (value is String) {
-        return double.tryParse(value);
-      }
-      return null;
-    }
-
-    final double? moist = parseDouble(map['moist']);
-    final double? temp = parseDouble(map['temp']);
-    final double? hum = parseDouble(map['hum']);
-    final double? n = parseDouble(map['n']);
-    final double? p = parseDouble(map['p']);
-    final double? k = parseDouble(map['k']);
-
-    if (moist == null &&
-        temp == null &&
-        hum == null &&
-        n == null &&
-        p == null &&
-        k == null) {
-      return null;
-    }
-
-    return _SensorSample(
-      timestamp: timestamp,
-      moist: moist,
-      temp: temp,
-      hum: hum,
-      n: n,
-      p: p,
-      k: k,
     );
   }
 }
@@ -614,12 +505,6 @@ String _formatDashboardTime(String rawTime) {
   return rawTime;
 }
 
-extension on DateTime {
-  bool isSameDay(DateTime other) {
-    return year == other.year && month == other.month && day == other.day;
-  }
-}
-
 String _displayLeafStatus(String status) =>
     AppStrings.displayLeafStatus(status);
 
@@ -744,92 +629,111 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _DailyAverageCard extends StatelessWidget {
-  const _DailyAverageCard({required this.samples});
-  final List<_SensorSample> samples;
-
-  String _averageValue(List<double?> values, {bool percent = false}) {
-    final List<double> valid = values.whereType<double>().toList();
-    if (valid.isEmpty) return '-';
-    final double avg = valid.reduce((a, b) => a + b) / valid.length;
-    if (percent) {
-      return '${avg.toStringAsFixed(1)}%';
-    }
-    return avg.toStringAsFixed(1);
-  }
+  const _DailyAverageCard();
 
   @override
   Widget build(BuildContext context) {
-    if (samples.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'متوسط بيانات اليوم',
-                style: Theme.of(context).textTheme.titleMedium,
+    return StreamBuilder<DatabaseEvent>(
+      stream: FirebaseStreams.todayAvgStream,
+      builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
+        if (snapshot.hasError) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'متوسط بيانات اليوم',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  Text('خطأ: ${snapshot.error}'),
+                ],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'سيبدأ تجميع القراءات كل 30 دقيقة بمجرد مشاهدة لوحة التحكم.',
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'متوسط بيانات اليوم',
-              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
+          );
+        }
+
+        final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
+        final int count = (data['count'] as num?)?.toInt() ?? 0;
+
+        if (count == 0 || data.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'متوسط بيانات اليوم',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text('سيبدأ تجميع القراءات بمجرد توفرها'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final String moistStr = data['moist']?.toString() ?? '-';
+        final String tempStr = data['temp']?.toString() ?? '-';
+        final String humStr = data['hum']?.toString() ?? '-';
+        final String nStr = data['n']?.toString() ?? '-';
+        final String pStr = data['p']?.toString() ?? '-';
+        final String kStr = data['k']?.toString() ?? '-';
+
+        String formatValue(String value, {bool percent = false}) {
+          if (value == '-') return '-';
+          try {
+            final double num = double.parse(value);
+            if (percent) {
+              return '${num.toStringAsFixed(1)}%';
+            }
+            return num.toStringAsFixed(1);
+          } catch (_) {
+            return '-';
+          }
+        }
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                _AverageChip(
-                  label: 'رطوبة التربة',
-                  value: _averageValue(
-                    samples.map((e) => e.moist).toList(),
-                    percent: true,
-                  ),
+                Text(
+                  'متوسط بيانات اليوم',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                _AverageChip(
-                  label: 'درجة الحرارة',
-                  value: _averageValue(samples.map((e) => e.temp).toList()),
-                ),
-                _AverageChip(
-                  label: 'الرطوبة',
-                  value: _averageValue(
-                    samples.map((e) => e.hum).toList(),
-                    percent: true,
-                  ),
-                ),
-                _AverageChip(
-                  label: 'النيتروجين',
-                  value: _averageValue(samples.map((e) => e.n).toList()),
-                ),
-                _AverageChip(
-                  label: 'الفوسفور',
-                  value: _averageValue(samples.map((e) => e.p).toList()),
-                ),
-                _AverageChip(
-                  label: 'البوتاسيوم',
-                  value: _averageValue(samples.map((e) => e.k).toList()),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: <Widget>[
+                    _AverageChip(
+                      label: 'رطوبة التربة',
+                      value: formatValue(moistStr, percent: true),
+                    ),
+                    _AverageChip(
+                      label: 'درجة الحرارة',
+                      value: formatValue(tempStr),
+                    ),
+                    _AverageChip(
+                      label: 'الرطوبة',
+                      value: formatValue(humStr, percent: true),
+                    ),
+                    _AverageChip(label: 'النيتروجين', value: formatValue(nStr)),
+                    _AverageChip(label: 'الفوسفور', value: formatValue(pStr)),
+                    _AverageChip(label: 'البوتاسيوم', value: formatValue(kStr)),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

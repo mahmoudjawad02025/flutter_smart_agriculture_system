@@ -6,7 +6,11 @@
         "n": 170,
         "p": 50,
         "k": 200,
-        "time": "2026-04-21T13:08:52.043387Z"
+        "time": "2026-04-21T13:08:52.043387Z",
+        "today_avg": {
+            "day": "",
+            "count": 0
+        }
     },
     "leaf" : {
         
@@ -18,34 +22,7 @@
             "fert1": false,
             "fert2": false
         },
-        "auto_water": {
-            "temp_min": 18,
-            "temp_max": 35,
-            "hum_min": 40,
-            "hum_max": 90,
-            "moist_min": 60,
-            "moist_max": 165
-        },
-        "auto_fertilizer": {
-            "n_min": 120,
-            "n_max": 220,
-            "p_min": 40,
-            "p_max": 80,
-            "k_min": 150,
-            "k_max": 250,
-            "leaf_goal": "Healthy"
-        },
-        "goals": {
-            "leaf_goal": "Healthy",
-            "moist_max": 165,
-            "moist_min": 60,
-            "k_max": 250,
-            "k_min": 150,
-            "n_max": 180,
-            "n_min": 170,
-            "p_max": 80,
-            "p_min": 40
-        }
+
     },
     "users" : {
 

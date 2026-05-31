@@ -28,7 +28,7 @@ class AppStrings {
       case 'manualtest':
         return 'اختبار يدوي';
       case 'usersignup':
-        return 'تسجيل مستخدم';
+        return 'مستخدم جديد';
       case 'healthy':
         return 'سليم';
       case 'lateblight':

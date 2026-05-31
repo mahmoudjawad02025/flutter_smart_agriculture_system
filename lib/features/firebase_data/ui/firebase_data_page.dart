@@ -60,16 +60,6 @@ class FirebaseDataPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 _ActionCard(
-                  title: 'نظام الإشعارات',
-                  subtitle: 'إرسال تنبيه مرض واحد لاختبار المزامنة',
-                  icon: Icons.notifications_active_rounded,
-                  onPressed: isLoading ? null : cubit.pushTestNotification,
-                  label: 'إرسال تنبيه اختبار',
-                  color: const Color(0xFFD32F2F),
-                  isLoading: isLoading,
-                ),
-                const SizedBox(height: 16),
-                _ActionCard(
                   title: 'معايرة المجسات',
                   subtitle: 'قراءة مستوى النيتروجين الخام مرة واحدة',
                   icon: Icons.shutter_speed_rounded,
