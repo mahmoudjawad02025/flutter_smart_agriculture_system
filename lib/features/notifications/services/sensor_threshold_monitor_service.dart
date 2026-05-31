@@ -312,16 +312,19 @@ class SensorThresholdMonitorService {
     bool shouldNotify = false;
     String thresholdType = '';
 
-    // Check if near minimum: value <= min + 5
-    if (currentValue <= minThreshold + buffer) {
+    // Notify only when value is within the buffer inside the safe range:
+    // - near minimum: min <= value <= min + buffer
+    // - near maximum: max - buffer <= value <= max
+    if (currentValue >= minThreshold && currentValue <= minThreshold + buffer) {
       final lastNotified = getLastNotified();
       if (lastNotified == null || (currentValue - lastNotified).abs() >= 2) {
         shouldNotify = true;
         thresholdType = 'min';
       }
     }
-    // Check if near maximum: value >= max - 5
-    else if (currentValue >= maxThreshold - buffer) {
+    // Check if near maximum inside range
+    else if (currentValue <= maxThreshold &&
+        currentValue >= maxThreshold - buffer) {
       final lastNotified = getLastNotified();
       if (lastNotified == null || (currentValue - lastNotified).abs() >= 2) {
         shouldNotify = true;

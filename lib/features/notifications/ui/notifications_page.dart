@@ -205,9 +205,17 @@ class _NotificationCard extends StatelessWidget {
             if (parts.length > 1) sensorKey = parts[1].toLowerCase();
           }
 
+          // Auto actions (auto_water / auto_fertilizer) are system
+          // notifications, not disease detections. Detect them here so
+          // the UI can render their provided title/message directly.
+          final bool isAutoAction = detectedCode.toLowerCase().startsWith(
+            'auto_',
+          );
+
           final bool isDiseaseNotification =
               !isLog &&
               !isSensorThreshold &&
+              !isAutoAction &&
               detectedCode.isNotEmpty &&
               !isTest &&
               !isSignup;
@@ -225,8 +233,9 @@ class _NotificationCard extends StatelessWidget {
           late final String titleText;
           late final String bodyText;
 
-          if (isLog) {
-            // For log notifications, use the provided title/message directly.
+          if (isLog || isAutoAction) {
+            // For log and auto-action notifications, use the provided
+            // title/message directly.
             titleText = notification.title;
             bodyText = notification.message;
           } else if (isSensorThreshold) {
@@ -271,7 +280,8 @@ class _NotificationCard extends StatelessWidget {
                       child: Icon(
                         // Map icon based on notification type / sensor key
                         (() {
-                          if (isLog) return Icons.event_note_rounded;
+                          if (isLog || isAutoAction)
+                            return Icons.event_note_rounded;
                           if (isSignup) return Icons.person_add_rounded;
                           if (isTest) return Icons.cloud_done_rounded;
                           if (isSensorThreshold) {
@@ -357,7 +367,7 @@ class _NotificationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (!isLog && !isSensorThreshold)
+                if (!isLog && !isSensorThreshold && !isAutoAction)
                   RichText(
                     text: TextSpan(
                       style: const TextStyle(
