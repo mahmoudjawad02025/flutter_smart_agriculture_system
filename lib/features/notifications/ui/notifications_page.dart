@@ -233,17 +233,17 @@ class _NotificationCard extends StatelessWidget {
           late final String titleText;
           late final String bodyText;
 
-          if (isLog || isAutoAction) {
-            // For log and auto-action notifications, use the provided
-            // title/message directly.
+          if (isLog ||
+              isAutoAction ||
+              isSensorThreshold ||
+              isSignup ||
+              isTest) {
+            // For log, auto-action, sensor, signup, and test notifications,
+            // use the provided title/message directly.
             titleText = notification.title;
             bodyText = notification.message;
-          } else if (isSensorThreshold) {
-            // Sensor notifications already contain a friendly title/message.
-            titleText = notification.title;
-            bodyText = notification.message;
-          } else if (detectedCode.isNotEmpty &&
-              detectedCode.toLowerCase() != 'usersignup') {
+          } else if (detectedCode.isNotEmpty) {
+            // Disease detection branch (تم اكتشاف …)
             if (detectedCode.toLowerCase() == 'manualtest') {
               titleText = AppStrings.displayDiseaseName(detectedCode);
               bodyText = notification.message;
@@ -252,9 +252,6 @@ class _NotificationCard extends StatelessWidget {
               bodyText =
                   'تم اكتشاف $displayDisease على ورقة ${AppStrings.plantDefinite}';
             }
-          } else if (detectedCode.toLowerCase() == 'usersignup') {
-            titleText = AppStrings.displayDiseaseName(detectedCode);
-            bodyText = notification.message;
           } else {
             titleText = notification.title;
             bodyText = notification.message;
@@ -367,7 +364,11 @@ class _NotificationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (!isLog && !isSensorThreshold && !isAutoAction)
+                if (!isLog &&
+                    !isSensorThreshold &&
+                    !isAutoAction &&
+                    !isSignup &&
+                    !isTest)
                   RichText(
                     text: TextSpan(
                       style: const TextStyle(

@@ -55,89 +55,6 @@ class NotificationsService {
     }
   }
 
-  /// Add a simple notification for log events (pump ON/OFF).
-  Future<void> addLogNotification({
-    required String title,
-    required String message,
-    String code = 'log',
-    DateTime? createdAt,
-  }) async {
-    try {
-      final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
-
-      final FarmNotification notification = FarmNotification(
-        id: id,
-        title: title,
-        message: message,
-        diseaseName: code,
-        nextUpload: '',
-        isRead: false,
-        createdAt: createdAt ?? DateTime.now(),
-      );
-
-      // Write notification
-      await _database
-          .ref('${FarmPayload.notificationItemsPath}/notif_$id')
-          .set(notification.toMap());
-
-      // Increment unread count
-      await _incrementUnreadCount();
-    } catch (e) {
-      print('[NOTIFICATIONS_SERVICE] Error adding log notification: $e');
-      rethrow;
-    }
-  }
-
-  /// Add notification when sensor data is near min or max threshold
-  Future<void> addSensorThresholdNotification({
-    required String sensorName,
-    required int sensorValue,
-    required String thresholdType, // 'min' or 'max'
-    DateTime? createdAt,
-  }) async {
-    try {
-      final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
-
-      final String thresholdLabel = thresholdType == 'min'
-          ? 'الحد الأدنى'
-          : 'الحد الأقصى';
-      final String sensorLabel = _getSensorArabicLabel(sensorName);
-
-      final FarmNotification notification = FarmNotification(
-        id: id,
-        title: 'تنبيه: قيمة $sensorLabel قريبة من $thresholdLabel',
-        message:
-            'قيمة $sensorLabel الحالية $sensorValue قريبة من $thresholdLabel.',
-        // Include sensor key in diseaseName so UI can pick an icon and label
-        diseaseName: 'sensor_threshold:$sensorName',
-        nextUpload: '',
-        isRead: false,
-        createdAt: createdAt ?? DateTime.now(),
-      );
-
-      print(
-        '[NOTIFICATIONS_SERVICE] Adding sensor threshold notification: $sensorName ($thresholdType)',
-      );
-
-      // Write notification
-      await _database
-          .ref('${FarmPayload.notificationItemsPath}/notif_$id')
-          .set(notification.toMap());
-
-      // Increment unread count
-      await _incrementUnreadCount();
-
-      print(
-        '[NOTIFICATIONS_SERVICE] Sensor threshold notification added successfully',
-      );
-    } catch (e) {
-      print(
-        '[NOTIFICATIONS_SERVICE] Error adding sensor threshold notification: $e',
-      );
-      rethrow;
-    }
-  }
-
   /// Add notification prompting user to upload image
   Future<void> addImageUploadNotification({DateTime? createdAt}) async {
     try {
@@ -175,30 +92,38 @@ class NotificationsService {
     }
   }
 
-  /// Helper to get Arabic label for sensor
-  String _getSensorArabicLabel(String sensorName) {
-    switch (sensorName.toLowerCase()) {
-      case 'n':
-      case 'nitrogen':
-        return 'النيتروجين';
-      case 'p':
-      case 'phosphorus':
-        return 'الفوسفور';
-      case 'k':
-      case 'potassium':
-        return 'البوتاسيوم';
-      case 'moist':
-      case 'moisture':
-        return 'رطوبة التربة';
-      case 'temp':
-      case 'temperature':
-        return 'درجة الحرارة';
-      case 'hum':
-      case 'humidity':
-        return 'الرطوبة الجوية';
-      default:
-        // If it's an English key like 'moist' return readable Arabic fallback
-        return sensorName;
+  /// Add a generic log notification for pump changes and system events.
+  Future<void> addLogNotification({
+    required String title,
+    required String message,
+    String? logType,
+    DateTime? createdAt,
+  }) async {
+    try {
+      final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
+
+      final FarmNotification notification = FarmNotification(
+        id: id,
+        title: title,
+        message: message,
+        diseaseName: logType ?? 'system_log',
+        nextUpload: '',
+        isRead: false,
+        createdAt: createdAt ?? DateTime.now(),
+      );
+
+      print('[NOTIFICATIONS_SERVICE] Adding log notification: $title');
+
+      await _database
+          .ref('${FarmPayload.notificationItemsPath}/notif_$id')
+          .set(notification.toMap());
+
+      await _incrementUnreadCount();
+
+      print('[NOTIFICATIONS_SERVICE] Log notification added successfully');
+    } catch (e) {
+      print('[NOTIFICATIONS_SERVICE] Error adding log notification: $e');
+      rethrow;
     }
   }
 

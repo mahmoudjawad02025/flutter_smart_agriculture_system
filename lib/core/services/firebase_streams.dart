@@ -57,6 +57,17 @@ class FirebaseStreams {
   static DatabaseEvent? get lastNotificationItemsEvent =>
       _notificationItems?._lastEvent;
 
+  static _SharedQueryStream? _dailyAverages;
+  static Stream<DatabaseEvent> get dailyAveragesStream {
+    _dailyAverages ??= _SharedQueryStream(
+      _db.ref(FarmPayload.dailyAveragesPath),
+    );
+    return _dailyAverages!.stream;
+  }
+
+  static DatabaseEvent? get lastDailyAveragesEvent =>
+      _dailyAverages?._lastEvent;
+
   static _SharedQueryStream? _unreadCount;
   static Stream<DatabaseEvent> get unreadCountStream {
     _unreadCount ??= _SharedQueryStream(_db.ref(FarmPayload.unreadCountPath));
@@ -85,23 +96,21 @@ class _SharedQueryStream {
   void _handleListen() {
     // Ensure we have a single underlying subscription forwarding events.
 
-    if (_subscription == null) {
-      _subscription = _query.onValue.listen(
-        (DatabaseEvent event) {
-          _lastEvent = event;
-          try {
-            _controller?.add(event);
-          } catch (_) {}
-        },
-        onError: (Object e, StackTrace? s) {
-          _controller?.addError(e, s);
-        },
-      );
+    _subscription ??= _query.onValue.listen(
+      (DatabaseEvent event) {
+        _lastEvent = event;
+        try {
+          _controller?.add(event);
+        } catch (_) {}
+      },
+      onError: (Object e, StackTrace? s) {
+        _controller?.addError(e, s);
+      },
+    );
 
-      // No seeding here — rely on the `onValue` subscription to forward
-      // the initial event. Seeding caused compatibility issues with
-      // the `DatabaseEvent` constructors across package versions.
-    }
+    // No seeding here — rely on the `onValue` subscription to forward
+    // the initial event. Seeding caused compatibility issues with
+    // the `DatabaseEvent` constructors across package versions.
   }
 
   void _handleCancel() {

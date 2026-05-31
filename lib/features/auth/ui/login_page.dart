@@ -103,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'نظام زراعة البندورة الذكي',
+                  'نظام الزراعة الذكي',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,

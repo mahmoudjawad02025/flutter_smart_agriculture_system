@@ -46,12 +46,6 @@ class DiseaseDetectionCubit extends Cubit<DiseaseDetectionState> {
         ),
       );
 
-      // Send notification when image is uploaded
-      await _notificationsCubit.addImageUploadNotification(
-        createdAt: DateTime.now(),
-      );
-      print('[ANALYZE_IMAGE] Image upload notification sent');
-
       // Trigger automatic analysis if enabled in settings
       if (AppRuntimeConfig.autoAnalyze.value) {
         await analyzeImage();

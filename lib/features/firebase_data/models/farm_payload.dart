@@ -13,13 +13,11 @@ class FarmPayload {
 
   static String get sensorsPath =>
       rootPath.isEmpty ? 'sensors' : '$rootPath/sensors';
+  static String get dailyAveragesPath => '$extraPath/avarages';
   static String get leafPath => rootPath.isEmpty ? 'leaf' : '$rootPath/leaf';
   static String get configPath =>
       rootPath.isEmpty ? 'config' : '$rootPath/config';
-  static String get goalsPath => '$configPath/goals';
   static String get pumpsPath => '$configPath/pumps';
-  static String get autoWaterPath => '$configPath/auto_water';
-  static String get autoFertilizerPath => '$configPath/auto_fertilizer';
 
   static String get extraPath => rootPath.isEmpty ? 'extra' : '$rootPath/extra';
   static String get notificationsPath => '$extraPath/notifications';

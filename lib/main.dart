@@ -15,8 +15,6 @@ import 'core/localization/app_strings.dart';
 import 'features/auth/cubit/auth_cubit.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/ui/auth_wrapper.dart';
-import 'core/services/pump_change_logger.dart';
-import 'core/services/auto_actions_engine.dart';
 
 import 'features/disease_detection/cubit/disease_detection_cubit.dart';
 import 'features/disease_detection/services/disease_detection_service.dart';
@@ -24,7 +22,6 @@ import 'features/firebase_data/cubit/firebase_data_cubit.dart';
 import 'features/firebase_data/models/farm_payload.dart';
 import 'features/notifications/cubit/notifications_cubit.dart';
 import 'features/notifications/services/notifications_service.dart';
-import 'features/notifications/services/sensor_threshold_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,88 +45,6 @@ void main() async {
     await FarmPayload.ensureDefaults(FirebaseDatabase.instance);
   } catch (error, stack) {
     debugPrint('[STARTUP] FarmPayload.ensureDefaults failed: $error\n$stack');
-  }
-
-  try {
-    PumpChangeLogger.ensureStarted(database: FirebaseDatabase.instance);
-  } catch (error, stack) {
-    debugPrint('[STARTUP] PumpChangeLogger failed to start: $error\n$stack');
-  }
-
-  try {
-    AutoActionsEngine.ensureStarted(database: FirebaseDatabase.instance);
-  } catch (error, stack) {
-    debugPrint('[STARTUP] AutoActionsEngine failed to start: $error\n$stack');
-  }
-
-  // Initialize sensor threshold monitoring
-  try {
-    final SensorThresholdMonitorService sensorMonitor =
-        SensorThresholdMonitorService(
-          database: FirebaseDatabase.instance,
-          notificationsService: NotificationsService(
-            database: FirebaseDatabase.instance,
-          ),
-        );
-    sensorMonitor.startMonitoring();
-    debugPrint('[STARTUP] Sensor threshold monitoring started');
-  } catch (error, stack) {
-    debugPrint('[STARTUP] Sensor monitoring failed to start: $error\n$stack');
-  }
-
-  // Keep auto-fertilizer targets in sync with Firebase so UI shows edits
-  // made directly in the console or by other clients.
-  try {
-    FirebaseDatabase.instance
-        .ref(FarmPayload.autoFertilizerPath)
-        .onValue
-        .listen((DatabaseEvent event) async {
-          final dynamic raw = event.snapshot.value;
-          if (raw == null) return;
-          Map<String, dynamic> map;
-          if (raw is Map<String, dynamic>) {
-            map = raw;
-          } else if (raw is Map) {
-            map = Map<String, dynamic>.from(raw);
-          } else {
-            return;
-          }
-
-          int? asInt(dynamic v) {
-            if (v == null) return null;
-            if (v is int) return v;
-            if (v is num) return v.toInt();
-            if (v is String) return int.tryParse(v);
-            return null;
-          }
-
-          final int nMin = asInt(map['n_min']) ?? AppRuntimeConfig.nMin.value;
-          final int nMax = asInt(map['n_max']) ?? AppRuntimeConfig.nMax.value;
-          final int pMin = asInt(map['p_min']) ?? AppRuntimeConfig.pMin.value;
-          final int pMax = asInt(map['p_max']) ?? AppRuntimeConfig.pMax.value;
-          final int kMin = asInt(map['k_min']) ?? AppRuntimeConfig.kMin.value;
-          final int kMax = asInt(map['k_max']) ?? AppRuntimeConfig.kMax.value;
-          final String leafGoal =
-              (map['leaf_goal'] ?? AppRuntimeConfig.leafGoal.value).toString();
-
-          try {
-            await AppRuntimeConfig.setAutoFertilizerTargets(
-              nMinValue: nMin,
-              nMaxValue: nMax,
-              pMinValue: pMin,
-              pMaxValue: pMax,
-              kMinValue: kMin,
-              kMaxValue: kMax,
-              leafGoalValue: leafGoal,
-            );
-          } catch (e) {
-            debugPrint(
-              '[STARTUP] failed to apply auto_fertilizer snapshot: $e',
-            );
-          }
-        });
-  } catch (error, stack) {
-    debugPrint('[STARTUP] AutoFertilizer listener failed: $error\n$stack');
   }
 
   runApp(const MyApp());

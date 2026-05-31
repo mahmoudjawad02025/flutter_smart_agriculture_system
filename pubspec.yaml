@@ -43,6 +43,7 @@ dependencies:
   dio: ^5.9.2
   firebase_core: ^4.7.0
   firebase_database: ^12.3.0
+  cloud_functions: ^6.2.0
   uuid: ^4.0.0
   firebase_auth: ^6.4.0
   google_sign_in: ^6.2.1
@@ -74,7 +75,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - lib/core/media/icons/app/app.png
+    - lib/core/media/icons/app/app.jpg
     - assets/best_float32.tflite
     - lib/docs/firebase_struct.json
 
@@ -82,7 +83,7 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: lib/core/media/icons/app/app.png
+  image_path: lib/core/media/icons/app/app.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -17,6 +17,10 @@ class ConfigurationsPage extends StatefulWidget {
 
 class _ConfigurationsPageState extends State<ConfigurationsPage> {
   final FirebaseDatabase _database = FirebaseDatabase.instance;
+  late final Stream<DatabaseEvent> _configStream = _database
+      .ref(FarmPayload.configPath)
+      .onValue
+      .asBroadcastStream();
 
   void _showError(String message) {
     showLocalizedSnackBar(context, message, forceError: true);
@@ -74,425 +78,6 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
     );
   }
 
-  Future<List<int>?> _showBoundedRangeDialog({
-    required String title,
-    required String minLabel,
-    required String maxLabel,
-    required int minValue,
-    required int maxValue,
-    required int minAllowed,
-    required int maxAllowed,
-  }) async {
-    final TextEditingController minController = TextEditingController(
-      text: minValue.toString(),
-    );
-    final TextEditingController maxController = TextEditingController(
-      text: maxValue.toString(),
-    );
-
-    return showDialog<List<int>>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextField(
-                controller: minController,
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.allow(
-                    RegExp(minAllowed < 0 ? r'^-?\d*$' : r'^\d*$'),
-                  ),
-                ],
-                decoration: InputDecoration(labelText: minLabel),
-              ),
-              TextField(
-                controller: maxController,
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.allow(
-                    RegExp(minAllowed < 0 ? r'^-?\d*$' : r'^\d*$'),
-                  ),
-                ],
-                decoration: InputDecoration(labelText: maxLabel),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final int? minParsed = int.tryParse(minController.text.trim());
-                final int? maxParsed = int.tryParse(maxController.text.trim());
-                if (minParsed == null || maxParsed == null) {
-                  Navigator.pop(dialogContext);
-                  return;
-                }
-                Navigator.pop(dialogContext, <int>[minParsed, maxParsed]);
-              },
-              child: const Text('حفظ'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  bool _validateRangeValues(
-    int minValue,
-    int maxValue,
-    int minAllowed,
-    int maxAllowed,
-  ) {
-    if (minValue < minAllowed || maxValue > maxAllowed) return false;
-    if (minValue > maxValue) return false;
-    return true;
-  }
-
-  Future<void> _syncAutoWaterToRealtimeDatabase({
-    required int tempMin,
-    required int tempMax,
-    required int humMin,
-    required int humMax,
-    required int moistMin,
-    required int moistMax,
-  }) async {
-    await _database.ref(FarmPayload.autoWaterPath).set(<String, dynamic>{
-      'temp_min': tempMin,
-      'temp_max': tempMax,
-      'hum_min': humMin,
-      'hum_max': humMax,
-      'moist_min': moistMin,
-      'moist_max': moistMax,
-    });
-  }
-
-  Future<void> _syncAutoFertilizerToRealtimeDatabase({
-    required int nMin,
-    required int nMax,
-    required int pMin,
-    required int pMax,
-    required int kMin,
-    required int kMax,
-    required String leafGoal,
-  }) async {
-    await _database.ref(FarmPayload.autoFertilizerPath).set(<String, dynamic>{
-      'n_min': nMin,
-      'n_max': nMax,
-      'p_min': pMin,
-      'p_max': pMax,
-      'k_min': kMin,
-      'k_max': kMax,
-      'leaf_goal': leafGoal,
-    });
-  }
-
-  Future<void> _saveAutoWaterConfig({
-    int? tempMin,
-    int? tempMax,
-    int? humMin,
-    int? humMax,
-    int? moistMin,
-    int? moistMax,
-  }) async {
-    final int tempMinValue = tempMin ?? AppRuntimeConfig.tempMin.value;
-    final int tempMaxValue = tempMax ?? AppRuntimeConfig.tempMax.value;
-    final int humMinValue = humMin ?? AppRuntimeConfig.humMin.value;
-    final int humMaxValue = humMax ?? AppRuntimeConfig.humMax.value;
-    final int moistMinValue = moistMin ?? AppRuntimeConfig.moistMin.value;
-    final int moistMaxValue = moistMax ?? AppRuntimeConfig.moistMax.value;
-
-    if (!_validateRangeValues(
-          tempMinValue,
-          tempMaxValue,
-          AppRuntimeConfig.tempLowerBound,
-          AppRuntimeConfig.tempUpperBound,
-        ) ||
-        !_validateRangeValues(
-          humMinValue,
-          humMaxValue,
-          AppRuntimeConfig.humLowerBound,
-          AppRuntimeConfig.humUpperBound,
-        ) ||
-        !_validateRangeValues(
-          moistMinValue,
-          moistMaxValue,
-          AppRuntimeConfig.moistLowerBound,
-          AppRuntimeConfig.moistUpperBound,
-        )) {
-      _showError(
-        'يرجى الحفاظ على درجة الحرارة والرطوبة والرطوبة داخل الحدود الصالحة وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-      );
-      return;
-    }
-
-    try {
-      await _syncAutoWaterToRealtimeDatabase(
-        tempMin: tempMinValue,
-        tempMax: tempMaxValue,
-        humMin: humMinValue,
-        humMax: humMaxValue,
-        moistMin: moistMinValue,
-        moistMax: moistMaxValue,
-      );
-      await AppRuntimeConfig.setAutoWaterTargets(
-        tempMinValue: tempMinValue,
-        tempMaxValue: tempMaxValue,
-        humMinValue: humMinValue,
-        humMaxValue: humMaxValue,
-        moistMinValue: moistMinValue,
-        moistMaxValue: moistMaxValue,
-      );
-      _showSuccess('تم حفظ إعدادات الري التلقائي ومزامنتها.');
-    } catch (error) {
-      _showError('مزامنة Firebase فشلت: $error');
-    }
-  }
-
-  Future<void> _saveAutoFertilizerConfig({
-    int? nMin,
-    int? nMax,
-    int? pMin,
-    int? pMax,
-    int? kMin,
-    int? kMax,
-  }) async {
-    final int nMinValue = nMin ?? AppRuntimeConfig.nMin.value;
-    final int nMaxValue = nMax ?? AppRuntimeConfig.nMax.value;
-    final int pMinValue = pMin ?? AppRuntimeConfig.pMin.value;
-    final int pMaxValue = pMax ?? AppRuntimeConfig.pMax.value;
-    final int kMinValue = kMin ?? AppRuntimeConfig.kMin.value;
-    final int kMaxValue = kMax ?? AppRuntimeConfig.kMax.value;
-    const String leafGoalValue = 'Healthy';
-
-    if (!_validateRangeValues(
-          nMinValue,
-          nMaxValue,
-          AppRuntimeConfig.nutrientLowerBound,
-          AppRuntimeConfig.nutrientUpperBound,
-        ) ||
-        !_validateRangeValues(
-          pMinValue,
-          pMaxValue,
-          AppRuntimeConfig.nutrientLowerBound,
-          AppRuntimeConfig.nutrientUpperBound,
-        ) ||
-        !_validateRangeValues(
-          kMinValue,
-          kMaxValue,
-          AppRuntimeConfig.nutrientLowerBound,
-          AppRuntimeConfig.nutrientUpperBound,
-        )) {
-      _showError(
-        'يرجى الحفاظ على N/P/K داخل الحدود الصالحة وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-      );
-      return;
-    }
-
-    try {
-      await _syncAutoFertilizerToRealtimeDatabase(
-        nMin: nMinValue,
-        nMax: nMaxValue,
-        pMin: pMinValue,
-        pMax: pMaxValue,
-        kMin: kMinValue,
-        kMax: kMaxValue,
-        leafGoal: leafGoalValue,
-      );
-      await AppRuntimeConfig.setAutoFertilizerTargets(
-        nMinValue: nMinValue,
-        nMaxValue: nMaxValue,
-        pMinValue: pMinValue,
-        pMaxValue: pMaxValue,
-        kMinValue: kMinValue,
-        kMaxValue: kMaxValue,
-        leafGoalValue: leafGoalValue,
-      );
-      _showSuccess('تم حفظ إعدادات التسميد التلقائي ومزامنتها.');
-    } catch (error) {
-      _showError('مزامنة Firebase فشلت: $error');
-    }
-  }
-
-  Future<void> _editTempRange() async {
-    final List<int>? range = await _showBoundedRangeDialog(
-      title: 'نطاق درجة حرارة الري التلقائي',
-      minLabel: 'الحد الأدنى لدرجة الحرارة (°م)',
-      maxLabel: 'الحد الأقصى لدرجة الحرارة (°م)',
-      minValue: AppRuntimeConfig.tempMin.value,
-      maxValue: AppRuntimeConfig.tempMax.value,
-      minAllowed: AppRuntimeConfig.tempLowerBound,
-      maxAllowed: AppRuntimeConfig.tempUpperBound,
-    );
-
-    if (range == null ||
-        !_validateRangeValues(
-          range[0],
-          range[1],
-          AppRuntimeConfig.tempLowerBound,
-          AppRuntimeConfig.tempUpperBound,
-        )) {
-      if (range != null) {
-        _showError(
-          'يرجى الحفاظ على درجة الحرارة داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-        );
-      }
-      return;
-    }
-
-    await _saveAutoWaterConfig(tempMin: range[0], tempMax: range[1]);
-  }
-
-  Future<void> _editHumidityRange() async {
-    final List<int>? range = await _showBoundedRangeDialog(
-      title: 'نطاق رطوبة الري التلقائي',
-      minLabel: 'الحد الأدنى للرطوبة (%)',
-      maxLabel: 'الحد الأقصى للرطوبة (%)',
-      minValue: AppRuntimeConfig.humMin.value,
-      maxValue: AppRuntimeConfig.humMax.value,
-      minAllowed: AppRuntimeConfig.humLowerBound,
-      maxAllowed: AppRuntimeConfig.humUpperBound,
-    );
-
-    if (range == null ||
-        !_validateRangeValues(
-          range[0],
-          range[1],
-          AppRuntimeConfig.humLowerBound,
-          AppRuntimeConfig.humUpperBound,
-        )) {
-      if (range != null) {
-        _showError(
-          'يرجى الحفاظ على الرطوبة داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-        );
-      }
-      return;
-    }
-
-    await _saveAutoWaterConfig(humMin: range[0], humMax: range[1]);
-  }
-
-  Future<void> _editMoistureRange() async {
-    final List<int>? range = await _showBoundedRangeDialog(
-      title: 'نطاق رطوبة التربة للري التلقائي',
-      minLabel: 'الحد الأدنى لرطوبة التربة (%)',
-      maxLabel: 'الحد الأقصى لرطوبة التربة (%)',
-      minValue: AppRuntimeConfig.moistMin.value,
-      maxValue: AppRuntimeConfig.moistMax.value,
-      minAllowed: AppRuntimeConfig.moistLowerBound,
-      maxAllowed: AppRuntimeConfig.moistUpperBound,
-    );
-
-    if (range == null ||
-        !_validateRangeValues(
-          range[0],
-          range[1],
-          AppRuntimeConfig.moistLowerBound,
-          AppRuntimeConfig.moistUpperBound,
-        )) {
-      if (range != null) {
-        _showError(
-          'يرجى الحفاظ على الرطوبة داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-        );
-      }
-      return;
-    }
-
-    await _saveAutoWaterConfig(moistMin: range[0], moistMax: range[1]);
-  }
-
-  Future<void> _editNitrogenRange() async {
-    final List<int>? range = await _showBoundedRangeDialog(
-      title: 'نطاق النيتروجين في التسميد التلقائي',
-      minLabel: 'الحد الأدنى للنيتروجين',
-      maxLabel: 'الحد الأقصى للنيتروجين',
-      minValue: AppRuntimeConfig.nMin.value,
-      maxValue: AppRuntimeConfig.nMax.value,
-      minAllowed: AppRuntimeConfig.nutrientLowerBound,
-      maxAllowed: AppRuntimeConfig.nutrientUpperBound,
-    );
-
-    if (range == null ||
-        !_validateRangeValues(
-          range[0],
-          range[1],
-          AppRuntimeConfig.nutrientLowerBound,
-          AppRuntimeConfig.nutrientUpperBound,
-        )) {
-      if (range != null) {
-        _showError(
-          'يرجى الحفاظ على النيتروجين داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-        );
-      }
-      return;
-    }
-
-    await _saveAutoFertilizerConfig(nMin: range[0], nMax: range[1]);
-  }
-
-  Future<void> _editPhosphorusRange() async {
-    final List<int>? range = await _showBoundedRangeDialog(
-      title: 'نطاق الفوسفور في التسميد التلقائي',
-      minLabel: 'الحد الأدنى للفوسفور',
-      maxLabel: 'الحد الأقصى للفوسفور',
-      minValue: AppRuntimeConfig.pMin.value,
-      maxValue: AppRuntimeConfig.pMax.value,
-      minAllowed: AppRuntimeConfig.nutrientLowerBound,
-      maxAllowed: AppRuntimeConfig.nutrientUpperBound,
-    );
-
-    if (range == null ||
-        !_validateRangeValues(
-          range[0],
-          range[1],
-          AppRuntimeConfig.nutrientLowerBound,
-          AppRuntimeConfig.nutrientUpperBound,
-        )) {
-      if (range != null) {
-        _showError(
-          'يرجى الحفاظ على الفوسفور داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-        );
-      }
-      return;
-    }
-
-    await _saveAutoFertilizerConfig(pMin: range[0], pMax: range[1]);
-  }
-
-  Future<void> _editPotassiumRange() async {
-    final List<int>? range = await _showBoundedRangeDialog(
-      title: 'نطاق البوتاسيوم في التسميد التلقائي',
-      minLabel: 'الحد الأدنى للبوتاسيوم',
-      maxLabel: 'الحد الأقصى للبوتاسيوم',
-      minValue: AppRuntimeConfig.kMin.value,
-      maxValue: AppRuntimeConfig.kMax.value,
-      minAllowed: AppRuntimeConfig.nutrientLowerBound,
-      maxAllowed: AppRuntimeConfig.nutrientUpperBound,
-    );
-
-    if (range == null ||
-        !_validateRangeValues(
-          range[0],
-          range[1],
-          AppRuntimeConfig.nutrientLowerBound,
-          AppRuntimeConfig.nutrientUpperBound,
-        )) {
-      if (range != null) {
-        _showError(
-          'يرجى الحفاظ على البوتاسيوم داخل الحدود وأن يكون الحد الأدنى أقل من أو يساوي الحد الأقصى.',
-        );
-      }
-      return;
-    }
-
-    await _saveAutoFertilizerConfig(kMin: range[0], kMax: range[1]);
-  }
-
   Future<void> _editReuploadDelay() async {
     final int? value = await _showBoundedNumberDialog(
       title: 'تعديل مدة إعادة الرفع',
@@ -529,6 +114,179 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
         _showError('فشل تحديث الحالة: $e');
       }
     }
+  }
+
+  Future<Map<String, int>?> _showMinMaxDialog({
+    required String title,
+    required String minLabel,
+    required String maxLabel,
+    required int currentMin,
+    required int currentMax,
+    required int allowedMin,
+    required int allowedMax,
+  }) async {
+    final TextEditingController minController = TextEditingController(
+      text: currentMin.toString(),
+    );
+    final TextEditingController maxController = TextEditingController(
+      text: currentMax.toString(),
+    );
+    String? errorMessage;
+
+    return showDialog<Map<String, int>>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text(title),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextField(
+                    controller: minController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      labelText: minLabel,
+                      hintText: '$allowedMin - $allowedMax',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: maxController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      labelText: maxLabel,
+                      hintText: '$allowedMin - $allowedMax',
+                    ),
+                  ),
+                  if (errorMessage != null) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage ?? '',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('إلغاء'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final int? minValue = int.tryParse(
+                      minController.text.trim(),
+                    );
+                    final int? maxValue = int.tryParse(
+                      maxController.text.trim(),
+                    );
+                    if (minValue == null || maxValue == null) {
+                      setState(() {
+                        errorMessage = 'الرجاء إدخال أرقام صحيحة.';
+                      });
+                      return;
+                    }
+                    if (minValue < allowedMin || minValue > allowedMax) {
+                      setState(() {
+                        errorMessage =
+                            'القيمة الدنيا يجب أن تكون بين $allowedMin و $allowedMax.';
+                      });
+                      return;
+                    }
+                    if (maxValue < allowedMin || maxValue > allowedMax) {
+                      setState(() {
+                        errorMessage =
+                            'القيمة القصوى يجب أن تكون بين $allowedMin و $allowedMax.';
+                      });
+                      return;
+                    }
+                    if (minValue > maxValue) {
+                      setState(() {
+                        errorMessage =
+                            'القيمة الدنيا يجب ألا تكون أكبر من القيمة القصوى.';
+                      });
+                      return;
+                    }
+                    Navigator.pop(dialogContext, <String, int>{
+                      'min': minValue,
+                      'max': maxValue,
+                    });
+                  },
+                  child: const Text('حفظ'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _editConfigRange({
+    required String section,
+    required String title,
+    required String minKey,
+    required String maxKey,
+    required int currentMin,
+    required int currentMax,
+    required int allowedMin,
+    required int allowedMax,
+  }) async {
+    final Map<String, int>? result = await _showMinMaxDialog(
+      title: title,
+      minLabel: 'الحد الأدنى',
+      maxLabel: 'الحد الأقصى',
+      currentMin: currentMin,
+      currentMax: currentMax,
+      allowedMin: allowedMin,
+      allowedMax: allowedMax,
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    try {
+      await _database.ref('${FarmPayload.configPath}/$section').update(
+        <String, dynamic>{minKey: result['min'], maxKey: result['max']},
+      );
+      if (mounted) {
+        _showSuccess('تم حفظ الإعدادات بنجاح.');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('فشل حفظ الإعدادات: $e');
+      }
+    }
+  }
+
+  Widget _configRangeTile({
+    required String label,
+    required int minValue,
+    required int maxValue,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(label),
+      subtitle: Text('الحد الأدنى: $minValue  •  الحد الأقصى: $maxValue'),
+      trailing: const Icon(Icons.edit_outlined),
+      onTap: onTap,
+    );
+  }
+
+  int _toInt(dynamic value, [int fallback = 0]) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
   }
 
   Future<String?> _showStatusDialog() async {
@@ -636,93 +394,139 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             },
           ),
           const SizedBox(height: 16),
-          _SectionCard(
-            title: 'إعدادات الري التلقائي',
-            subtitle: 'حدود درجة الحرارة والرطوبة ورطوبة التربة للري',
-            children: <Widget>[
-              _EditableTile(
-                label: 'درجة الحرارة',
-                value:
-                    '${AppRuntimeConfig.tempMin.value} °م - ${AppRuntimeConfig.tempMax.value} °م',
-                onTap: _editTempRange,
-                trailingIcon: Icons.add,
-              ),
-              _EditableTile(
-                label: 'الرطوبة',
-                value:
-                    '${AppRuntimeConfig.humMin.value}% - ${AppRuntimeConfig.humMax.value}%',
-                onTap: _editHumidityRange,
-                trailingIcon: Icons.add,
-              ),
-              _EditableTile(
-                label: 'رطوبة التربة',
-                value:
-                    '${AppRuntimeConfig.moistMin.value}% - ${AppRuntimeConfig.moistMax.value}%',
-                onTap: _editMoistureRange,
-                trailingIcon: Icons.add,
-              ),
-            ],
+          StreamBuilder<DatabaseEvent>(
+            stream: _configStream,
+            builder: (context, snapshot) {
+              final Map<String, dynamic> config = _toMap(
+                snapshot.data?.snapshot.value,
+              );
+              final Map<String, dynamic> autoWater = _toMap(
+                config['auto_water'],
+              );
+
+              return _SectionCard(
+                title: 'إعدادات الري التلقائي',
+                subtitle: 'حدود الرطوبة ودرجة الحرارة والرطوبة الأرضية',
+                children: <Widget>[
+                  _configRangeTile(
+                    label: 'درجة الحرارة',
+                    minValue: _toInt(autoWater['temp_min']),
+                    maxValue: _toInt(autoWater['temp_max']),
+                    onTap: () => _editConfigRange(
+                      section: 'auto_water',
+                      title: 'تعديل حدود درجة الحرارة',
+                      minKey: 'temp_min',
+                      maxKey: 'temp_max',
+                      currentMin: _toInt(autoWater['temp_min'], 18),
+                      currentMax: _toInt(autoWater['temp_max'], 35),
+                      allowedMin: -20,
+                      allowedMax: 60,
+                    ),
+                  ),
+                  const Divider(),
+                  _configRangeTile(
+                    label: 'رطوبة الهواء',
+                    minValue: _toInt(autoWater['hum_min']),
+                    maxValue: _toInt(autoWater['hum_max']),
+                    onTap: () => _editConfigRange(
+                      section: 'auto_water',
+                      title: 'تعديل حدود رطوبة الهواء',
+                      minKey: 'hum_min',
+                      maxKey: 'hum_max',
+                      currentMin: _toInt(autoWater['hum_min'], 40),
+                      currentMax: _toInt(autoWater['hum_max'], 90),
+                      allowedMin: 0,
+                      allowedMax: 100,
+                    ),
+                  ),
+                  const Divider(),
+                  _configRangeTile(
+                    label: 'رطوبة التربة',
+                    minValue: _toInt(autoWater['moist_min']),
+                    maxValue: _toInt(autoWater['moist_max']),
+                    onTap: () => _editConfigRange(
+                      section: 'auto_water',
+                      title: 'تعديل حدود رطوبة التربة',
+                      minKey: 'moist_min',
+                      maxKey: 'moist_max',
+                      currentMin: _toInt(autoWater['moist_min'], 60),
+                      currentMax: _toInt(autoWater['moist_max'], 165),
+                      allowedMin: 0,
+                      allowedMax: 300,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
-          _SectionCard(
-            title: 'إعدادات التسميد التلقائي',
-            subtitle: 'حدود N و P و K مع هدف الورقة للعرض فقط',
-            children: <Widget>[
-              ValueListenableBuilder<int>(
-                valueListenable: AppRuntimeConfig.nMin,
-                builder: (context, nMin, _) {
-                  return ValueListenableBuilder<int>(
-                    valueListenable: AppRuntimeConfig.nMax,
-                    builder: (context, nMax, __) {
-                      return _EditableTile(
-                        label: 'النيتروجين (N)',
-                        value: '$nMin - $nMax',
-                        onTap: _editNitrogenRange,
-                        trailingIcon: Icons.add,
-                      );
-                    },
-                  );
-                },
-              ),
-              ValueListenableBuilder<int>(
-                valueListenable: AppRuntimeConfig.pMin,
-                builder: (context, pMin, _) {
-                  return ValueListenableBuilder<int>(
-                    valueListenable: AppRuntimeConfig.pMax,
-                    builder: (context, pMax, __) {
-                      return _EditableTile(
-                        label: 'الفوسفور (P)',
-                        value: '$pMin - $pMax',
-                        onTap: _editPhosphorusRange,
-                        trailingIcon: Icons.add,
-                      );
-                    },
-                  );
-                },
-              ),
-              ValueListenableBuilder<int>(
-                valueListenable: AppRuntimeConfig.kMin,
-                builder: (context, kMin, _) {
-                  return ValueListenableBuilder<int>(
-                    valueListenable: AppRuntimeConfig.kMax,
-                    builder: (context, kMax, __) {
-                      return _EditableTile(
-                        label: 'البوتاسيوم (K)',
-                        value: '$kMin - $kMax',
-                        onTap: _editPotassiumRange,
-                        trailingIcon: Icons.add,
-                      );
-                    },
-                  );
-                },
-              ),
-              const _SimpleTile(
-                label: 'هدف الورقة',
-                value: 'سليم (للقراءة فقط)',
-                icon: Icons.lock_outline,
-              ),
-            ],
+          StreamBuilder<DatabaseEvent>(
+            stream: _configStream,
+            builder: (context, snapshot) {
+              final Map<String, dynamic> config = _toMap(
+                snapshot.data?.snapshot.value,
+              );
+              final Map<String, dynamic> autoFertilizer = _toMap(
+                config['auto_fertilizer'],
+              );
+
+              return _SectionCard(
+                title: 'إعدادات التسميد التلقائي',
+                subtitle: 'حدود النيتروجين والفوسفور والبوتاسيوم',
+                children: <Widget>[
+                  _configRangeTile(
+                    label: 'نيتروجين (N)',
+                    minValue: _toInt(autoFertilizer['n_min']),
+                    maxValue: _toInt(autoFertilizer['n_max']),
+                    onTap: () => _editConfigRange(
+                      section: 'auto_fertilizer',
+                      title: 'تعديل حدود النيتروجين',
+                      minKey: 'n_min',
+                      maxKey: 'n_max',
+                      currentMin: _toInt(autoFertilizer['n_min'], 120),
+                      currentMax: _toInt(autoFertilizer['n_max'], 220),
+                      allowedMin: 0,
+                      allowedMax: 500,
+                    ),
+                  ),
+                  const Divider(),
+                  _configRangeTile(
+                    label: 'فوسفور (P)',
+                    minValue: _toInt(autoFertilizer['p_min']),
+                    maxValue: _toInt(autoFertilizer['p_max']),
+                    onTap: () => _editConfigRange(
+                      section: 'auto_fertilizer',
+                      title: 'تعديل حدود الفوسفور',
+                      minKey: 'p_min',
+                      maxKey: 'p_max',
+                      currentMin: _toInt(autoFertilizer['p_min'], 40),
+                      currentMax: _toInt(autoFertilizer['p_max'], 80),
+                      allowedMin: 0,
+                      allowedMax: 500,
+                    ),
+                  ),
+                  const Divider(),
+                  _configRangeTile(
+                    label: 'بوتاسيوم (K)',
+                    minValue: _toInt(autoFertilizer['k_min']),
+                    maxValue: _toInt(autoFertilizer['k_max']),
+                    onTap: () => _editConfigRange(
+                      section: 'auto_fertilizer',
+                      title: 'تعديل حدود البوتاسيوم',
+                      minKey: 'k_min',
+                      maxKey: 'k_max',
+                      currentMin: _toInt(autoFertilizer['k_min'], 150),
+                      currentMax: _toInt(autoFertilizer['k_max'], 250),
+                      allowedMin: 0,
+                      allowedMax: 500,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
+          const SizedBox(height: 12),
+          _PumpControlSection(database: _database),
           const SizedBox(height: 12),
           StreamBuilder<DatabaseEvent>(
             stream: FirebaseStreams.leafStream,
@@ -752,8 +556,6 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
               );
             },
           ),
-          const SizedBox(height: 12),
-          _PumpControlSection(database: _database),
           const SizedBox(height: 12),
           _SectionCard(
             title: 'ما تحتاجه',
@@ -788,25 +590,12 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
 
   Future<void> _handleManualToggle(
     DatabaseReference pumpRef,
-    String pumpName,
     bool newValue,
   ) async {
     try {
-      // 1. Capture "Before" state snapshot
-      final DataSnapshot dataSnapshot = await FarmPayload.rootRef(
-        widget.database,
-      ).get();
-      final Map<dynamic, dynamic> currentData =
-          dataSnapshot.value as Map? ?? {};
-
-      // 2. Perform the toggle
       await pumpRef.set(newValue);
-
-      // Logging is handled centrally by `PumpChangeLogger`, which observes
-      // the pumps root and writes minimal ON/OFF entries. Do not write a
-      // manual log here to avoid duplicate entries.
     } catch (e) {
-      debugPrint('Manual log failed: $e');
+      debugPrint('Manual pump toggle failed: $e');
     }
   }
 
@@ -849,7 +638,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/water'),
-                          'مضخة المياه',
                           value,
                         );
                       },
@@ -862,7 +650,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/fert1'),
-                          'مضخة السماد 1',
                           value,
                         );
                       },
@@ -875,7 +662,6 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
                       onChanged: (bool value) {
                         _handleManualToggle(
                           widget.database.ref('${FarmPayload.pumpsPath}/fert2'),
-                          'مضخة السماد 2',
                           value,
                         );
                       },

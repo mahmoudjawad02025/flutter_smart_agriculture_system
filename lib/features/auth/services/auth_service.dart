@@ -57,14 +57,27 @@ class AuthService {
             .ref('${FarmPayload.notificationItemsPath}/notif_$notifId')
             .set({
               'id': notifId,
-              'title': 'طلب مستخدم جديد',
+              'title': 'مستخدم جديد بانتظار تأكيد المسؤول',
               'disease_name': 'User_Signup',
               'message':
-                  'قام المستخدم $displayName بالتسجيل ويحتاج موافقتك في إدارة المستخدمين.',
+                  'تم تسجيل مستخدم جديد ويحتاج إلى موافقة المسؤول لتفعيل الحساب.',
               'created_at': DateTime.now().toUtc().toIso8601String(),
               'next_upload': '',
               'is_read': false,
             });
+        // Ensure admins see the signup: increment the unread counter.
+        try {
+          final DataSnapshot countSnapshot = await _database
+              .ref(FarmPayload.unreadCountPath)
+              .get();
+          final int currentCount = (countSnapshot.value as int?) ?? 0;
+          await _database
+              .ref(FarmPayload.unreadCountPath)
+              .set(currentCount + 1);
+        } catch (e) {
+          // Do not block signup flow if increment fails; log for debugging.
+          print('[AUTH_SERVICE] Failed to increment unread_count: $e');
+        }
       }
 
       final authUser = await _userFromFirebaseUser(user);
