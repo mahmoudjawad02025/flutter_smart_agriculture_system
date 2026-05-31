@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "906975937291",
+    "firebase_url": "https://smart-cucumber-agriculture-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "smart-cucumber-agriculture",
+    "storage_bucket": "smart-cucumber-agriculture.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906975937291:android:91efed5c2b5c9a8aff580e",
+        "android_client_info": {
+          "package_name": "com.example.smart_cucumber_agriculture_system"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApRVJp3KmNMwd2KUoS4FHk-sqr7TmMoAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

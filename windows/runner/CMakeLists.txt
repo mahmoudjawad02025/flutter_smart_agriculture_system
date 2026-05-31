@@ -36,5 +36,11 @@ target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
+# Firebase C++ prebuilt libs may not ship PDB files in Debug; suppress linker
+# warning LNK4099 to keep local debug builds readable.
+if(MSVC)
+  target_link_options(${BINARY_NAME} PRIVATE "$<$<CONFIG:Debug>:/IGNORE:4099>")
+endif()
+
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
