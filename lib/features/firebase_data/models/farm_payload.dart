@@ -119,6 +119,15 @@ class FarmPayload {
   static Map<String, dynamic> _toMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is List) {
+      final Map<String, dynamic> map = {};
+      for (int i = 0; i < value.length; i++) {
+        if (value[i] != null) {
+          map[i.toString()] = value[i];
+        }
+      }
+      return map;
+    }
     return <String, dynamic>{};
   }
 }

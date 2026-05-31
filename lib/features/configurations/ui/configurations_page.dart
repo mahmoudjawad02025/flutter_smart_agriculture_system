@@ -775,26 +775,9 @@ class _PumpControlSectionState extends State<_PumpControlSection> {
       // 2. Perform the toggle
       await pumpRef.set(newValue);
 
-      // 3. Push a simplified manual log
-      final String logId = 'manual_${DateTime.now().millisecondsSinceEpoch}';
-
-      final Map<String, dynamic> sensorsData = _toMap(currentData['sensors']);
-      final Map<String, dynamic> leafData = _toMap(currentData['leaf']);
-
-      await widget.database.ref('${FarmPayload.manualLogsPath}/$logId').set({
-        'time': DateTime.now().toUtc().toIso8601String(),
-        'action': newValue ? 'ON' : 'OFF',
-        'pump': pumpName,
-        'state': {
-          'temp': sensorsData['temp'] ?? 0,
-          'moist': sensorsData['moist'] ?? 0,
-          'hum': sensorsData['hum'] ?? 0,
-          'n': sensorsData['n'] ?? 0,
-          'p': sensorsData['p'] ?? 0,
-          'k': sensorsData['k'] ?? 0,
-          'status': leafData['status'] ?? 'Unknown',
-        },
-      });
+      // Logging is handled centrally by `PumpChangeLogger`, which observes
+      // the pumps root and writes minimal ON/OFF entries. Do not write a
+      // manual log here to avoid duplicate entries.
     } catch (e) {
       debugPrint('Manual log failed: $e');
     }

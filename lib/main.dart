@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,10 +12,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'core/config/app_access_control.dart';
 import 'core/config/app_runtime_config.dart';
 import 'core/localization/app_strings.dart';
-import 'core/services/auto_actions_engine.dart';
 import 'features/auth/cubit/auth_cubit.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/ui/auth_wrapper.dart';
+import 'core/services/pump_change_logger.dart';
 
 import 'features/disease_detection/cubit/disease_detection_cubit.dart';
 import 'features/disease_detection/services/disease_detection_service.dart';
@@ -49,12 +48,11 @@ void main() async {
     debugPrint('[STARTUP] FarmPayload.ensureDefaults failed: $error\n$stack');
   }
 
-  // Start in-app automation: reacts to Firebase changes while the app is running.
-  // NOTE: Realtime Database does not execute Dart code on the server.
-  AutoActionsEngine.ensureStarted(
-    database: FirebaseDatabase.instance,
-    debug: kDebugMode,
-  );
+  try {
+    PumpChangeLogger.ensureStarted(database: FirebaseDatabase.instance);
+  } catch (error, stack) {
+    debugPrint('[STARTUP] PumpChangeLogger failed to start: $error\n$stack');
+  }
 
   runApp(const MyApp());
 }

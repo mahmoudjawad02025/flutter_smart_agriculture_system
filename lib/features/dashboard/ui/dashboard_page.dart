@@ -258,68 +258,66 @@ class _LogsSnapshot extends StatelessWidget {
         final Map<String, dynamic> logsData = _toMap(
           snapshot.data?.snapshot.value,
         );
+
         final List<_LogItem> allLogs = [];
 
-        // Parse Fertilizer Logs
-        _toMap(logsData['fert_log']).forEach((key, val) {
-          final data = _toMap(val);
+        void addIfPumpLog(
+          Map<String, dynamic> data, {
+          bool isAuto = false,
+          bool isManual = false,
+        }) {
+          if (data.isEmpty) return;
+          if (data['debug'] == true) return;
+
+          final String action = data['action']?.toString().toUpperCase() ?? '';
+          final String pump = data['pump']?.toString() ?? '';
+          if (action != 'ON' && action != 'OFF') return;
+
+          final String lowPump = pump.toLowerCase();
+          IconData icon;
+          String title;
+
+          if (lowPump.contains('water') || pump.toUpperCase() == 'WATER') {
+            icon = Icons.water_drop_outlined;
+            title =
+                '${isAuto ? 'ري تلقائي' : 'ري يدوي'} : ${AppStrings.displayAction(action)}';
+          } else if (lowPump.contains('fert') ||
+              pump.toUpperCase() == 'FERTILIZER') {
+            icon = Icons.science_outlined;
+            title =
+                '${AppStrings.displayPumpName(pump)} ${isAuto ? 'تلقائي' : 'يدوي'} : ${AppStrings.displayAction(action)}';
+          } else {
+            icon = Icons.touch_app_outlined;
+            title =
+                '${AppStrings.displayPumpName(pump)} ${isAuto ? 'تلقائي' : 'يدوي'} : ${AppStrings.displayAction(action)}';
+          }
+
           allLogs.add(
             _LogItem(
               time: _parseDate(data['time']),
-              title: 'الأسمدة: ${data['type'] ?? 'تطبيق'}',
-              subtitle: 'القيمة: ${data['val'] ?? '-'}',
-              icon: Icons.science_outlined,
+              title: title,
+              subtitle: '',
+              icon: icon,
+              isManual: isManual,
             ),
           );
+        }
+
+        // Auto logs
+        final Map<String, dynamic> autoLogs = _toMap(logsData['auto_logs']);
+        autoLogs.forEach((kind, entries) {
+          final Map<String, dynamic> kindLogs = _toMap(entries);
+          kindLogs.forEach((key, val) {
+            final Map<String, dynamic> data = _toMap(val);
+            addIfPumpLog(data, isAuto: true);
+          });
         });
 
-        // Parse Water Logs
-        _toMap(logsData['water_log']).forEach((key, val) {
-          final data = _toMap(val);
-          allLogs.add(
-            _LogItem(
-              time: _parseDate(data['time']),
-              title: 'جلسة ري',
-              subtitle: 'تم تشغيل مضخة الري',
-              icon: Icons.water_drop_outlined,
-            ),
-          );
-        });
-
-        // Parse AI Upload Logs
-        _toMap(logsData['upload_log']).forEach((key, val) {
-          final data = _toMap(val);
-          allLogs.add(
-            _LogItem(
-              time: _parseDate(data['time']),
-              title: 'نتيجة فحص الذكاء الاصطناعي',
-              subtitle:
-                  'الكشف: ${AppStrings.displayDiseaseName(data['res']?.toString() ?? 'Healthy')}',
-              icon: Icons.auto_awesome_outlined,
-            ),
-          );
-        });
-
-        // Parse Manual Logs
-        _toMap(logsData['manual_log']).forEach((key, val) {
-          final data = _toMap(val);
-          final state = _toMap(data['state']);
-          final String rawAction = data['action']?.toString() ?? '';
-
-          allLogs.add(
-            _LogItem(
-              time: _parseDate(data['time']),
-              title:
-                  'يدوي ${AppStrings.displayPumpName(data['pump']?.toString() ?? '')}: ${AppStrings.displayAction(rawAction)}',
-              icon: Icons.touch_app_outlined,
-              isManual: true,
-              n: state['n']?.toString() ?? '?',
-              p: state['p']?.toString() ?? '?',
-              k: state['k']?.toString() ?? '?',
-              moist: state['moist']?.toString() ?? '?',
-              temp: state['temp']?.toString() ?? '?',
-            ),
-          );
+        // Manual logs
+        final Map<String, dynamic> manualLogs = _toMap(logsData['manual_logs']);
+        manualLogs.forEach((key, val) {
+          final Map<String, dynamic> data = _toMap(val);
+          addIfPumpLog(data, isManual: true);
         });
 
         allLogs.sort((a, b) => b.time.compareTo(a.time));
@@ -382,26 +380,13 @@ class _LogsSnapshot extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: log.isManual
-                            ? Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      _MiniMetric(Icons.water_drop, log.moist!),
-                                      _MiniMetric(Icons.thermostat, log.temp!),
-                                      _MiniMetric(Icons.grass, log.n!),
-                                      _MiniMetric(Icons.spa, log.p!),
-                                      _MiniMetric(Icons.eco, log.k!),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                log.subtitle ?? '',
+                        subtitle:
+                            (log.subtitle != null && log.subtitle!.isNotEmpty)
+                            ? Text(
+                                log.subtitle!,
                                 style: const TextStyle(fontSize: 12),
-                              ),
+                              )
+                            : null,
                         trailing: Text(
                           '${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
                           style: TextStyle(

@@ -520,7 +520,7 @@ class NotificationBadge extends StatelessWidget {
         return Badge.count(
           count: state.unreadCount,
           isLabelVisible: state.unreadCount > 0,
-          offset: const Offset(24, 7),
+          offset: const Offset(-2, 2),
           child: IconButton(
             icon: const Icon(Icons.notifications_outlined),
             tooltip: 'عرض الإشعارات',

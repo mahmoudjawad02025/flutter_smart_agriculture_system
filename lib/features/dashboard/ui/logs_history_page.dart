@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/services/firebase_streams.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../features/firebase_data/models/farm_payload.dart';
 
 class LogsHistoryPage extends StatelessWidget {
   const LogsHistoryPage({super.key});
@@ -17,19 +18,81 @@ class LogsHistoryPage extends StatelessWidget {
             icon: const Icon(Icons.refresh),
             onPressed: () {}, // StreamBuilder handles this
           ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'حذف الكل',
+            onPressed: () async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+              final bool? confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('حذف كل السجلات'),
+                  content: const Text(
+                    'هل تريد حذف جميع السجلات نهائياً؟ لا يمكن التراجع.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('إلغاء'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('حذف'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed != true) return;
+
+              // Use a SnackBar as an indeterminate progress indicator to avoid
+              // using BuildContext across async gaps.
+              final SnackBar loading = SnackBar(
+                content: const Text('جارٍ حذف السجلات...'),
+                duration: const Duration(days: 1),
+              );
+              scaffoldMessenger.showSnackBar(loading);
+
+              try {
+                await FirebaseDatabase.instance
+                    .ref(FarmPayload.logsPath)
+                    .remove();
+                scaffoldMessenger.hideCurrentSnackBar();
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(content: Text('تم حذف السجلات.')),
+                );
+              } catch (e) {
+                scaffoldMessenger.hideCurrentSnackBar();
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('فشل حذف السجلات: $e')),
+                );
+              }
+            },
+          ),
         ],
       ),
       body: StreamBuilder<DatabaseEvent>(
+        initialData: FirebaseStreams.lastLogsEvent,
         stream: FirebaseStreams.logsStream,
         builder: (context, snapshot) {
-          // If there is no data yet, show an empty state message
-          // instead of a persistent spinner so the page doesn't look
-          // like it's still loading when the DB contains no logs.
+          if (snapshot.hasError) {
+            return Center(child: Text('فشل تحميل السجلات: ${snapshot.error}'));
+          }
+
+          // Prefer showing available data (including `initialData`) over
+          // an unconditional waiting spinner. Only show the spinner while
+          // the stream is still waiting and no data is available yet.
           if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
             return const Center(child: Text('لا توجد سجلات.'));
           }
 
-          final logs = _parseAllLogs(snapshot.data!.snapshot.value);
+          final Map<String, dynamic> logsNode = _toMap(
+            snapshot.data!.snapshot.value,
+          );
+          final logs = _parseAllLogs(logsNode);
 
           if (logs.isEmpty) {
             return const Center(child: Text('لا توجد سجلات.'));
@@ -58,7 +121,9 @@ class LogsHistoryPage extends StatelessWidget {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (log.isManual)
+                    if (log.subtitle != null && log.subtitle!.isNotEmpty)
+                      Text(log.subtitle!),
+                    if (log.hasSensors)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Wrap(
@@ -68,14 +133,12 @@ class LogsHistoryPage extends StatelessWidget {
                             _LogMetric(Icons.water_drop, '${log.moist}%'),
                             _LogMetric(Icons.thermostat, '${log.temp}°م'),
                             _LogMetric(Icons.air, '${log.hum}%'),
-                            _LogMetric(Icons.grass, '${log.n}'),
-                            _LogMetric(Icons.spa, '${log.p}'),
+                            _LogMetric(Icons.eco, '${log.n}'),
+                            _LogMetric(Icons.eco, '${log.p}'),
                             _LogMetric(Icons.eco, '${log.k}'),
                           ],
                         ),
-                      )
-                    else
-                      Text(log.subtitle ?? ''),
+                      ),
                     const SizedBox(height: 4),
                     Text(
                       'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
@@ -100,68 +163,70 @@ class LogsHistoryPage extends StatelessWidget {
     final Map<String, dynamic> logsData = _toMap(raw);
     final List<_DetailedLogItem> allLogs = [];
 
-    // Fertilizer
-    _toMap(logsData['fert_log']).forEach((key, val) {
-      final data = _toMap(val);
+    void addIfPumpLog(
+      Map<String, dynamic> data, {
+      bool isAuto = false,
+      bool isManual = false,
+    }) {
+      if (data.isEmpty) return;
+      if (data['debug'] == true) return; // ignore debug entries
+
+      final String action = data['action']?.toString().toUpperCase() ?? '';
+      final String pump = data['pump']?.toString() ?? '';
+      if (action != 'ON' && action != 'OFF') return;
+
+      final String lowPump = pump.toLowerCase();
+      IconData icon = Icons.auto_awesome_outlined;
+      String title;
+
+      if (lowPump.contains('water') || pump.toUpperCase() == 'WATER') {
+        icon = Icons.water_drop_outlined;
+        title =
+            '${isAuto ? 'ري تلقائي' : 'ري يدوي'} : ${AppStrings.displayAction(action)}';
+      } else if (lowPump.contains('fert') ||
+          pump.toUpperCase() == 'FERTILIZER') {
+        icon = Icons.science_outlined;
+        title =
+            '${AppStrings.displayPumpName(pump)} ${isAuto ? 'تلقائي' : 'يدوي'} : ${AppStrings.displayAction(action)}';
+      } else {
+        icon = Icons.touch_app_outlined;
+        title =
+            '${AppStrings.displayPumpName(pump)} ${isAuto ? 'تلقائي' : 'يدوي'} : ${AppStrings.displayAction(action)}';
+      }
+
       allLogs.add(
         _DetailedLogItem(
           time: _parseDate(data['time']),
-          title: 'التسميد: ${data['type'] ?? 'تطبيق'}',
-          subtitle: 'القيمة: ${data['val'] ?? '-'}',
-          icon: Icons.science_outlined,
+          title: title,
+          subtitle: null,
+          icon: icon,
         ),
       );
+    }
+
+    // Auto logs
+    final Map<String, dynamic> autoLogs = _toMap(logsData['auto_logs']);
+    autoLogs.forEach((kind, entries) {
+      final Map<String, dynamic> kindLogs = _toMap(entries);
+      kindLogs.forEach((key, val) {
+        final data = _toMap(val);
+        addIfPumpLog(data, isAuto: true);
+      });
     });
 
-    // Water
-    _toMap(logsData['water_log']).forEach((key, val) {
+    // Manual logs
+    final Map<String, dynamic> manualLogs = _toMap(logsData['manual_logs']);
+    manualLogs.forEach((key, val) {
       final data = _toMap(val);
-      allLogs.add(
-        _DetailedLogItem(
-          time: _parseDate(data['time']),
-          title: 'جلسة ري',
-          subtitle: 'تم تشغيل مضخة الري',
-          icon: Icons.water_drop_outlined,
-        ),
-      );
+      addIfPumpLog(data, isManual: true);
     });
 
-    // AI
-    _toMap(logsData['upload_log']).forEach((key, val) {
-      final data = _toMap(val);
-      allLogs.add(
-        _DetailedLogItem(
-          time: _parseDate(data['time']),
-          title: 'نتيجة فحص الذكاء الاصطناعي',
-          subtitle: 'الكشف: ${data['res'] ?? 'سليم'}',
-          icon: Icons.auto_awesome_outlined,
-          leafStatus: data['res']?.toString(),
-        ),
-      );
-    });
-
-    // Manual
-    _toMap(logsData['manual_log']).forEach((key, val) {
-      final data = _toMap(val);
-      final state = _toMap(data['state']);
-      final String rawAction = data['action']?.toString() ?? '';
-
-      allLogs.add(
-        _DetailedLogItem(
-          time: _parseDate(data['time']),
-          title:
-              'يدوي ${AppStrings.displayPumpName(data['pump']?.toString() ?? '')}: ${AppStrings.displayAction(rawAction)}',
-          icon: Icons.touch_app_outlined,
-          isManual: true,
-          leafStatus: state['status']?.toString(),
-          n: state['n']?.toString() ?? '?',
-          p: state['p']?.toString() ?? '?',
-          k: state['k']?.toString() ?? '?',
-          hum: state['hum']?.toString() ?? '?',
-          moist: state['moist']?.toString() ?? '?',
-          temp: state['temp']?.toString() ?? '?',
-        ),
-      );
+    // Also scan top-level entries (in case snapshot pointed directly at a logs node)
+    logsData.forEach((key, val) {
+      final Map<String, dynamic> candidate = _toMap(val);
+      if (candidate.containsKey('action') && candidate.containsKey('pump')) {
+        addIfPumpLog(candidate);
+      }
     });
 
     allLogs.sort((a, b) => b.time.compareTo(a.time));
@@ -171,13 +236,22 @@ class LogsHistoryPage extends StatelessWidget {
   Map<String, dynamic> _toMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is List) {
+      final Map<String, dynamic> map = {};
+      for (int i = 0; i < value.length; i++) {
+        if (value[i] != null) {
+          map[i.toString()] = value[i];
+        }
+      }
+      return map;
+    }
     return <String, dynamic>{};
   }
 
   DateTime _parseDate(dynamic val) {
     if (val is String) {
       try {
-        return DateTime.parse(val);
+        return DateTime.parse(val).toLocal();
       } catch (_) {}
     }
     return DateTime.now();
@@ -214,7 +288,7 @@ class _DetailedLogItem {
   final String? subtitle;
   final IconData icon;
   final String? leafStatus;
-  final bool isManual;
+  final bool hasSensors;
   final String? n, p, k, moist, temp, hum;
 
   _DetailedLogItem({
@@ -223,7 +297,7 @@ class _DetailedLogItem {
     this.subtitle,
     required this.icon,
     this.leafStatus,
-    this.isManual = false,
+    this.hasSensors = false,
     this.n,
     this.p,
     this.k,

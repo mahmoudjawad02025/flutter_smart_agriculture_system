@@ -20,11 +20,15 @@ class FirebaseStreams {
     return _root!.stream;
   }
 
+  static DatabaseEvent? get lastRootEvent => _root?._lastEvent;
+
   static _SharedQueryStream? _leaf;
   static Stream<DatabaseEvent> get leafStream {
     _leaf ??= _SharedQueryStream(_db.ref(FarmPayload.leafPath));
     return _leaf!.stream;
   }
+
+  static DatabaseEvent? get lastLeafEvent => _leaf?._lastEvent;
 
   static _SharedQueryStream? _pumps;
   static Stream<DatabaseEvent> get pumpsStream {
@@ -32,23 +36,34 @@ class FirebaseStreams {
     return _pumps!.stream;
   }
 
+  static DatabaseEvent? get lastPumpsEvent => _pumps?._lastEvent;
+
   static _SharedQueryStream? _logs;
   static Stream<DatabaseEvent> get logsStream {
     _logs ??= _SharedQueryStream(_db.ref(FarmPayload.logsPath));
     return _logs!.stream;
   }
 
+  static DatabaseEvent? get lastLogsEvent => _logs?._lastEvent;
+
   static _SharedQueryStream? _notificationItems;
   static Stream<DatabaseEvent> get notificationItemsStream {
-    _notificationItems ??= _SharedQueryStream(_db.ref(FarmPayload.notificationItemsPath));
+    _notificationItems ??= _SharedQueryStream(
+      _db.ref(FarmPayload.notificationItemsPath),
+    );
     return _notificationItems!.stream;
   }
+
+  static DatabaseEvent? get lastNotificationItemsEvent =>
+      _notificationItems?._lastEvent;
 
   static _SharedQueryStream? _unreadCount;
   static Stream<DatabaseEvent> get unreadCountStream {
     _unreadCount ??= _SharedQueryStream(_db.ref(FarmPayload.unreadCountPath));
     return _unreadCount!.stream;
   }
+
+  static DatabaseEvent? get lastUnreadCountEvent => _unreadCount?._lastEvent;
 }
 
 class _SharedQueryStream {
@@ -86,14 +101,6 @@ class _SharedQueryStream {
       // No seeding here — rely on the `onValue` subscription to forward
       // the initial event. Seeding caused compatibility issues with
       // the `DatabaseEvent` constructors across package versions.
-    }
-
-    // If we already have a cached event, re-emit it so new listeners
-    // don't see an indefinite loading spinner.
-    if (_lastEvent != null) {
-      try {
-        _controller?.add(_lastEvent!);
-      } catch (_) {}
     }
   }
 

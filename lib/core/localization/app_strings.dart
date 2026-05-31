@@ -89,14 +89,14 @@ class AppStrings {
       case 'water':
       case 'waterpump':
       case 'pump':
-        return 'الري';
+        return 'ري';
       case 'fert1':
       case 'fertilizer1':
       case 'fert':
-        return 'التسميد 1';
+        return 'تسميد 1';
       case 'fert2':
       case 'fertilizer2':
-        return 'التسميد 2';
+        return 'تسميد 2';
       default:
         return pump;
     }

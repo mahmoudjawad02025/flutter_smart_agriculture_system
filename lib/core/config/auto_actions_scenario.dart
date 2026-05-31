@@ -64,16 +64,11 @@ class AutoActionDecision {
   }
 
   Map<String, dynamic> toLogMap() {
+    // Minimal log format: only record timestamp, pump name and action.
     return <String, dynamic>{
       'time': createdAt.toUtc().toIso8601String(),
       'pump': kind == AutoActionKind.water ? 'Water' : 'Fertilizer',
       'action': desiredPumpOn ? 'ON' : 'OFF',
-      'reason': reason,
-      'target': targetValue,
-      'title': logTitle,
-      'message': logMessage,
-      'state': sensorsSnapshot,
-      'leaf_status': leafStatus,
     };
   }
 
@@ -444,17 +439,7 @@ class AutoActionsScenario {
     );
 
     if (!autoMode) {
-      // Debug: write decision even when auto mode is off
-      if (debug) {
-        final String dbgId =
-            'auto_water_debug_${DateTime.now().microsecondsSinceEpoch}';
-        final Map<String, dynamic> dbg = Map<String, dynamic>.from(
-          decision.toLogMap(),
-        );
-        dbg['debug'] = true;
-        dbg['note'] = 'auto_mode_off';
-        await database.ref('${FarmPayload.autoLogsPath}/water/$dbgId').set(dbg);
-      }
+      // When auto mode is disabled we do not write logs.
       return decision;
     }
 
@@ -466,22 +451,9 @@ class AutoActionsScenario {
     }
 
     // Step 3: Write log entry
-    if (decision.shouldWriteLog) {
-      final String logId =
-          'auto_water_${decision.createdAt.microsecondsSinceEpoch}';
-      await database
-          .ref('${FarmPayload.autoLogsPath}/water/$logId')
-          .set(decision.toLogMap());
-    } else if (debug) {
-      // Debug: write a debug log so you can inspect the evaluated decision
-      final String dbgId =
-          'auto_water_debug_${decision.createdAt.microsecondsSinceEpoch}';
-      final Map<String, dynamic> dbg = Map<String, dynamic>.from(
-        decision.toLogMap(),
-      );
-      dbg['debug'] = true;
-      await database.ref('${FarmPayload.autoLogsPath}/water/$dbgId').set(dbg);
-    }
+    // Log writes are now centralized by `PumpChangeLogger` which listens to
+    // the pumps root and records ON/OFF events. Avoid writing auto logs here
+    // to prevent duplication.
 
     // Step 4: Send notification
     if (decision.shouldSendNotification) {

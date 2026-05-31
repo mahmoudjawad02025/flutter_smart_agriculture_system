@@ -45,7 +45,7 @@ class FarmNotification extends Equatable {
 
   static DateTime _parseDateTime(dynamic value) {
     if (value is String) {
-      return DateTime.parse(value);
+      return DateTime.parse(value).toLocal();
     }
     return DateTime.now();
   }
