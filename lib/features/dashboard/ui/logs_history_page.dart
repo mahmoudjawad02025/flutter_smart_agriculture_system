@@ -1,8 +1,9 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/services/firebase_streams.dart';
+import '../../../core/config/app_runtime_config.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/services/firebase_streams.dart';
 import '../../../features/firebase_data/models/farm_payload.dart';
 
 class LogsHistoryPage extends StatelessWidget {
@@ -23,7 +24,6 @@ class LogsHistoryPage extends StatelessWidget {
             tooltip: 'حذف الكل',
             onPressed: () async {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-
               final bool? confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
@@ -44,15 +44,11 @@ class LogsHistoryPage extends StatelessWidget {
                 ),
               );
               if (confirmed != true) return;
-
-              // Use a SnackBar as an indeterminate progress indicator to avoid
-              // using BuildContext across async gaps.
               final SnackBar loading = SnackBar(
                 content: const Text('جارٍ حذف السجلات...'),
                 duration: const Duration(days: 1),
               );
               scaffoldMessenger.showSnackBar(loading);
-
               try {
                 await FirebaseDatabase.instance
                     .ref(FarmPayload.logsPath)
@@ -71,132 +67,153 @@ class LogsHistoryPage extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<DatabaseEvent>(
-        initialData: FirebaseStreams.lastLogsEvent,
-        stream: FirebaseStreams.logsStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('فشل تحميل السجلات: ${snapshot.error}'));
-          }
-
-          // Prefer showing available data (including `initialData`) over
-          // an unconditional waiting spinner. Only show the spinner while
-          // the stream is still waiting and no data is available yet.
-          if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            return const Center(child: Text('لا توجد سجلات.'));
-          }
-
-          final Map<String, dynamic> logsNode = _toMap(
-            snapshot.data!.snapshot.value,
-          );
-          final logs = _parseAllLogs(logsNode);
-
-          if (logs.isEmpty) {
-            return const Center(child: Text('لا توجد سجلات.'));
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: logs.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              final log = logs[index];
-              return Dismissible(
-                key: Key(log.dbPath ?? index.toString()),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  color: Colors.red.shade200,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  child: Icon(Icons.delete_outline, color: Colors.red[700]),
-                ),
-                confirmDismiss: (direction) async {
-                  final bool? confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('حذف السجل'),
-                      content: const Text(
-                        'هل تريد حذف هذا السجل نهائياً؟ لا يمكن التراجع.',
+      body: ValueListenableBuilder<bool>(
+        valueListenable: AppRuntimeConfig.strongAlertMode,
+        builder: (context, isStrongAlert, _) {
+          return StreamBuilder<DatabaseEvent>(
+            initialData: FirebaseStreams.lastLogsEvent,
+            stream: FirebaseStreams.logsStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('فشل تحميل السجلات: {snapshot.error}'),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return const Center(child: Text('لا توجد سجلات.'));
+              }
+              final Map<String, dynamic> logsNode = _toMap(
+                snapshot.data!.snapshot.value,
+              );
+              final logs = _parseAllLogs(logsNode);
+              if (logs.isEmpty) {
+                return const Center(child: Text('لا توجد سجلات.'));
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: logs.length,
+                separatorBuilder: (context, index) => const Divider(),
+                itemBuilder: (context, index) {
+                  final log = logs[index];
+                  final bool isDiseaseLog =
+                      log.leafStatus != null &&
+                      log.leafStatus!.isNotEmpty &&
+                      !log.leafStatus!.toLowerCase().contains('healthy') &&
+                      !log.leafStatus!.toLowerCase().contains('unknown');
+                  return Dismissible(
+                    key: Key(log.dbPath ?? index.toString()),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      color: Colors.red.shade200,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 16),
+                      child: Icon(Icons.delete_outline, color: Colors.red[700]),
+                    ),
+                    confirmDismiss: (direction) async {
+                      final bool? confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('حذف السجل'),
+                          content: const Text(
+                            'هل تريد حذف هذا السجل نهائياً؟ لا يمكن التراجع.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('إلغاء'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text('حذف'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return confirmed == true;
+                    },
+                    onDismissed: (direction) async {
+                      if (log.dbPath == null) return;
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
+                      try {
+                        await FirebaseDatabase.instance
+                            .ref(log.dbPath!)
+                            .remove();
+                        scaffoldMessenger.showSnackBar(
+                          const SnackBar(content: Text('تم حذف السجل.')),
+                        );
+                      } catch (e) {
+                        scaffoldMessenger.showSnackBar(
+                          SnackBar(content: Text('فشل حذف السجل: $e')),
+                        );
+                      }
+                    },
+                    child: ListTile(
+                      tileColor: (isStrongAlert && isDiseaseLog)
+                          ? Colors.red.shade50
+                          : null,
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
+                        child: Icon(
+                          log.icon,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: const Text('إلغاء'),
+                      title: Text(
+                        log.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: (isStrongAlert && isDiseaseLog)
+                              ? Colors.red[800]
+                              : null,
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: const Text('حذف'),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (log.subtitle != null && log.subtitle!.isNotEmpty)
+                            Text(log.subtitle!),
+                          if (log.hasSensors)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                children: [
+                                  _LogMetric(Icons.water_drop, '${log.moist}%'),
+                                  _LogMetric(Icons.thermostat, '${log.temp}°م'),
+                                  _LogMetric(Icons.air, '${log.hum}%'),
+                                  _LogMetric(Icons.eco, '${log.n}'),
+                                  _LogMetric(Icons.eco, '${log.p}'),
+                                  _LogMetric(Icons.eco, '${log.k}'),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Text(
+                        '${log.time.day.toString().padLeft(2, '0')}/${log.time.month.toString().padLeft(2, '0')}/${(log.time.year % 100).toString().padLeft(2, '0')} ${log.time.hour.toString().padLeft(2, '0')}:${log.time.minute.toString().padLeft(2, '0')}',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey,
                         ),
-                      ],
+                      ),
                     ),
                   );
-                  return confirmed == true;
                 },
-                onDismissed: (direction) async {
-                  if (log.dbPath == null) return;
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
-                  try {
-                    await FirebaseDatabase.instance.ref(log.dbPath!).remove();
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(content: Text('تم حذف السجل.')),
-                    );
-                  } catch (e) {
-                    scaffoldMessenger.showSnackBar(
-                      SnackBar(content: Text('فشل حذف السجل: $e')),
-                    );
-                  }
-                },
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                    child: Icon(
-                      log.icon,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  title: Text(
-                    log.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (log.subtitle != null && log.subtitle!.isNotEmpty)
-                        Text(log.subtitle!),
-                      if (log.hasSensors)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 4,
-                            children: [
-                              _LogMetric(Icons.water_drop, '${log.moist}%'),
-                              _LogMetric(Icons.thermostat, '${log.temp}°م'),
-                              _LogMetric(Icons.air, '${log.hum}%'),
-                              _LogMetric(Icons.eco, '${log.n}'),
-                              _LogMetric(Icons.eco, '${log.p}'),
-                              _LogMetric(Icons.eco, '${log.k}'),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
-                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                  trailing: Text(
-                    '${log.time.day}/${log.time.month}/${log.time.year}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                ),
               );
             },
           );

@@ -125,26 +125,26 @@ class PumpChangeLogger {
       await _database.ref('${FarmPayload.manualLogsPath}/$id').set(payload);
     }
 
-    // Also create a simple notification for this log so users get alerted.
-    try {
-      final String pumpDisplay = AppStrings.displayPumpName(pumpKey);
-      final String actionText = isOn ? AppStrings.on : AppStrings.off;
-      final String title = '$pumpDisplay : $actionText';
-      final String message = isAuto
-          ? 'تم بواسطة النظام التلقائي'
-          : 'تم بواسطة المستخدم يدوياً';
+    // Create notification only for auto logs, not manual logs.
+    if (isAuto) {
+      try {
+        final String pumpDisplay = AppStrings.displayPumpName(pumpKey);
+        final String actionText = isOn ? AppStrings.on : AppStrings.off;
+        final String title = '$pumpDisplay : $actionText';
+        final String message = 'تم بواسطة النظام التلقائي';
 
-      final NotificationsService svc = NotificationsService(
-        database: _database,
-      );
-      await svc.addLogNotification(
-        title: title,
-        message: message,
-        code: 'pump_log',
-        createdAt: now,
-      );
-    } catch (_) {
-      // best-effort; do not fail logging on notification errors
+        final NotificationsService svc = NotificationsService(
+          database: _database,
+        );
+        await svc.addLogNotification(
+          title: title,
+          message: message,
+          code: 'pump_log',
+          createdAt: now,
+        );
+      } catch (_) {
+        // best-effort; do not fail logging on notification errors
+      }
     }
   }
 

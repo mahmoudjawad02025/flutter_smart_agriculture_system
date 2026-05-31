@@ -23,6 +23,7 @@ import 'features/firebase_data/cubit/firebase_data_cubit.dart';
 import 'features/firebase_data/models/farm_payload.dart';
 import 'features/notifications/cubit/notifications_cubit.dart';
 import 'features/notifications/services/notifications_service.dart';
+import 'features/notifications/services/sensor_threshold_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +53,21 @@ void main() async {
     PumpChangeLogger.ensureStarted(database: FirebaseDatabase.instance);
   } catch (error, stack) {
     debugPrint('[STARTUP] PumpChangeLogger failed to start: $error\n$stack');
+  }
+
+  // Initialize sensor threshold monitoring
+  try {
+    final SensorThresholdMonitorService sensorMonitor =
+        SensorThresholdMonitorService(
+          database: FirebaseDatabase.instance,
+          notificationsService: NotificationsService(
+            database: FirebaseDatabase.instance,
+          ),
+        );
+    sensorMonitor.startMonitoring();
+    debugPrint('[STARTUP] Sensor threshold monitoring started');
+  } catch (error, stack) {
+    debugPrint('[STARTUP] Sensor monitoring failed to start: $error\n$stack');
   }
 
   // Keep auto-fertilizer targets in sync with Firebase so UI shows edits

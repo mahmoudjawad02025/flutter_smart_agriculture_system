@@ -147,16 +147,6 @@ class _NotificationCard extends StatelessWidget {
           final bool isTest = notification.diseaseName == 'Manual_Test';
           final bool isSignup = notification.diseaseName == 'User_Signup';
 
-          final Color accentColor = notification.isRead
-              ? Colors.grey[500]!
-              : isSignup
-              ? Colors.deepPurple
-              : isTest
-              ? Colors.blue
-              : (isStrongAlert
-                    ? const Color(0xFFD32F2F)
-                    : const Color(0xFF2E7D32));
-
           // Prefer explicit diseaseName; if missing, try to detect known
           // disease codes inside the stored title/message so legacy DB
           // entries written in English still render Arabic labels.
@@ -198,15 +188,49 @@ class _NotificationCard extends StatelessWidget {
               ? AppStrings.displayDiseaseName(detectedCode)
               : '';
 
+          // Classify notification type so we can apply strong-alert only to
+          // true disease detections (not sensor thresholds, logs, or tests).
           final bool isLog =
               detectedCode.toLowerCase().contains('log') ||
               detectedCode.toLowerCase().contains('pump');
+
+          // Detect sensor threshold notifications: diseaseName stored as
+          // 'sensor_threshold:<sensor_key>' (see NotificationsService).
+          final bool isSensorThreshold = detectedCode.toLowerCase().startsWith(
+            'sensor_threshold',
+          );
+          String sensorKey = '';
+          if (isSensorThreshold) {
+            final parts = detectedCode.split(':');
+            if (parts.length > 1) sensorKey = parts[1].toLowerCase();
+          }
+
+          final bool isDiseaseNotification =
+              !isLog &&
+              !isSensorThreshold &&
+              detectedCode.isNotEmpty &&
+              !isTest &&
+              !isSignup;
+
+          final Color accentColor = notification.isRead
+              ? Colors.grey[500]!
+              : isSignup
+              ? Colors.deepPurple
+              : isTest
+              ? Colors.blue
+              : (isDiseaseNotification && isStrongAlert
+                    ? const Color(0xFFD32F2F)
+                    : const Color(0xFF2E7D32));
 
           late final String titleText;
           late final String bodyText;
 
           if (isLog) {
             // For log notifications, use the provided title/message directly.
+            titleText = notification.title;
+            bodyText = notification.message;
+          } else if (isSensorThreshold) {
+            // Sensor notifications already contain a friendly title/message.
             titleText = notification.title;
             bodyText = notification.message;
           } else if (detectedCode.isNotEmpty &&
@@ -227,10 +251,8 @@ class _NotificationCard extends StatelessWidget {
             bodyText = notification.message;
           }
 
+          // No left accent border — user prefers no vertical line.
           return Container(
-            decoration: BoxDecoration(
-              border: Border(left: BorderSide(color: accentColor, width: 5)),
-            ),
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,6 +260,8 @@ class _NotificationCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
+                    // Leading icon box. Use a sensor-specific icon when
+                    // the notification represents a sensor threshold.
                     Container(
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.1),
@@ -245,13 +269,35 @@ class _NotificationCard extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.all(10),
                       child: Icon(
-                        isLog
-                            ? Icons.event_note_rounded
-                            : isSignup
-                            ? Icons.person_add_rounded
-                            : isTest
-                            ? Icons.cloud_done_rounded
-                            : Icons.warning_amber_rounded,
+                        // Map icon based on notification type / sensor key
+                        (() {
+                          if (isLog) return Icons.event_note_rounded;
+                          if (isSignup) return Icons.person_add_rounded;
+                          if (isTest) return Icons.cloud_done_rounded;
+                          if (isSensorThreshold) {
+                            switch (sensorKey) {
+                              case 'moist':
+                              case 'moisture':
+                                return Icons.water_drop_outlined;
+                              case 'temp':
+                              case 'temperature':
+                                return Icons.thermostat;
+                              case 'hum':
+                              case 'humidity':
+                                return Icons.air;
+                              case 'n':
+                              case 'nitrogen':
+                              case 'p':
+                              case 'phosphorus':
+                              case 'k':
+                              case 'potassium':
+                                return Icons.eco;
+                              default:
+                                return Icons.warning_amber_rounded;
+                            }
+                          }
+                          return Icons.warning_amber_rounded;
+                        })(),
                         color: accentColor,
                         size: 22,
                       ),
@@ -311,7 +357,7 @@ class _NotificationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (!isLog)
+                if (!isLog && !isSensorThreshold)
                   RichText(
                     text: TextSpan(
                       style: const TextStyle(

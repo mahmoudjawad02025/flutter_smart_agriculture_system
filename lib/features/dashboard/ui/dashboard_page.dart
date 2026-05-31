@@ -827,11 +827,6 @@ class _DailyAverageCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'نقاط التجميع اليوم: ${samples.length}',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
           ],
         ),
       ),

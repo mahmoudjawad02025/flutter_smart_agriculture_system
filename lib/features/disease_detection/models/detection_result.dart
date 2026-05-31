@@ -19,9 +19,14 @@ class DetectionResult extends Equatable {
 
     void collectLabels(dynamic node) {
       if (node is Map) {
-        final dynamic classValue = node['class'] ?? node['label'] ?? node['name'];
+        final dynamic classValue =
+            node['class'] ?? node['label'] ?? node['name'];
         if (classValue is String && classValue.trim().isNotEmpty) {
-          labels.add(classValue.trim());
+          final String label = classValue.trim();
+          // Filter out labels that start with "كشف :" (detection prefix in Arabic)
+          if (!label.startsWith('كشف :')) {
+            labels.add(label);
+          }
         }
         if (node.containsKey('confidence')) {
           conf = (node['confidence'] as num).toDouble();
@@ -49,5 +54,10 @@ class DetectionResult extends Equatable {
   }
 
   @override
-  List<Object?> get props => <Object?>[rawJson, detectedLabels, createdAt, confidence];
+  List<Object?> get props => <Object?>[
+    rawJson,
+    detectedLabels,
+    createdAt,
+    confidence,
+  ];
 }

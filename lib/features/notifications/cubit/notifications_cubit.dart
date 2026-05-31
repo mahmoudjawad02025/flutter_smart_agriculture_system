@@ -96,6 +96,34 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
+  Future<void> addSensorThresholdNotification({
+    required String sensorName,
+    required int sensorValue,
+    required String thresholdType,
+    DateTime? createdAt,
+  }) async {
+    try {
+      await _notificationsService.addSensorThresholdNotification(
+        sensorName: sensorName,
+        sensorValue: sensorValue,
+        thresholdType: thresholdType,
+        createdAt: createdAt,
+      );
+    } catch (e) {
+      print('[NOTIFICATIONS] Error adding sensor threshold notification: $e');
+    }
+  }
+
+  Future<void> addImageUploadNotification({DateTime? createdAt}) async {
+    try {
+      await _notificationsService.addImageUploadNotification(
+        createdAt: createdAt,
+      );
+    } catch (e) {
+      print('[NOTIFICATIONS] Error adding image upload notification: $e');
+    }
+  }
+
   @override
   Future<void> close() async {
     await _notificationsSubscription?.cancel();
