@@ -43,6 +43,7 @@ dependencies:
   dio: ^5.9.2
   firebase_core: ^4.7.0
   firebase_database: ^12.3.0
+  firebase_functions: ^5.0.0
   uuid: ^4.0.0
   firebase_auth: ^6.4.0
   google_sign_in: ^6.2.1
