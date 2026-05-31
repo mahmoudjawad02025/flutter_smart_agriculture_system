@@ -54,6 +54,61 @@ void main() async {
     debugPrint('[STARTUP] PumpChangeLogger failed to start: $error\n$stack');
   }
 
+  // Keep auto-fertilizer targets in sync with Firebase so UI shows edits
+  // made directly in the console or by other clients.
+  try {
+    FirebaseDatabase.instance
+        .ref(FarmPayload.autoFertilizerPath)
+        .onValue
+        .listen((DatabaseEvent event) async {
+          final dynamic raw = event.snapshot.value;
+          if (raw == null) return;
+          Map<String, dynamic> map;
+          if (raw is Map<String, dynamic>) {
+            map = raw;
+          } else if (raw is Map) {
+            map = Map<String, dynamic>.from(raw);
+          } else {
+            return;
+          }
+
+          int? asInt(dynamic v) {
+            if (v == null) return null;
+            if (v is int) return v;
+            if (v is num) return v.toInt();
+            if (v is String) return int.tryParse(v);
+            return null;
+          }
+
+          final int nMin = asInt(map['n_min']) ?? AppRuntimeConfig.nMin.value;
+          final int nMax = asInt(map['n_max']) ?? AppRuntimeConfig.nMax.value;
+          final int pMin = asInt(map['p_min']) ?? AppRuntimeConfig.pMin.value;
+          final int pMax = asInt(map['p_max']) ?? AppRuntimeConfig.pMax.value;
+          final int kMin = asInt(map['k_min']) ?? AppRuntimeConfig.kMin.value;
+          final int kMax = asInt(map['k_max']) ?? AppRuntimeConfig.kMax.value;
+          final String leafGoal =
+              (map['leaf_goal'] ?? AppRuntimeConfig.leafGoal.value).toString();
+
+          try {
+            await AppRuntimeConfig.setAutoFertilizerTargets(
+              nMinValue: nMin,
+              nMaxValue: nMax,
+              pMinValue: pMin,
+              pMaxValue: pMax,
+              kMinValue: kMin,
+              kMaxValue: kMax,
+              leafGoalValue: leafGoal,
+            );
+          } catch (e) {
+            debugPrint(
+              '[STARTUP] failed to apply auto_fertilizer snapshot: $e',
+            );
+          }
+        });
+  } catch (error, stack) {
+    debugPrint('[STARTUP] AutoFertilizer listener failed: $error\n$stack');
+  }
+
   runApp(const MyApp());
 }
 

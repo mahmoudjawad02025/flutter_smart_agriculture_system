@@ -55,6 +55,39 @@ class NotificationsService {
     }
   }
 
+  /// Add a simple notification for log events (pump ON/OFF).
+  Future<void> addLogNotification({
+    required String title,
+    required String message,
+    String code = 'log',
+    DateTime? createdAt,
+  }) async {
+    try {
+      final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
+
+      final FarmNotification notification = FarmNotification(
+        id: id,
+        title: title,
+        message: message,
+        diseaseName: code,
+        nextUpload: '',
+        isRead: false,
+        createdAt: createdAt ?? DateTime.now(),
+      );
+
+      // Write notification
+      await _database
+          .ref('${FarmPayload.notificationItemsPath}/notif_$id')
+          .set(notification.toMap());
+
+      // Increment unread count
+      await _incrementUnreadCount();
+    } catch (e) {
+      print('[NOTIFICATIONS_SERVICE] Error adding log notification: $e');
+      rethrow;
+    }
+  }
+
   /// Delete all notifications and reset unread count.
   Future<void> deleteAllNotifications() async {
     try {

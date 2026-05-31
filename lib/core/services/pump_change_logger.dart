@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 
 import '../../features/firebase_data/models/farm_payload.dart';
+import '../../features/notifications/services/notifications_service.dart';
+import '../localization/app_strings.dart';
 
 /// Observes the pumps root and writes minimal ON/OFF logs when pump values
 /// change. Classifies logs as auto vs manual based on the current `auto`
@@ -121,6 +123,28 @@ class PumpChangeLogger {
     } else {
       final String id = 'manual_${now.millisecondsSinceEpoch}';
       await _database.ref('${FarmPayload.manualLogsPath}/$id').set(payload);
+    }
+
+    // Also create a simple notification for this log so users get alerted.
+    try {
+      final String pumpDisplay = AppStrings.displayPumpName(pumpKey);
+      final String actionText = isOn ? AppStrings.on : AppStrings.off;
+      final String title = '$pumpDisplay : $actionText';
+      final String message = isAuto
+          ? 'تم بواسطة النظام التلقائي'
+          : 'تم بواسطة المستخدم يدوياً';
+
+      final NotificationsService svc = NotificationsService(
+        database: _database,
+      );
+      await svc.addLogNotification(
+        title: title,
+        message: message,
+        code: 'pump_log',
+        createdAt: now,
+      );
+    } catch (_) {
+      // best-effort; do not fail logging on notification errors
     }
   }
 

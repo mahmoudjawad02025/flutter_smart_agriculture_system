@@ -668,26 +668,53 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
             title: 'إعدادات التسميد التلقائي',
             subtitle: 'حدود N و P و K مع هدف الورقة للعرض فقط',
             children: <Widget>[
-              _EditableTile(
-                label: 'النيتروجين (N)',
-                value:
-                    '${AppRuntimeConfig.nMin.value} - ${AppRuntimeConfig.nMax.value}',
-                onTap: _editNitrogenRange,
-                trailingIcon: Icons.add,
+              ValueListenableBuilder<int>(
+                valueListenable: AppRuntimeConfig.nMin,
+                builder: (context, nMin, _) {
+                  return ValueListenableBuilder<int>(
+                    valueListenable: AppRuntimeConfig.nMax,
+                    builder: (context, nMax, __) {
+                      return _EditableTile(
+                        label: 'النيتروجين (N)',
+                        value: '$nMin - $nMax',
+                        onTap: _editNitrogenRange,
+                        trailingIcon: Icons.add,
+                      );
+                    },
+                  );
+                },
               ),
-              _EditableTile(
-                label: 'الفوسفور (P)',
-                value:
-                    '${AppRuntimeConfig.pMin.value} - ${AppRuntimeConfig.pMax.value}',
-                onTap: _editPhosphorusRange,
-                trailingIcon: Icons.add,
+              ValueListenableBuilder<int>(
+                valueListenable: AppRuntimeConfig.pMin,
+                builder: (context, pMin, _) {
+                  return ValueListenableBuilder<int>(
+                    valueListenable: AppRuntimeConfig.pMax,
+                    builder: (context, pMax, __) {
+                      return _EditableTile(
+                        label: 'الفوسفور (P)',
+                        value: '$pMin - $pMax',
+                        onTap: _editPhosphorusRange,
+                        trailingIcon: Icons.add,
+                      );
+                    },
+                  );
+                },
               ),
-              _EditableTile(
-                label: 'البوتاسيوم (K)',
-                value:
-                    '${AppRuntimeConfig.kMin.value} - ${AppRuntimeConfig.kMax.value}',
-                onTap: _editPotassiumRange,
-                trailingIcon: Icons.add,
+              ValueListenableBuilder<int>(
+                valueListenable: AppRuntimeConfig.kMin,
+                builder: (context, kMin, _) {
+                  return ValueListenableBuilder<int>(
+                    valueListenable: AppRuntimeConfig.kMax,
+                    builder: (context, kMax, __) {
+                      return _EditableTile(
+                        label: 'البوتاسيوم (K)',
+                        value: '$kMin - $kMax',
+                        onTap: _editPotassiumRange,
+                        trailingIcon: Icons.add,
+                      );
+                    },
+                  );
+                },
               ),
               const _SimpleTile(
                 label: 'هدف الورقة',

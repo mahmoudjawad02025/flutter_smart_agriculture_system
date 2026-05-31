@@ -104,52 +104,98 @@ class LogsHistoryPage extends StatelessWidget {
             separatorBuilder: (context, index) => const Divider(),
             itemBuilder: (context, index) {
               final log = logs[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer,
-                  child: Icon(
-                    log.icon,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+              return Dismissible(
+                key: Key(log.dbPath ?? index.toString()),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red.shade200,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Icon(Icons.delete_outline, color: Colors.red[700]),
                 ),
-                title: Text(
-                  log.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (log.subtitle != null && log.subtitle!.isNotEmpty)
-                      Text(log.subtitle!),
-                    if (log.hasSensors)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 4,
-                          children: [
-                            _LogMetric(Icons.water_drop, '${log.moist}%'),
-                            _LogMetric(Icons.thermostat, '${log.temp}°م'),
-                            _LogMetric(Icons.air, '${log.hum}%'),
-                            _LogMetric(Icons.eco, '${log.n}'),
-                            _LogMetric(Icons.eco, '${log.p}'),
-                            _LogMetric(Icons.eco, '${log.k}'),
-                          ],
-                        ),
+                confirmDismiss: (direction) async {
+                  final bool? confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('حذف السجل'),
+                      content: const Text(
+                        'هل تريد حذف هذا السجل نهائياً؟ لا يمكن التراجع.',
                       ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('إلغاء'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: const Text('حذف'),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                trailing: Text(
-                  '${log.time.day}/${log.time.month}/${log.time.year}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  );
+                  return confirmed == true;
+                },
+                onDismissed: (direction) async {
+                  if (log.dbPath == null) return;
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  try {
+                    await FirebaseDatabase.instance.ref(log.dbPath!).remove();
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(content: Text('تم حذف السجل.')),
+                    );
+                  } catch (e) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(content: Text('فشل حذف السجل: $e')),
+                    );
+                  }
+                },
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    child: Icon(
+                      log.icon,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  title: Text(
+                    log.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (log.subtitle != null && log.subtitle!.isNotEmpty)
+                        Text(log.subtitle!),
+                      if (log.hasSensors)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
+                            children: [
+                              _LogMetric(Icons.water_drop, '${log.moist}%'),
+                              _LogMetric(Icons.thermostat, '${log.temp}°م'),
+                              _LogMetric(Icons.air, '${log.hum}%'),
+                              _LogMetric(Icons.eco, '${log.n}'),
+                              _LogMetric(Icons.eco, '${log.p}'),
+                              _LogMetric(Icons.eco, '${log.k}'),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  trailing: Text(
+                    '${log.time.day}/${log.time.month}/${log.time.year}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
                 ),
               );
             },
@@ -167,6 +213,7 @@ class LogsHistoryPage extends StatelessWidget {
       Map<String, dynamic> data, {
       bool isAuto = false,
       bool isManual = false,
+      String? dbPath,
     }) {
       if (data.isEmpty) return;
       if (data['debug'] == true) return; // ignore debug entries
@@ -225,6 +272,7 @@ class LogsHistoryPage extends StatelessWidget {
           moist: moist,
           temp: temp,
           hum: hum,
+          dbPath: dbPath,
           leafStatus: leafStatus,
         ),
       );
@@ -236,7 +284,11 @@ class LogsHistoryPage extends StatelessWidget {
       final Map<String, dynamic> kindLogs = _toMap(entries);
       kindLogs.forEach((key, val) {
         final data = _toMap(val);
-        addIfPumpLog(data, isAuto: true);
+        addIfPumpLog(
+          data,
+          isAuto: true,
+          dbPath: '${FarmPayload.autoLogsPath}/$kind/$key',
+        );
       });
     });
 
@@ -244,14 +296,18 @@ class LogsHistoryPage extends StatelessWidget {
     final Map<String, dynamic> manualLogs = _toMap(logsData['manual_logs']);
     manualLogs.forEach((key, val) {
       final data = _toMap(val);
-      addIfPumpLog(data, isManual: true);
+      addIfPumpLog(
+        data,
+        isManual: true,
+        dbPath: '${FarmPayload.manualLogsPath}/$key',
+      );
     });
 
     // Also scan top-level entries (in case snapshot pointed directly at a logs node)
     logsData.forEach((key, val) {
       final Map<String, dynamic> candidate = _toMap(val);
       if (candidate.containsKey('action') && candidate.containsKey('pump')) {
-        addIfPumpLog(candidate);
+        addIfPumpLog(candidate, dbPath: '${FarmPayload.logsPath}/$key');
       }
     });
 
@@ -314,6 +370,7 @@ class _DetailedLogItem {
   final String? subtitle;
   final IconData icon;
   final String? leafStatus;
+  final String? dbPath;
   final bool hasSensors;
   final String? n, p, k, moist, temp, hum;
 
@@ -330,5 +387,6 @@ class _DetailedLogItem {
     this.moist,
     this.temp,
     this.hum,
+    this.dbPath,
   });
 }

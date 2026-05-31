@@ -198,10 +198,18 @@ class _NotificationCard extends StatelessWidget {
               ? AppStrings.displayDiseaseName(detectedCode)
               : '';
 
+          final bool isLog =
+              detectedCode.toLowerCase().contains('log') ||
+              detectedCode.toLowerCase().contains('pump');
+
           late final String titleText;
           late final String bodyText;
 
-          if (detectedCode.isNotEmpty &&
+          if (isLog) {
+            // For log notifications, use the provided title/message directly.
+            titleText = notification.title;
+            bodyText = notification.message;
+          } else if (detectedCode.isNotEmpty &&
               detectedCode.toLowerCase() != 'usersignup') {
             if (detectedCode.toLowerCase() == 'manualtest') {
               titleText = AppStrings.displayDiseaseName(detectedCode);
@@ -237,7 +245,9 @@ class _NotificationCard extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.all(10),
                       child: Icon(
-                        isSignup
+                        isLog
+                            ? Icons.event_note_rounded
+                            : isSignup
                             ? Icons.person_add_rounded
                             : isTest
                             ? Icons.cloud_done_rounded
@@ -301,26 +311,30 @@ class _NotificationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 13, color: Colors.black87),
-                    children: [
-                      const TextSpan(
-                        text: 'كشف: ',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                if (!isLog)
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
                       ),
-                      TextSpan(
-                        text: displayDisease.isNotEmpty
-                            ? displayDisease
-                            : _displayDiseaseName(notification.diseaseName),
-                        style: TextStyle(
-                          color: accentColor,
-                          fontWeight: FontWeight.bold,
+                      children: [
+                        const TextSpan(
+                          text: 'كشف: ',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      ),
-                    ],
+                        TextSpan(
+                          text: displayDisease.isNotEmpty
+                              ? displayDisease
+                              : _displayDiseaseName(notification.diseaseName),
+                          style: TextStyle(
+                            color: accentColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 const SizedBox(height: 6),
                 Text(
                   bodyText,
