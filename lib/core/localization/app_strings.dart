@@ -4,7 +4,7 @@ class AppStrings {
   // App metadata
   static const String appTitle = 'المزرعة الذكية';
   // Asset path for the app icon used inside the Flutter UI (drawer, appbar).
-  static const String appIconAsset = 'lib/core/media/icons/app/app.png';
+  static const String appIconAsset = 'lib/core/media/icons/app/app.jpg';
   static const String diseaseDetected = 'تم الكشف عن مرض';
 
   // Common UI labels

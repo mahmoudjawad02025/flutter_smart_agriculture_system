@@ -634,7 +634,7 @@ class _DailyAverageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseStreams.todayAvgStream,
+      stream: FirebaseStreams.dailyAveragesStream,
       builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
         if (snapshot.hasError) {
           return Card(
@@ -656,9 +656,26 @@ class _DailyAverageCard extends StatelessWidget {
         }
 
         final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
-        final int count = (data['count'] as num?)?.toInt() ?? 0;
+        final Map<String, dynamic> tempEntry = _toMap(data['temp']);
+        final Map<String, dynamic> humEntry = _toMap(data['hum']);
+        final Map<String, dynamic> moistEntry = _toMap(data['moist']);
+        final Map<String, dynamic> nEntry = _toMap(data['n']);
+        final Map<String, dynamic> pEntry = _toMap(data['p']);
+        final Map<String, dynamic> kEntry = _toMap(data['k']);
 
-        if (count == 0 || data.isEmpty) {
+        int countOf(Map<String, dynamic> m) =>
+            (m['count'] as num?)?.toInt() ?? 0;
+        String avgOf(Map<String, dynamic> m) => m['avarage']?.toString() ?? '-';
+
+        final int totalCount =
+            countOf(tempEntry) +
+            countOf(humEntry) +
+            countOf(moistEntry) +
+            countOf(nEntry) +
+            countOf(pEntry) +
+            countOf(kEntry);
+
+        if (data.isEmpty || totalCount == 0) {
           return Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -677,12 +694,12 @@ class _DailyAverageCard extends StatelessWidget {
           );
         }
 
-        final String moistStr = data['moist']?.toString() ?? '-';
-        final String tempStr = data['temp']?.toString() ?? '-';
-        final String humStr = data['hum']?.toString() ?? '-';
-        final String nStr = data['n']?.toString() ?? '-';
-        final String pStr = data['p']?.toString() ?? '-';
-        final String kStr = data['k']?.toString() ?? '-';
+        final String moistStr = avgOf(moistEntry);
+        final String tempStr = avgOf(tempEntry);
+        final String humStr = avgOf(humEntry);
+        final String nStr = avgOf(nEntry);
+        final String pStr = avgOf(pEntry);
+        final String kStr = avgOf(kEntry);
 
         String formatValue(String value, {bool percent = false}) {
           if (value == '-') return '-';

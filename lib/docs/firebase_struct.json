@@ -6,23 +6,38 @@
         "n": 170,
         "p": 50,
         "k": 200,
-        "time": "2026-04-21T13:08:52.043387Z",
-        "today_avg": {
-            "day": "",
-            "count": 0
-        }
+        "time": "2026-04-21T13:08:52.043387Z"
     },
-    "leaf" : {
-        
+    "leaf": {
+        "last_updated": "2026-05-31T18:38:05.404555Z",
+        "needs_fix": true,
+        "reupload_at": "2026-06-03T18:38:05.404555Z",
+        "status": "LateBlight"
     },
     "config" : {
+        "auto_fertilizer": {
+            "k_max": 250,
+            "k_min": 150,
+            "leaf_goal": "Healthy",
+            "n_max": 220,
+            "n_min": 120,
+            "p_max": 80,
+            "p_min": 40
+        },
+        "auto_water": {
+            "hum_max": 90,
+            "hum_min": 40,
+            "moist_max": 160,
+            "moist_min": 60,
+            "temp_max": 35,
+            "temp_min": 18
+        },
         "pumps": {
             "auto": true,
-            "water": false,
             "fert1": false,
-            "fert2": false
-        },
-
+            "fert2": false,
+            "water": false
+        }
     },
     "users" : {
 
@@ -37,6 +52,32 @@
             }, 
             "auto_logs": {
 
+            }
+        },
+        "avarages" : {
+            "temp": {
+                "avarage": 0,
+                "count": 0
+            },
+            "hum": {
+                "avarage": 0,
+                "count": 0
+            },
+            "moist": {
+                "avarage": 0,
+                "count": 0
+            },
+            "n": {
+                "avarage": 0,
+                "count": 0
+            },
+            "p": {
+                "avarage": 0,
+                "count": 0
+            },
+            "k": {
+                "avarage": 0,
+                "count": 0
             }
         }
     }

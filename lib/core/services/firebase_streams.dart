@@ -57,13 +57,16 @@ class FirebaseStreams {
   static DatabaseEvent? get lastNotificationItemsEvent =>
       _notificationItems?._lastEvent;
 
-  static _SharedQueryStream? _todayAvg;
-  static Stream<DatabaseEvent> get todayAvgStream {
-    _todayAvg ??= _SharedQueryStream(_db.ref(FarmPayload.todayAveragesPath));
-    return _todayAvg!.stream;
+  static _SharedQueryStream? _dailyAverages;
+  static Stream<DatabaseEvent> get dailyAveragesStream {
+    _dailyAverages ??= _SharedQueryStream(
+      _db.ref(FarmPayload.dailyAveragesPath),
+    );
+    return _dailyAverages!.stream;
   }
 
-  static DatabaseEvent? get lastTodayAvgEvent => _todayAvg?._lastEvent;
+  static DatabaseEvent? get lastDailyAveragesEvent =>
+      _dailyAverages?._lastEvent;
 
   static _SharedQueryStream? _unreadCount;
   static Stream<DatabaseEvent> get unreadCountStream {

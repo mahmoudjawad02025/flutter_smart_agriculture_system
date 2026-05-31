@@ -13,7 +13,7 @@ class FarmPayload {
 
   static String get sensorsPath =>
       rootPath.isEmpty ? 'sensors' : '$rootPath/sensors';
-  static String get todayAveragesPath => '$sensorsPath/today_avg';
+  static String get dailyAveragesPath => '$extraPath/avarages';
   static String get leafPath => rootPath.isEmpty ? 'leaf' : '$rootPath/leaf';
   static String get configPath =>
       rootPath.isEmpty ? 'config' : '$rootPath/config';
