@@ -273,6 +273,25 @@ class _LogsSnapshot extends StatelessWidget {
           final String pump = data['pump']?.toString() ?? '';
           if (action != 'ON' && action != 'OFF') return;
 
+          final Map<String, dynamic> sensorsMap = _toMap(data['sensors']);
+          final String? moist = sensorsMap['moist']?.toString();
+          final String? temp = sensorsMap['temp']?.toString();
+          final String? hum = sensorsMap['hum']?.toString();
+          final String? n = sensorsMap['n']?.toString();
+          final String? p = sensorsMap['p']?.toString();
+          final String? k = sensorsMap['k']?.toString();
+          final bool hasSensors = sensorsMap.isNotEmpty;
+
+          String? leafStatus;
+          if (data.containsKey('leaf_status')) {
+            leafStatus = data['leaf_status']?.toString();
+          } else if (data.containsKey('leaf')) {
+            final dynamic leafVal = data['leaf'];
+            if (leafVal is String) leafStatus = leafVal;
+            if (leafVal is Map)
+              leafStatus = _toMap(leafVal)['status']?.toString();
+          }
+
           final String lowPump = pump.toLowerCase();
           IconData icon;
           String title;
@@ -299,6 +318,14 @@ class _LogsSnapshot extends StatelessWidget {
               subtitle: '',
               icon: icon,
               isManual: isManual,
+              hasSensors: hasSensors,
+              n: n,
+              p: p,
+              k: k,
+              moist: moist,
+              temp: temp,
+              hum: hum,
+              leafStatus: leafStatus,
             ),
           );
         }
@@ -381,14 +408,73 @@ class _LogsSnapshot extends StatelessWidget {
                           ),
                         ),
                         subtitle:
-                            (log.subtitle != null && log.subtitle!.isNotEmpty)
-                            ? Text(
-                                log.subtitle!,
-                                style: const TextStyle(fontSize: 12),
+                            (log.hasSensors ||
+                                (log.leafStatus != null &&
+                                    log.leafStatus!.isNotEmpty) ||
+                                (log.subtitle != null &&
+                                    log.subtitle!.isNotEmpty))
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (log.hasSensors)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [
+                                            _MiniMetric(
+                                              Icons.water_drop,
+                                              '${log.moist ?? '-'}%',
+                                            ),
+                                            _MiniMetric(
+                                              Icons.thermostat,
+                                              '${log.temp ?? '-'}°م',
+                                            ),
+                                            _MiniMetric(
+                                              Icons.air,
+                                              '${log.hum ?? '-'}%',
+                                            ),
+                                            _MiniMetric(
+                                              Icons.eco,
+                                              '${log.n ?? '-'}',
+                                            ),
+                                            _MiniMetric(
+                                              Icons.eco,
+                                              '${log.p ?? '-'}',
+                                            ),
+                                            _MiniMetric(
+                                              Icons.eco,
+                                              '${log.k ?? '-'}',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  if (log.subtitle != null &&
+                                      log.subtitle!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        log.subtitle!,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               )
                             : null,
                         trailing: Text(
-                          '${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
+                          '${log.time.day}/${log.time.month}/${log.time.year}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[500],
@@ -408,7 +494,7 @@ class _LogsSnapshot extends StatelessWidget {
   DateTime _parseDate(dynamic val) {
     if (val is String) {
       try {
-        return DateTime.parse(val);
+        return DateTime.parse(val).toLocal();
       } catch (_) {}
     }
     return DateTime.now();
@@ -448,7 +534,9 @@ class _LogItem {
   final String? subtitle;
   final IconData icon;
   final bool isManual;
-  final String? n, p, k, moist, temp;
+  final bool hasSensors;
+  final String? n, p, k, moist, temp, hum;
+  final String? leafStatus;
 
   _LogItem({
     required this.time,
@@ -456,11 +544,14 @@ class _LogItem {
     this.subtitle,
     required this.icon,
     this.isManual = false,
+    this.hasSensors = false,
     this.n,
     this.p,
     this.k,
     this.moist,
     this.temp,
+    this.hum,
+    this.leafStatus,
   });
 }
 

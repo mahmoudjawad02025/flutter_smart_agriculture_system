@@ -68,21 +68,59 @@ class PumpChangeLogger {
   Future<void> _writePumpLog(String pumpKey, bool isOn, bool isAuto) async {
     final DateTime now = DateTime.now();
     final String iso = now.toUtc().toIso8601String();
+    // Capture current sensors and leaf status to make logs informative.
+    Map<String, dynamic> sensorsSnapshot = <String, dynamic>{};
+    Map<String, dynamic> leafSnapshot = <String, dynamic>{};
+    try {
+      final DataSnapshot s = await _database.ref(FarmPayload.sensorsPath).get();
+      sensorsSnapshot = _toMap(s.value);
+    } catch (_) {
+      sensorsSnapshot = <String, dynamic>{};
+    }
+    try {
+      final DataSnapshot l = await _database.ref(FarmPayload.leafPath).get();
+      leafSnapshot = _toMap(l.value);
+    } catch (_) {
+      leafSnapshot = <String, dynamic>{};
+    }
+
+    final Map<String, dynamic> sensorsToWrite = <String, dynamic>{};
+    void tryCopy(String key) {
+      if (sensorsSnapshot.containsKey(key) && sensorsSnapshot[key] != null) {
+        sensorsToWrite[key] = sensorsSnapshot[key];
+      }
+    }
+
+    tryCopy('moist');
+    tryCopy('temp');
+    tryCopy('hum');
+    tryCopy('n');
+    tryCopy('p');
+    tryCopy('k');
+
+    final String? leafStatus =
+        (leafSnapshot['status'] ??
+                leafSnapshot['leaf'] ??
+                leafSnapshot['state'])
+            ?.toString();
+
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'time': iso,
+      'pump': pumpKey,
+      'action': isOn ? 'ON' : 'OFF',
+    };
+    if (sensorsToWrite.isNotEmpty) payload['sensors'] = sensorsToWrite;
+    if (leafStatus != null && leafStatus.isNotEmpty)
+      payload['leaf_status'] = leafStatus;
 
     if (isAuto) {
       final String id = '${pumpKey}_${now.microsecondsSinceEpoch}';
-      await _database.ref('${FarmPayload.autoLogsPath}/$pumpKey/$id').set({
-        'time': iso,
-        'pump': pumpKey,
-        'action': isOn ? 'ON' : 'OFF',
-      });
+      await _database
+          .ref('${FarmPayload.autoLogsPath}/$pumpKey/$id')
+          .set(payload);
     } else {
       final String id = 'manual_${now.millisecondsSinceEpoch}';
-      await _database.ref('${FarmPayload.manualLogsPath}/$id').set({
-        'time': iso,
-        'pump': pumpKey,
-        'action': isOn ? 'ON' : 'OFF',
-      });
+      await _database.ref('${FarmPayload.manualLogsPath}/$id').set(payload);
     }
   }
 

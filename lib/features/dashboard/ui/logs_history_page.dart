@@ -147,7 +147,7 @@ class LogsHistoryPage extends StatelessWidget {
                   ],
                 ),
                 trailing: Text(
-                  '${log.time.day}/${log.time.month}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
+                  '${log.time.day}/${log.time.month}/${log.time.year}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
                   textAlign: TextAlign.right,
                   style: const TextStyle(fontSize: 10, color: Colors.grey),
                 ),
@@ -175,6 +175,24 @@ class LogsHistoryPage extends StatelessWidget {
       final String pump = data['pump']?.toString() ?? '';
       if (action != 'ON' && action != 'OFF') return;
 
+      final Map<String, dynamic> sensorsMap = _toMap(data['sensors']);
+      final String? moist = sensorsMap['moist']?.toString();
+      final String? temp = sensorsMap['temp']?.toString();
+      final String? hum = sensorsMap['hum']?.toString();
+      final String? n = sensorsMap['n']?.toString();
+      final String? p = sensorsMap['p']?.toString();
+      final String? k = sensorsMap['k']?.toString();
+      final bool hasSensors = sensorsMap.isNotEmpty;
+
+      String? leafStatus;
+      if (data.containsKey('leaf_status')) {
+        leafStatus = data['leaf_status']?.toString();
+      } else if (data.containsKey('leaf')) {
+        final dynamic leafVal = data['leaf'];
+        if (leafVal is String) leafStatus = leafVal;
+        if (leafVal is Map) leafStatus = _toMap(leafVal)['status']?.toString();
+      }
+
       final String lowPump = pump.toLowerCase();
       IconData icon = Icons.auto_awesome_outlined;
       String title;
@@ -200,6 +218,14 @@ class LogsHistoryPage extends StatelessWidget {
           title: title,
           subtitle: null,
           icon: icon,
+          hasSensors: hasSensors,
+          n: n,
+          p: p,
+          k: k,
+          moist: moist,
+          temp: temp,
+          hum: hum,
+          leafStatus: leafStatus,
         ),
       );
     }
