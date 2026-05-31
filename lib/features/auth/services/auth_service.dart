@@ -1,13 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/models/auth_user.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth;
   final FirebaseDatabase _database;
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   AuthService({
     required FirebaseAuth firebaseAuth,
@@ -240,57 +238,6 @@ class AuthService {
 
   Future<void> updateUserStatus(String uid, String newStatus) async {
     await _database.ref('${FarmPayload.usersPath}/$uid/status').set(newStatus);
-  }
-
-  /// Delete a user account from both Firebase Auth and Realtime Database
-/// Delete current user account (requires reauthentication)
-  Future<void> deleteCurrentUser(String password) async {
-    try {
-      final User? user = _firebaseAuth.currentUser;
-      if (user == null || user.email == null) {
-        throw Exception('لا يوجد مستخدم مسجل الدخول.');
-      }
-
-      // Reauthenticate first
-      await reauthenticate(password);
-
-      // Delete from Realtime Database
-      await _database.ref('${FarmPayload.usersPath}/${user.uid}').remove();
-
-      // Delete from Firebase Authentication
-      await user.delete();
-
-      print('[AUTH_SERVICE] Current user ${user.uid} deleted from Auth and Database');
-    } catch (e) {
-      print('[AUTH_SERVICE] Error deleting current user: $e');
-      rethrow;
-    }
-  }
-
-  /// Admin delete: Delete user from both Realtime Database and Firebase Authentication
-  /// Calls a Cloud Function with Admin SDK privileges
-  Future<void> deleteUserAsAdmin(String uid) async {
-    try {
-      // Call Cloud Function to delete user from Firebase Authentication
-      final HttpsCallable deleteUserFunction =
-          _functions.httpsCallable('deleteUser');
-
-      await deleteUserFunction.call(<String, dynamic>{
-        'uid': uid,
-      });
-
-      // Delete from Realtime Database
-      await _database.ref('${FarmPayload.usersPath}/$uid').remove();
-
-      print('[AUTH_SERVICE] User $uid deleted from Auth and Database by admin');
-    } on FirebaseFunctionsException catch (e) {
-      print('[AUTH_SERVICE] Cloud Function error: ${e.message}');
-      print('[AUTH_SERVICE] Code: ${e.code}');
-      throw Exception('خطأ في حذف المستخدم: ${e.message}');
-    } catch (e) {
-      print('[AUTH_SERVICE] Error deleting user $uid: $e');
-      rethrow;
-    }
   }
 
   Future<void> _ensureUserRecord({

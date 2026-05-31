@@ -87,45 +87,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 trailing: user.role == 'admin'
                     ? const Icon(Icons.admin_panel_settings, color: Colors.blue)
                     : PopupMenuButton<String>(
-                        onSelected: (value) async {
-                          if (value == 'delete') {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('تأكيد الحذف'),
-                                content: Text(
-                                  'هل تريد حقًا حذف حساب ${user.displayName} (${user.email})؟\nهذا الإجراء لا يمكن التراجع عنه.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(ctx).pop(false),
-                                    child: const Text('إلغاء'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(ctx).pop(true),
-                                    child: const Text(
-                                      'حذف',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirm == true) {
-                              await context.read<AuthCubit>().deleteUser(
-                                user.uid,
-                              );
-                              _refresh();
-                            }
-                          } else {
-                            await context.read<AuthCubit>().updateUserStatus(
-                              user.uid,
-                              value,
-                            );
-                            _refresh();
-                          }
+                        onSelected: (status) async {
+                          await context.read<AuthCubit>().updateUserStatus(
+                            user.uid,
+                            status,
+                          );
+                          _refresh();
                         },
                         itemBuilder: (context) {
                           if (user.status == 'pending') {
@@ -138,13 +105,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                 value: 'rejected',
                                 child: Text('رفض'),
                               ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text(
-                                  'حذف',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
                             ];
                           } else {
                             final bool isBlocked = user.status == 'blocked';
@@ -152,13 +112,6 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                               PopupMenuItem(
                                 value: isBlocked ? 'approved' : 'blocked',
                                 child: Text(isBlocked ? 'إلغاء الحظر' : 'حظر'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text(
-                                  'حذف',
-                                  style: TextStyle(color: Colors.red),
-                                ),
                               ),
                             ];
                           }
