@@ -17,7 +17,6 @@ class AppStrings {
   static const String plantDefinite = 'النبتة';
 
   // Disease display mapping
-  // map_ai_results: add new model disease labels here when needed
   static String displayDiseaseName(String name) {
     if (name.isEmpty) return '';
     final String normalized = name.toLowerCase().replaceAll(
@@ -38,11 +37,6 @@ class AppStrings {
       case 'bacterialspot':
       case 'bacterial':
         return 'بقعة بكتيرية';
-      case 'anthracnose':
-        return 'الأنثراكنوز';
-      case 'downymildew':
-      case 'downy':
-        return 'بياض زغبي';
       case 'earlyblight':
         return 'تعفن مبكر';
       case 'yellowleafcurl':
@@ -57,7 +51,6 @@ class AppStrings {
   }
 
   // Leaf status mapping (normalized)
-  // map_ai_results: add new model disease labels here for leaf status display
   static String displayLeafStatus(String status) {
     final String normalized = status.toLowerCase().replaceAll(
       RegExp(r'[_\s-]'),
@@ -72,11 +65,6 @@ class AppStrings {
         return 'بقعة بكتيرية';
       case 'lateblight':
         return 'تعفن متأخر';
-      case 'anthracnose':
-        return 'الأنثراكنوز';
-      case 'downymildew':
-      case 'downy':
-        return 'بياض زغبي';
       case 'earlyblight':
         return 'تعفن مبكر';
       case 'yellowleafcurl':

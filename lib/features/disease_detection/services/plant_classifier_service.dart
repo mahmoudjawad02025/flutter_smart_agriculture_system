@@ -12,18 +12,16 @@ class PlantClassifierService {
   }
 
   Interpreter? _interpreter;
-  // map_ai_results: labels from the current TFLite model
-  // IMPORTANT: order must match the model output indices (Python test shows)
   static const List<String> _labels = <String>[
-    'Anthracnose',
-    'DownyMildew',
     'Healthy',
+    'BacterialSpot',
+    'LateBlight',
   ];
 
   Future<void> _initModel() async {
     final InterpreterOptions options = InterpreterOptions();
     _interpreter = await Interpreter.fromAsset(
-      'lib/core/media/ai/best_float32.tflite',
+      'assets/best_float32.tflite',
       options: options,
     );
   }
@@ -38,33 +36,22 @@ class PlantClassifierService {
       throw Exception('لم يتم العثور على الصورة.');
     }
 
-    print('[PLANT_CLASSIFIER] Loading image from: $imagePath');
     final Uint8List imageBytes = await imageFile.readAsBytes();
-    print('[PLANT_CLASSIFIER] Image bytes: ${imageBytes.length} bytes');
-
     final img.Image? decodedImage = img.decodeImage(imageBytes);
 
     if (decodedImage == null) {
       throw Exception('فشل فك ترميز الصورة.');
     }
 
-    print(
-      '[PLANT_CLASSIFIER] Decoded image: ${decodedImage.width}x${decodedImage.height}',
-    );
-
-    // 1. Normalize orientation and resize to 224x224
-    // map_ai_results: align with Python/Pillow processing (EXIF orientation + bicubic)
-    final img.Image oriented = img.bakeOrientation(decodedImage);
+    // 1. Resize to 224x224
     final img.Image resizedImage = img.copyResize(
-      oriented,
+      decodedImage,
       width: 224,
       height: 224,
-      interpolation: img.Interpolation.cubic,
     );
 
     // 2. Extract RGB and normalize (0.0 to 1.0)
     // The model expects a Float32List of shape [1, 224, 224, 3]
-    // map_ai_results: pixel extraction must exactly match Python preprocessing
     final Float32List inputBuffer = Float32List(1 * 224 * 224 * 3);
     int pixelIndex = 0;
 
@@ -72,16 +59,10 @@ class PlantClassifierService {
       for (int x = 0; x < resizedImage.width; x++) {
         final img.Pixel pixel = resizedImage.getPixel(x, y);
 
-        // Extract RGB channels (ensure 0-255 range)
-        // pixel.r, pixel.g, pixel.b are in 0-255 range
-        final double r = (pixel.r as num).toDouble();
-        final double g = (pixel.g as num).toDouble();
-        final double b = (pixel.b as num).toDouble();
-
-        // Normalize to 0.0-1.0 range (matches Python: np.array(img, dtype=np.float32) / 255.0)
-        inputBuffer[pixelIndex++] = r / 255.0;
-        inputBuffer[pixelIndex++] = g / 255.0;
-        inputBuffer[pixelIndex++] = b / 255.0;
+        // Normalize RGB values
+        inputBuffer[pixelIndex++] = pixel.r / 255.0;
+        inputBuffer[pixelIndex++] = pixel.g / 255.0;
+        inputBuffer[pixelIndex++] = pixel.b / 255.0;
       }
     }
 
@@ -109,22 +90,25 @@ class PlantClassifierService {
       }
     }
 
-    // map_ai_results: the new model outputs these labels directly
-    final String detectedLabel = _labels[maxIndex];
-
-    // DEBUG: Log model predictions to verify preprocessing matches Python test
-    print('[PLANT_CLASSIFIER] Raw probabilities:');
-    for (int i = 0; i < _labels.length; i++) {
-      print('  ${_labels[i]}: ${(probabilities[i] * 100).toStringAsFixed(2)}%');
+    String detectedLabel = _labels[maxIndex];
+    if (detectedLabel == 'Healthy') {
+      detectedLabel = 'BacterialSpot';
+    } else if (detectedLabel == 'BacterialSpot') {
+      detectedLabel = 'Healthy';
     }
-    print(
-      '[PLANT_CLASSIFIER] Predicted: $detectedLabel (${(maxProb * 100).toStringAsFixed(2)}%)',
-    );
 
     // Build raw JSON for advanced details similar to Roboflow
+    // Ensure probabilities map keys reflect the swapped labels so
+    // rawJson is consistent with `detectedLabel` and `detectedLabels`.
     final Map<String, double> probsMap = <String, double>{};
     for (int i = 0; i < _labels.length; i++) {
-      probsMap[_labels[i]] = probabilities[i];
+      String key = _labels[i];
+      if (key == 'Healthy') {
+        key = 'BacterialSpot';
+      } else if (key == 'BacterialSpot') {
+        key = 'Healthy';
+      }
+      probsMap[key] = probabilities[i];
     }
 
     final Map<String, dynamic> rawJson = <String, dynamic>{

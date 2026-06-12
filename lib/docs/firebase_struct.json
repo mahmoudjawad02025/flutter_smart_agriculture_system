@@ -56,28 +56,28 @@
         },
         "avarages" : {
             "temp": {
-                "avarage": 10,
-                "count": 10
+                "avarage": 0,
+                "count": 0
             },
             "hum": {
-                "avarage": 10,
-                "count": 10
+                "avarage": 0,
+                "count": 0
             },
             "moist": {
-                "avarage": 10,
-                "count": 10
+                "avarage": 0,
+                "count": 0
             },
             "n": {
-                "avarage": 10,
-                "count": 10
+                "avarage": 0,
+                "count": 0
             },
             "p": {
-                "avarage": 10,
-                "count": 10
+                "avarage": 0,
+                "count": 0
             },
             "k": {
-                "avarage": 10,
-                "count": 10
+                "avarage": 0,
+                "count": 0
             }
         }
     }

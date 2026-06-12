@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/plant_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
@@ -33,10 +32,8 @@ class DiseaseDetectionService {
       return null;
     }
 
-    // Use app's cache directory instead of hardcoded /lib path
-    final Directory cacheDir = await getApplicationCacheDirectory();
     final Directory uploadsDirectory = Directory(
-      '${cacheDir.path}${Platform.pathSeparator}uploads',
+      '${Directory.current.path}${Platform.pathSeparator}lib${Platform.pathSeparator}core${Platform.pathSeparator}uploads',
     );
 
     if (!await uploadsDirectory.exists()) {
