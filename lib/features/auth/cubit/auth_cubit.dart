@@ -13,6 +13,22 @@ class AuthCubit extends Cubit<AuthState> {
     : _authService = authService,
       super(const AuthInitial()) {
     _bindAuthStateChanges();
+    _restorePersistedSession();
+  }
+
+  Future<void> _restorePersistedSession() async {
+    try {
+      final AuthUser? user = await _authService.getCurrentUser();
+      if (user != null && !isClosed) {
+        emit(AuthAuthenticated(user));
+      } else if (!isClosed && state is AuthInitial) {
+        emit(const AuthUnauthenticated());
+      }
+    } catch (error) {
+      if (!isClosed && state is AuthInitial) {
+        emit(const AuthUnauthenticated());
+      }
+    }
   }
 
   void _bindAuthStateChanges() {

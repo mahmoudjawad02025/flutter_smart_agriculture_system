@@ -25,12 +25,22 @@
             "p_min": 40
         },
         "auto_water": {
-            "hum_max": 90,
-            "hum_min": 40,
-            "moist_max": 160,
-            "moist_min": 60,
-            "temp_max": 35,
-            "temp_min": 18
+            "moist_max": 80,
+            "moist_min": 40
+        },
+        "tanks": {
+            "water_tank": {
+                "capacity": 5000,
+                "speed": 100
+            },
+            "fert1_tank": {
+                "capacity": 2000,
+                "speed": 50
+            },
+            "fert2_tank": {
+                "capacity": 2000,
+                "speed": 50
+            }
         },
         "pumps": {
             "auto": true,
@@ -52,32 +62,6 @@
             }, 
             "auto_logs": {
 
-            }
-        },
-        "avarages" : {
-            "temp": {
-                "avarage": 0,
-                "count": 0
-            },
-            "hum": {
-                "avarage": 0,
-                "count": 0
-            },
-            "moist": {
-                "avarage": 0,
-                "count": 0
-            },
-            "n": {
-                "avarage": 0,
-                "count": 0
-            },
-            "p": {
-                "avarage": 0,
-                "count": 0
-            },
-            "k": {
-                "avarage": 0,
-                "count": 0
             }
         }
     }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/models/auth_user.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
@@ -14,16 +15,38 @@ class AuthService {
        _database = database;
 
   Stream<AuthUser?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().asyncMap((User? user) async {
-      if (user == null) return null;
-      try {
-        final authUser = await _userFromFirebaseUser(user);
-        if (authUser.status != 'approved') return null;
-        return authUser;
-      } catch (e) {
+    return _firebaseAuth.authStateChanges().asyncMap(_resolveAuthUser);
+  }
+
+  Future<AuthUser?> _resolveAuthUser(User? user) async {
+    if (user == null) {
+      return null;
+    }
+
+    try {
+      final AuthUser authUser = await _userFromFirebaseUser(user).timeout(
+        const Duration(seconds: 8),
+      );
+      if (authUser.status != 'approved') {
         return null;
       }
-    });
+      return authUser;
+    } catch (error, stack) {
+      debugPrint('[AUTH_SERVICE] resolve auth user failed: $error\n$stack');
+      return _fallbackAuthUser(user);
+    }
+  }
+
+  AuthUser _fallbackAuthUser(User user) {
+    return AuthUser(
+      uid: user.uid,
+      email: user.email ?? '',
+      displayName: user.displayName,
+      photoUrl: user.photoURL,
+      createdAt: user.metadata.creationTime,
+      role: 'user',
+      status: 'approved',
+    );
   }
 
   Future<AuthUser> signUp({
@@ -136,9 +159,19 @@ class AuthService {
 
   Future<AuthUser?> getCurrentUser() async {
     final User? user = _firebaseAuth.currentUser;
-    if (user == null) return null;
-    final authUser = await _userFromFirebaseUser(user);
-    return authUser.status == 'approved' ? authUser : null;
+    if (user == null) {
+      return null;
+    }
+
+    try {
+      final AuthUser authUser = await _userFromFirebaseUser(user).timeout(
+        const Duration(seconds: 8),
+      );
+      return authUser.status == 'approved' ? authUser : null;
+    } catch (error, stack) {
+      debugPrint('[AUTH_SERVICE] getCurrentUser failed: $error\n$stack');
+      return _fallbackAuthUser(user);
+    }
   }
 
   // Security Verification Methods

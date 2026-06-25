@@ -27,8 +27,8 @@ class AuthWrapper extends StatelessWidget {
               return const AppShellPage();
             }
 
-            // 2. Initial Loading Screen
-            if (state is AuthInitial) {
+            // 2. Loading states
+            if (state is AuthInitial || state is AuthLoading) {
               return _LoadingScreen();
             }
 
@@ -66,6 +66,14 @@ class _LoadingScreen extends StatelessWidget {
             const SizedBox(height: 24),
             const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'جاري تحميل التطبيق...',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF2E7D32),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

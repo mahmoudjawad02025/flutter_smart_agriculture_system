@@ -38,6 +38,14 @@ class FirebaseStreams {
 
   static DatabaseEvent? get lastPumpsEvent => _pumps?._lastEvent;
 
+  static _SharedQueryStream? _config;
+  static Stream<DatabaseEvent> get configStream {
+    _config ??= _SharedQueryStream(_db.ref(FarmPayload.configPath));
+    return _config!.stream;
+  }
+
+  static DatabaseEvent? get lastConfigEvent => _config?._lastEvent;
+
   static _SharedQueryStream? _logs;
   static Stream<DatabaseEvent> get logsStream {
     _logs ??= _SharedQueryStream(_db.ref(FarmPayload.logsPath));
@@ -56,17 +64,6 @@ class FirebaseStreams {
 
   static DatabaseEvent? get lastNotificationItemsEvent =>
       _notificationItems?._lastEvent;
-
-  static _SharedQueryStream? _dailyAverages;
-  static Stream<DatabaseEvent> get dailyAveragesStream {
-    _dailyAverages ??= _SharedQueryStream(
-      _db.ref(FarmPayload.dailyAveragesPath),
-    );
-    return _dailyAverages!.stream;
-  }
-
-  static DatabaseEvent? get lastDailyAveragesEvent =>
-      _dailyAverages?._lastEvent;
 
   static _SharedQueryStream? _unreadCount;
   static Stream<DatabaseEvent> get unreadCountStream {
@@ -94,8 +91,6 @@ class _SharedQueryStream {
   }
 
   void _handleListen() {
-    // Ensure we have a single underlying subscription forwarding events.
-
     _subscription ??= _query.onValue.listen(
       (DatabaseEvent event) {
         _lastEvent = event;
@@ -108,9 +103,16 @@ class _SharedQueryStream {
       },
     );
 
-    // No seeding here — rely on the `onValue` subscription to forward
-    // the initial event. Seeding caused compatibility issues with
-    // the `DatabaseEvent` constructors across package versions.
+    final DatabaseEvent? cached = _lastEvent;
+    if (cached != null) {
+      scheduleMicrotask(() {
+        if (_controller?.hasListener ?? false) {
+          try {
+            _controller?.add(cached);
+          } catch (_) {}
+        }
+      });
+    }
   }
 
   void _handleCancel() {

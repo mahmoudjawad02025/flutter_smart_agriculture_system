@@ -1,4 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
+import '../../../core/constants/sensor_units.dart';
+import '../../../core/utils/firebase_parsers.dart';
 import '../../../core/services/firebase_streams.dart';
 import '../../../core/localization/app_strings.dart';
 import 'package:flutter/material.dart';
@@ -14,8 +16,12 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage>
+    with AutomaticKeepAliveClientMixin {
   late final Stream<DatabaseEvent> _dataStream;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -24,15 +30,12 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return SafeArea(
       child: StreamBuilder<DatabaseEvent>(
         stream: _dataStream,
+        initialData: FirebaseStreams.lastRootEvent,
         builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
           if (snapshot.hasError) {
             return _MessageView(
@@ -60,6 +63,8 @@ class _DashboardPageState extends State<DashboardPage> {
           final Map<String, dynamic> sensors = _toMap(data['sensors']);
           final Map<String, dynamic> source = live.isNotEmpty ? live : sensors;
           final Map<String, dynamic> leaf = _toMap(data['leaf']);
+          final Map<String, dynamic> config = _toMap(data['config']);
+          final Map<String, dynamic> tanks = _toMap(config['tanks']);
 
           final String rawTime = '${source['time'] ?? '-'}';
           final String time = _formatDashboardTime(rawTime);
@@ -70,6 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
           final String reuploadAt = '${leaf['reupload_at'] ?? ''}';
 
           return ListView(
+            key: const PageStorageKey<String>('dashboard_scroll'),
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               _HeaderCard(
@@ -78,8 +84,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 needsFix: needsFix,
                 reuploadAt: reuploadAt,
               ),
-              const SizedBox(height: 14),
-              const _DailyAverageCard(),
               const SizedBox(height: 14),
               GridView.count(
                 crossAxisCount: 2,
@@ -90,37 +94,63 @@ class _DashboardPageState extends State<DashboardPage> {
                 shrinkWrap: true,
                 children: <Widget>[
                   _MetricCard(
-                    title: 'رطوبة التربة',
-                    value: '${source['moist'] ?? '-'}%',
+                    title: 'رطوبة التربة (${SensorUnits.percent})',
+                    value: SensorUnits.formatValue(
+                      source['moist']?.toString(),
+                      unit: SensorUnits.percent,
+                    ),
                     icon: Icons.water_drop_outlined,
+                    color: const Color(0xFF1E88E5),
                   ),
                   _MetricCard(
-                    title: 'درجة الحرارة',
-                    value: '${source['temp'] ?? '-'}°م',
+                    title: 'درجة الحرارة (${SensorUnits.celsius})',
+                    value: SensorUnits.formatValue(
+                      source['temp']?.toString(),
+                      unit: SensorUnits.celsius,
+                    ),
                     icon: Icons.thermostat_outlined,
+                    color: const Color(0xFFE53935),
                   ),
                   _MetricCard(
-                    title: 'الرطوبة',
-                    value: '${source['hum'] ?? '-'}%',
+                    title: 'رطوبة الهواء (${SensorUnits.percent})',
+                    value: SensorUnits.formatValue(
+                      source['hum']?.toString(),
+                      unit: SensorUnits.percent,
+                    ),
                     icon: Icons.air_outlined,
+                    color: const Color(0xFF00ACC1),
                   ),
                   _MetricCard(
-                    title: 'النيتروجين (N)',
-                    value: '${source['n'] ?? '-'}',
+                    title: 'النيتروجين (N) — ${SensorUnits.mgPerKg}',
+                    value: SensorUnits.formatValue(
+                      source['n']?.toString(),
+                      unit: SensorUnits.mgPerKg,
+                    ),
                     icon: Icons.grass_outlined,
+                    color: const Color(0xFF43A047),
                   ),
                   _MetricCard(
-                    title: 'الفوسفور (P)',
-                    value: '${source['p'] ?? '-'}',
+                    title: 'الفوسفور (P) — ${SensorUnits.mgPerKg}',
+                    value: SensorUnits.formatValue(
+                      source['p']?.toString(),
+                      unit: SensorUnits.mgPerKg,
+                    ),
                     icon: Icons.spa_outlined,
+                    color: const Color(0xFF8E24AA),
                   ),
                   _MetricCard(
-                    title: 'البوتاسيوم (K)',
-                    value: '${source['k'] ?? '-'}',
+                    title: 'البوتاسيوم (K) — ${SensorUnits.mgPerKg}',
+                    value: SensorUnits.formatValue(
+                      source['k']?.toString(),
+                      unit: SensorUnits.mgPerKg,
+                    ),
                     icon: Icons.eco_outlined,
+                    color: const Color(0xFFFB8C00),
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              _TanksCapacityCard(tanks: tanks),
               const SizedBox(height: 14),
               _PumpsSnapshot(database: FirebaseDatabase.instance),
               const SizedBox(height: 14),
@@ -141,6 +171,7 @@ class _LogsSnapshot extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
       stream: FirebaseStreams.logsStream,
+      initialData: FirebaseStreams.lastLogsEvent,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {
           return const SizedBox.shrink();
@@ -316,27 +347,45 @@ class _LogsSnapshot extends StatelessWidget {
                                           children: [
                                             _MiniMetric(
                                               Icons.water_drop,
-                                              '${log.moist ?? '-'}%',
+                                              SensorUnits.formatValue(
+                                                log.moist,
+                                                unit: SensorUnits.percent,
+                                              ),
                                             ),
                                             _MiniMetric(
                                               Icons.thermostat,
-                                              '${log.temp ?? '-'}°م',
+                                              SensorUnits.formatValue(
+                                                log.temp,
+                                                unit: SensorUnits.celsius,
+                                              ),
                                             ),
                                             _MiniMetric(
                                               Icons.air,
-                                              '${log.hum ?? '-'}%',
+                                              SensorUnits.formatValue(
+                                                log.hum,
+                                                unit: SensorUnits.percent,
+                                              ),
                                             ),
                                             _MiniMetric(
                                               Icons.eco,
-                                              '${log.n ?? '-'}',
+                                              SensorUnits.formatValue(
+                                                log.n,
+                                                unit: SensorUnits.mgPerKg,
+                                              ),
                                             ),
                                             _MiniMetric(
                                               Icons.eco,
-                                              '${log.p ?? '-'}',
+                                              SensorUnits.formatValue(
+                                                log.p,
+                                                unit: SensorUnits.mgPerKg,
+                                              ),
                                             ),
                                             _MiniMetric(
                                               Icons.eco,
-                                              '${log.k ?? '-'}',
+                                              SensorUnits.formatValue(
+                                                log.k,
+                                                unit: SensorUnits.mgPerKg,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -454,6 +503,7 @@ class _PumpsSnapshot extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
       stream: FirebaseStreams.pumpsStream,
+      initialData: FirebaseStreams.lastPumpsEvent,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
         final Map<String, dynamic> pumps = _toMap(
@@ -603,24 +653,50 @@ class _MetricCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.icon,
+    required this.color,
   });
   final String title;
   final String value;
   final IconData icon;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: color.withValues(alpha: 0.18)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(icon),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
             const Spacer(),
-            Text(title, style: Theme.of(context).textTheme.labelLarge),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: color.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(value, style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ],
         ),
       ),
@@ -628,143 +704,251 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _DailyAverageCard extends StatelessWidget {
-  const _DailyAverageCard();
+class _TanksCapacityCard extends StatelessWidget {
+  const _TanksCapacityCard({required this.tanks});
+
+  final Map<String, dynamic> tanks;
+
+  static const List<_TankDefinition> _definitions = <_TankDefinition>[
+    _TankDefinition(
+      key: 'water_tank',
+      label: 'خزان المياه',
+      icon: Icons.water_drop_rounded,
+      color: Color(0xFF1E88E5),
+      defaultCapacity: 5000,
+    ),
+    _TankDefinition(
+      key: 'fert1_tank',
+      label: 'خزان السماد 1',
+      icon: Icons.science_rounded,
+      color: Color(0xFF43A047),
+      defaultCapacity: 2000,
+    ),
+    _TankDefinition(
+      key: 'fert2_tank',
+      label: 'خزان السماد 2',
+      icon: Icons.biotech_rounded,
+      color: Color(0xFFFB8C00),
+      defaultCapacity: 2000,
+    ),
+  ];
+
+  int _readCapacity(Map<String, dynamic> tankData, int fallback) =>
+      parseFirebaseInt(tankData['capacity'], fallback: fallback);
+
+  String _formatCapacity(int capacity) {
+    if (capacity >= 1000) {
+      final double liters = capacity / 1000;
+      final String litersText = liters == liters.roundToDouble()
+          ? liters.toStringAsFixed(0)
+          : liters.toStringAsFixed(1);
+      return '$litersText لتر';
+    }
+    return SensorUnits.attachUnit('$capacity', SensorUnits.milliliter);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseStreams.dailyAveragesStream,
-      builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
-        if (snapshot.hasError) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'متوسط بيانات اليوم',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  Text('خطأ: ${snapshot.error}'),
-                ],
-              ),
-            ),
-          );
-        }
+    final List<_TankCapacityData> tankData = _definitions.map((
+      _TankDefinition definition,
+    ) {
+      final Map<String, dynamic> tank = _toMap(tanks[definition.key]);
+      final int capacity = _readCapacity(tank, definition.defaultCapacity);
+      return _TankCapacityData(definition: definition, capacity: capacity);
+    }).toList();
 
-        final Map<String, dynamic> data = _toMap(snapshot.data?.snapshot.value);
-        final Map<String, dynamic> tempEntry = _toMap(data['temp']);
-        final Map<String, dynamic> humEntry = _toMap(data['hum']);
-        final Map<String, dynamic> moistEntry = _toMap(data['moist']);
-        final Map<String, dynamic> nEntry = _toMap(data['n']);
-        final Map<String, dynamic> pEntry = _toMap(data['p']);
-        final Map<String, dynamic> kEntry = _toMap(data['k']);
+    final int totalCapacity = tankData.fold<int>(
+      0,
+      (int sum, _TankCapacityData item) => sum + item.capacity,
+    );
+    final int maxCapacity = tankData.fold<int>(
+      1,
+      (int max, _TankCapacityData item) =>
+          item.capacity > max ? item.capacity : max,
+    );
 
-        int countOf(Map<String, dynamic> m) =>
-            (m['count'] as num?)?.toInt() ?? 0;
-        String avgOf(Map<String, dynamic> m) => m['avarage']?.toString() ?? '-';
-
-        final int totalCount =
-            countOf(tempEntry) +
-            countOf(humEntry) +
-            countOf(moistEntry) +
-            countOf(nEntry) +
-            countOf(pEntry) +
-            countOf(kEntry);
-
-        if (data.isEmpty || totalCount == 0) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'متوسط بيانات اليوم',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text('سيبدأ تجميع القراءات بمجرد توفرها'),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final String moistStr = avgOf(moistEntry);
-        final String tempStr = avgOf(tempEntry);
-        final String humStr = avgOf(humEntry);
-        final String nStr = avgOf(nEntry);
-        final String pStr = avgOf(pEntry);
-        final String kStr = avgOf(kEntry);
-
-        String formatValue(String value, {bool percent = false}) {
-          if (value == '-') return '-';
-          try {
-            final double num = double.parse(value);
-            if (percent) {
-              return '${num.toStringAsFixed(1)}%';
-            }
-            return num.toStringAsFixed(1);
-          } catch (_) {
-            return '-';
-          }
-        }
-
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
               children: <Widget>[
-                Text(
-                  'متوسط بيانات اليوم',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Icon(
+                  Icons.propane_tank_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 22,
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: <Widget>[
-                    _AverageChip(
-                      label: 'رطوبة التربة',
-                      value: formatValue(moistStr, percent: true),
-                    ),
-                    _AverageChip(
-                      label: 'درجة الحرارة',
-                      value: formatValue(tempStr),
-                    ),
-                    _AverageChip(
-                      label: 'الرطوبة',
-                      value: formatValue(humStr, percent: true),
-                    ),
-                    _AverageChip(label: 'النيتروجين', value: formatValue(nStr)),
-                    _AverageChip(label: 'الفوسفور', value: formatValue(pStr)),
-                    _AverageChip(label: 'البوتاسيوم', value: formatValue(kStr)),
-                  ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'سعة الخزانات',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'الإجمالي: ${_formatCapacity(totalCapacity)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: tankData.map((_TankCapacityData item) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: _TankCapacityVisual(
+                      label: item.definition.label,
+                      icon: item.definition.icon,
+                      color: item.definition.color,
+                      capacity: item.capacity,
+                      fillFraction: item.capacity / maxCapacity,
+                      capacityLabel: _formatCapacity(item.capacity),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _AverageChip extends StatelessWidget {
-  const _AverageChip({required this.label, required this.value});
+class _TankDefinition {
+  const _TankDefinition({
+    required this.key,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.defaultCapacity,
+  });
+
+  final String key;
   final String label;
-  final String value;
+  final IconData icon;
+  final Color color;
+  final int defaultCapacity;
+}
+
+class _TankCapacityData {
+  const _TankCapacityData({required this.definition, required this.capacity});
+
+  final _TankDefinition definition;
+  final int capacity;
+}
+
+class _TankCapacityVisual extends StatelessWidget {
+  const _TankCapacityVisual({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.capacity,
+    required this.fillFraction,
+    required this.capacityLabel,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final int capacity;
+  final double fillFraction;
+  final String capacityLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-      label: Text('$label: $value'),
+    final double clampedFill = fillFraction.clamp(0.15, 1.0);
+
+    return Column(
+      children: <Widget>[
+        Container(
+          height: 118,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
+          ),
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: color.withValues(alpha: 0.18)),
+                    ),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: FractionallySizedBox(
+                        heightFactor: clampedFill,
+                        widthFactor: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: <Color>[
+                                color.withValues(alpha: 0.55),
+                                color,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                left: 0,
+                right: 0,
+                child: Icon(icon, color: color, size: 20),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: color.withValues(alpha: 0.9),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          capacityLabel,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: color.withValues(alpha: 0.95),
+          ),
+        ),
+      ],
     );
   }
 }

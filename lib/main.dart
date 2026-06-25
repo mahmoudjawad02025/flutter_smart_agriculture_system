@@ -6,7 +6,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/plant_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/firebase_options.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'core/config/app_access_control.dart';

@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_runtime_config.dart';
+import '../../../core/constants/sensor_units.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/services/firebase_streams.dart';
 import '../../../features/firebase_data/models/farm_payload.dart';
@@ -184,12 +185,48 @@ class LogsHistoryPage extends StatelessWidget {
                                 spacing: 12,
                                 runSpacing: 4,
                                 children: [
-                                  _LogMetric(Icons.water_drop, '${log.moist}%'),
-                                  _LogMetric(Icons.thermostat, '${log.temp}°م'),
-                                  _LogMetric(Icons.air, '${log.hum}%'),
-                                  _LogMetric(Icons.eco, '${log.n}'),
-                                  _LogMetric(Icons.eco, '${log.p}'),
-                                  _LogMetric(Icons.eco, '${log.k}'),
+                                  _LogMetric(
+                                    Icons.water_drop,
+                                    SensorUnits.formatValue(
+                                      log.moist,
+                                      unit: SensorUnits.percent,
+                                    ),
+                                  ),
+                                  _LogMetric(
+                                    Icons.thermostat,
+                                    SensorUnits.formatValue(
+                                      log.temp,
+                                      unit: SensorUnits.celsius,
+                                    ),
+                                  ),
+                                  _LogMetric(
+                                    Icons.air,
+                                    SensorUnits.formatValue(
+                                      log.hum,
+                                      unit: SensorUnits.percent,
+                                    ),
+                                  ),
+                                  _LogMetric(
+                                    Icons.eco,
+                                    SensorUnits.formatValue(
+                                      log.n,
+                                      unit: SensorUnits.mgPerKg,
+                                    ),
+                                  ),
+                                  _LogMetric(
+                                    Icons.eco,
+                                    SensorUnits.formatValue(
+                                      log.p,
+                                      unit: SensorUnits.mgPerKg,
+                                    ),
+                                  ),
+                                  _LogMetric(
+                                    Icons.eco,
+                                    SensorUnits.formatValue(
+                                      log.k,
+                                      unit: SensorUnits.mgPerKg,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
