@@ -15,14 +15,16 @@
         "status": "LateBlight"
     },
     "config" : {
-        "auto_fertilizer": {
+        "auto_fert": {
             "k_max": 250,
             "k_min": 150,
             "leaf_goal": "Healthy",
             "n_max": 220,
             "n_min": 120,
             "p_max": 80,
-            "p_min": 40
+            "p_min": 40,
+            "fert2_dose_ml": 400,
+            "fert2_disease_name": "BacterialSpot"
         },
         "auto_water": {
             "moist_max": 80,
@@ -47,7 +49,8 @@
             "fert1": false,
             "fert2": false,
             "water": false
-        }
+        },
+        "refresh_time": 5000
     },
     "users" : {
 
@@ -57,11 +60,41 @@
 
         },
         "logs" : {
-            "manual_logs": {
-
-            }, 
-            "auto_logs": {
-
+            "fert1": {
+                "fert1_2026-06-29T20:51:27": {
+                    "action": "OFF",
+                    "leaf_status": "BacterialSpot",
+                    "mode": "manual",
+                    "pump": "fert1",
+                    "tank_capacity": 4382,
+                    "sensors": {
+                        "hum": 69,
+                        "k": 253,
+                        "moist": 95,
+                        "n": 118,
+                        "p": 110,
+                        "temp": 29
+                    },
+                    "time": "2026-06-29T20:51:27"
+                }
+            },
+            "fert2": {
+                "fert2_2026-06-29T20:51:26": {
+                    "action": "OFF",
+                    "leaf_status": "BacterialSpot",
+                    "mode": "manual",
+                    "pump": "fert2",
+                    "tank_capacity": 939,
+                    "sensors": {
+                        "hum": 69,
+                        "k": 253,
+                        "moist": 95,
+                        "n": 118,
+                        "p": 110,
+                        "temp": 29
+                    },
+                    "time": "2026-06-29T20:51:26"
+                }
             }
         }
     }

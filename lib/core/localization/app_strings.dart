@@ -78,6 +78,12 @@ class AppStrings {
     }
   }
 
+  // Fertilizer pump/tank labels (config + dashboard)
+  static const String fert1PumpLabel = 'مضخة السماد 1 (علاج نقص المعادن)';
+  static const String fert2PumpLabel = 'مضخة السماد 2 (علاج اكتشاف المرض)';
+  static const String fert1TankLabel = 'خزان السماد 1 (علاج نقص المعادن)';
+  static const String fert2TankLabel = 'خزان السماد 2 (علاج اكتشاف المرض)';
+
   // Pump name mapping
   static String displayPumpName(String pump) {
     if (pump.isEmpty) return '';

@@ -83,7 +83,11 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: lib/core/media/icons/app/app.jpg
+  windows:
+    generate: true
+    image_path: lib/core/media/icons/app/core_icom.png
+    icon_size: 48
+  image_path: lib/core/media/icons/app/core_icom.png
   remove_alpha_ios: true
 
   # An image asset can refer to one or more resolution-specific "variants", see

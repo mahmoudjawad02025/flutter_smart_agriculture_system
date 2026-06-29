@@ -46,6 +46,14 @@ class FirebaseStreams {
 
   static DatabaseEvent? get lastConfigEvent => _config?._lastEvent;
 
+  static _SharedQueryStream? _refreshTime;
+  static Stream<DatabaseEvent> get refreshTimeStream {
+    _refreshTime ??= _SharedQueryStream(_db.ref(FarmPayload.refreshTimePath));
+    return _refreshTime!.stream;
+  }
+
+  static DatabaseEvent? get lastRefreshTimeEvent => _refreshTime?._lastEvent;
+
   static _SharedQueryStream? _logs;
   static Stream<DatabaseEvent> get logsStream {
     _logs ??= _SharedQueryStream(_db.ref(FarmPayload.logsPath));

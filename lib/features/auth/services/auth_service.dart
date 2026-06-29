@@ -79,8 +79,8 @@ class AuthService {
         await _database
             .ref('${FarmPayload.notificationItemsPath}/notif_$notifId')
             .set({
-              'id': notifId,
               'title': 'مستخدم جديد بانتظار تأكيد المسؤول',
+              'type': 'user_signup',
               'disease_name': 'User_Signup',
               'message':
                   'تم تسجيل مستخدم جديد ويحتاج إلى موافقة المسؤول لتفعيل الحساب.',

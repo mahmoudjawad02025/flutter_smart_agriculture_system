@@ -18,6 +18,13 @@ class FarmPayload {
       rootPath.isEmpty ? 'config' : '$rootPath/config';
   static String get pumpsPath => '$configPath/pumps';
   static String get tanksPath => '$configPath/tanks';
+  static String get autoFertPath => '$configPath/auto_fert';
+  static String get refreshTimePath => '$configPath/refresh_time';
+
+  /// ESP32 main-loop delay bounds (milliseconds).
+  static const int minRefreshTimeMs = 1;
+  static const int maxRefreshTimeMs = 3600000;
+  static const int defaultRefreshTimeMs = 5000;
 
   static String get extraPath => rootPath.isEmpty ? 'extra' : '$rootPath/extra';
   static String get notificationsPath => '$extraPath/notifications';
@@ -34,7 +41,9 @@ class FarmPayload {
     return <String, dynamic>{
       'sensors': <String, dynamic>{},
       'leaf': <String, dynamic>{},
-      'config': <String, dynamic>{},
+      'config': <String, dynamic>{
+        'refresh_time': defaultRefreshTimeMs,
+      },
       'users': <String, dynamic>{},
       'extra': <String, dynamic>{
         'notifications': <String, dynamic>{},
@@ -80,11 +89,41 @@ class FarmPayload {
       }
     }
 
+    await _migrateLegacyAutoFertilizerPath(farmRef);
+
     final DatabaseReference usersRef = database.ref(usersPath);
     final DataSnapshot usersSnapshot = await usersRef.get();
     if (!usersSnapshot.exists || usersSnapshot.value == null) {
       await usersRef.set(<String, dynamic>{});
     }
+  }
+
+  static Future<void> _migrateLegacyAutoFertilizerPath(
+    DatabaseReference farmRef,
+  ) async {
+    final DataSnapshot legacySnapshot = await farmRef
+        .child('config/auto_fertilizer')
+        .get();
+    if (!legacySnapshot.exists || legacySnapshot.value == null) {
+      return;
+    }
+
+    final Map<String, dynamic> legacy = _toMap(legacySnapshot.value);
+    final DataSnapshot currentSnapshot = await farmRef
+        .child('config/auto_fert')
+        .get();
+
+    if (!currentSnapshot.exists || currentSnapshot.value == null) {
+      await farmRef.child('config/auto_fert').set(legacy);
+    } else {
+      final Map<String, dynamic> current = _toMap(currentSnapshot.value);
+      await farmRef.child('config/auto_fert').update(<String, dynamic>{
+        ...current,
+        ...legacy,
+      });
+    }
+
+    await farmRef.child('config/auto_fertilizer').remove();
   }
 
   static void _collectMissing(

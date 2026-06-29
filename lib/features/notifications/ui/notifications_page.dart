@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/config/app_runtime_config.dart';
-import '../../../core/localization/app_strings.dart';
+import '../../../core/widgets/paginated_list_view.dart';
 import '../cubit/notifications_cubit.dart';
 import '../models/farm_notification.dart';
+import '../models/notification_display.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -112,16 +113,14 @@ class NotificationsPage extends StatelessWidget {
             );
           }
 
-          return ListView(
+          return PaginatedListView(
             padding: const EdgeInsets.all(14),
-            children: <Widget>[
-              _SummaryCard(unreadCount: state.unreadCount),
-              const SizedBox(height: 16),
-              ...state.notifications.map(
-                (FarmNotification notification) =>
-                    _NotificationCard(notification: notification),
-              ),
-            ],
+            itemCount: state.notifications.length,
+            header: _SummaryCard(unreadCount: state.unreadCount),
+            itemBuilder: (BuildContext context, int index) {
+              final FarmNotification notification = state.notifications[index];
+              return _NotificationCard(notification: notification);
+            },
           );
         },
       ),
@@ -144,120 +143,11 @@ class _NotificationCard extends StatelessWidget {
       child: ValueListenableBuilder<bool>(
         valueListenable: AppRuntimeConfig.strongAlertMode,
         builder: (context, isStrongAlert, _) {
-          final bool isTest = notification.diseaseName == 'Manual_Test';
-          final bool isSignup = notification.diseaseName == 'User_Signup';
-
-          // Prefer explicit diseaseName; if missing, try to detect known
-          // disease codes inside the stored title/message so legacy DB
-          // entries written in English still render Arabic labels.
-          String extractDiseaseFromText(String? text) {
-            if (text == null || text.isEmpty) return '';
-            final String normalized = text.toLowerCase().replaceAll(
-              RegExp(r'[_\s-]'),
-              '',
-            );
-            final List<String> candidates = <String>[
-              'manualtest',
-              'usersignup',
-              'healthy',
-              'lateblight',
-              'late',
-              'bacterialspot',
-              'bacterial',
-              'earlyblight',
-              'yellowleafcurl',
-              'septoria',
-              'powderymildew',
-            ];
-            for (final String c in candidates) {
-              if (normalized.contains(c)) return c;
-            }
-            return '';
-          }
-
-          String detectedCode = '';
-          if (notification.diseaseName.isNotEmpty) {
-            detectedCode = notification.diseaseName;
-          } else {
-            final String fromTitle = extractDiseaseFromText(notification.title);
-            final String fromMsg = extractDiseaseFromText(notification.message);
-            detectedCode = fromTitle.isNotEmpty ? fromTitle : fromMsg;
-          }
-
-          final String displayDisease = detectedCode.isNotEmpty
-              ? AppStrings.displayDiseaseName(detectedCode)
-              : '';
-
-          // Classify notification type so we can apply strong-alert only to
-          // true disease detections (not sensor thresholds, logs, or tests).
-          final bool isLog =
-              detectedCode.toLowerCase().contains('log') ||
-              detectedCode.toLowerCase().contains('pump');
-
-          // Detect sensor threshold notifications: diseaseName stored as
-          // 'sensor_threshold:<sensor_key>' (see NotificationsService).
-          final bool isSensorThreshold = detectedCode.toLowerCase().startsWith(
-            'sensor_threshold',
-          );
-          String sensorKey = '';
-          if (isSensorThreshold) {
-            final parts = detectedCode.split(':');
-            if (parts.length > 1) sensorKey = parts[1].toLowerCase();
-          }
-
-          // Auto actions (auto_water / auto_fertilizer) are system
-          // notifications, not disease detections. Detect them here so
-          // the UI can render their provided title/message directly.
-          final bool isAutoAction = detectedCode.toLowerCase().startsWith(
-            'auto_',
+          final NotificationDisplay display = NotificationDisplay.resolve(
+            notification,
+            isStrongAlertMode: isStrongAlert,
           );
 
-          final bool isDiseaseNotification =
-              !isLog &&
-              !isSensorThreshold &&
-              !isAutoAction &&
-              detectedCode.isNotEmpty &&
-              !isTest &&
-              !isSignup;
-
-          final Color accentColor = notification.isRead
-              ? Colors.grey[500]!
-              : isSignup
-              ? Colors.deepPurple
-              : isTest
-              ? Colors.blue
-              : (isDiseaseNotification && isStrongAlert
-                    ? const Color(0xFFD32F2F)
-                    : const Color(0xFF2E7D32));
-
-          late final String titleText;
-          late final String bodyText;
-
-          if (isLog ||
-              isAutoAction ||
-              isSensorThreshold ||
-              isSignup ||
-              isTest) {
-            // For log, auto-action, sensor, signup, and test notifications,
-            // use the provided title/message directly.
-            titleText = notification.title;
-            bodyText = notification.message;
-          } else if (detectedCode.isNotEmpty) {
-            // Disease detection branch (تم اكتشاف …)
-            if (detectedCode.toLowerCase() == 'manualtest') {
-              titleText = AppStrings.displayDiseaseName(detectedCode);
-              bodyText = notification.message;
-            } else {
-              titleText = 'تم اكتشاف $displayDisease';
-              bodyText =
-                  'تم اكتشاف $displayDisease على ورقة ${AppStrings.plantDefinite}';
-            }
-          } else {
-            titleText = notification.title;
-            bodyText = notification.message;
-          }
-
-          // No left accent border — user prefers no vertical line.
           return Container(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -266,46 +156,15 @@ class _NotificationCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    // Leading icon box. Use a sensor-specific icon when
-                    // the notification represents a sensor threshold.
                     Container(
                       decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.1),
+                        color: display.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       padding: const EdgeInsets.all(10),
                       child: Icon(
-                        // Map icon based on notification type / sensor key
-                        (() {
-                          if (isLog || isAutoAction)
-                            return Icons.event_note_rounded;
-                          if (isSignup) return Icons.person_add_rounded;
-                          if (isTest) return Icons.cloud_done_rounded;
-                          if (isSensorThreshold) {
-                            switch (sensorKey) {
-                              case 'moist':
-                              case 'moisture':
-                                return Icons.water_drop_outlined;
-                              case 'temp':
-                              case 'temperature':
-                                return Icons.thermostat;
-                              case 'hum':
-                              case 'humidity':
-                                return Icons.air;
-                              case 'n':
-                              case 'nitrogen':
-                              case 'p':
-                              case 'phosphorus':
-                              case 'k':
-                              case 'potassium':
-                                return Icons.eco;
-                              default:
-                                return Icons.warning_amber_rounded;
-                            }
-                          }
-                          return Icons.warning_amber_rounded;
-                        })(),
-                        color: accentColor,
+                        display.icon,
+                        color: display.accentColor,
                         size: 22,
                       ),
                     ),
@@ -316,10 +175,10 @@ class _NotificationCard extends StatelessWidget {
                         children: <Widget>[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
+                            children: <Widget>[
                               Expanded(
                                 child: Text(
-                                  titleText,
+                                  display.titleText,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
@@ -346,7 +205,7 @@ class _NotificationCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: accentColor,
+                                color: display.accentColor,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
@@ -364,37 +223,29 @@ class _NotificationCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (!isLog &&
-                    !isSensorThreshold &&
-                    !isAutoAction &&
-                    !isSignup &&
-                    !isTest)
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black87,
-                      ),
-                      children: [
-                        const TextSpan(
-                          text: 'كشف: ',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(
-                          text: displayDisease.isNotEmpty
-                              ? displayDisease
-                              : _displayDiseaseName(notification.diseaseName),
-                          style: TextStyle(
-                            color: accentColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      display.icon,
+                      size: 14,
+                      color: display.accentColor,
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Text(
+                      display.isDisease && display.detailLabel != null
+                          ? 'كشف: ${display.detailLabel}'
+                          : 'النوع: ${display.categoryLabel}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: display.accentColor,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 Text(
-                  bodyText,
+                  display.bodyText,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[800],
@@ -404,8 +255,8 @@ class _NotificationCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (notification.nextUpload.isNotEmpty && !isSignup)
+                  children: <Widget>[
+                    if (notification.nextUpload.isNotEmpty && display.isDisease)
                       Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(
@@ -417,7 +268,7 @@ class _NotificationCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
-                          children: [
+                          children: <Widget>[
                             const Icon(
                               Icons.schedule_outlined,
                               size: 14,
@@ -425,7 +276,7 @@ class _NotificationCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'إعادة رفع لاحقة: ${notification.nextUpload == "" ? "غير متوفر" : _formatTimestamp(DateTime.tryParse(notification.nextUpload) ?? DateTime.now())}',
+                              'إعادة رفع لاحقة: ${_formatTimestamp(DateTime.tryParse(notification.nextUpload) ?? DateTime.now())}',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.blue,
@@ -436,7 +287,7 @@ class _NotificationCard extends StatelessWidget {
                         ),
                       ),
                     Row(
-                      children: [
+                      children: <Widget>[
                         _ActionButton(
                           icon: notification.isRead
                               ? Icons.mark_email_unread_outlined
@@ -484,10 +335,6 @@ class _NotificationCard extends StatelessWidget {
 
   String _formatTimeOnly(DateTime dt) {
     return '${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _displayDiseaseName(String name) {
-    return AppStrings.displayDiseaseName(name);
   }
 }
 

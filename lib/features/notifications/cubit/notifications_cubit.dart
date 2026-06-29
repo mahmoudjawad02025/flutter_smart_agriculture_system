@@ -3,40 +3,51 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/farm_notification.dart';
 import '../services/notifications_service.dart';
+import '../services/reupload_reminder_service.dart';
 
 part 'notifications_state.dart';
 
 class NotificationsCubit extends Cubit<NotificationsState> {
-  NotificationsCubit({required NotificationsService notificationsService})
-    : _notificationsService = notificationsService,
-      super(
-        const NotificationsState(
-          notifications: <FarmNotification>[],
-          unreadCount: 0,
-        ),
-      ) {
+  NotificationsCubit({
+    required NotificationsService notificationsService,
+    required FirebaseDatabase database,
+  }) : _notificationsService = notificationsService,
+       _reuploadReminderService = ReuploadReminderService(
+         database: database,
+         notificationsService: notificationsService,
+       ),
+       super(
+         const NotificationsState(
+           notifications: <FarmNotification>[],
+           unreadCount: 0,
+         ),
+       ) {
     _bindFirebaseStreams();
+    _reuploadReminderService.start();
   }
 
   final NotificationsService _notificationsService;
+  final ReuploadReminderService _reuploadReminderService;
   StreamSubscription<List<FarmNotification>>? _notificationsSubscription;
-  StreamSubscription<int>? _unreadCountSubscription;
 
   void _bindFirebaseStreams() {
     _notificationsSubscription = _notificationsService
         .getNotificationsStream()
         .listen((List<FarmNotification> notifications) {
-          emit(state.copyWith(notifications: notifications));
-        });
-
-    _unreadCountSubscription = _notificationsService
-        .getUnreadCountStream()
-        .listen((int unreadCount) {
-          emit(state.copyWith(unreadCount: unreadCount));
+          final int unreadCount = notifications
+              .where((FarmNotification n) => !n.isRead)
+              .length;
+          emit(
+            state.copyWith(
+              notifications: notifications,
+              unreadCount: unreadCount,
+            ),
+          );
         });
   }
 
@@ -96,20 +107,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
-  Future<void> addImageUploadNotification({DateTime? createdAt}) async {
-    try {
-      await _notificationsService.addImageUploadNotification(
-        createdAt: createdAt,
-      );
-    } catch (e) {
-      print('[NOTIFICATIONS] Error adding image upload notification: $e');
-    }
-  }
-
   @override
   Future<void> close() async {
     await _notificationsSubscription?.cancel();
-    await _unreadCountSubscription?.cancel();
+    await _reuploadReminderService.dispose();
     return super.close();
   }
 }

@@ -3,9 +3,11 @@ import '../../../core/constants/sensor_units.dart';
 import '../../../core/utils/firebase_parsers.dart';
 import '../../../core/services/firebase_streams.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/utils/pump_log_parser.dart';
 import 'package:flutter/material.dart';
 
 import 'logs_history_page.dart';
+import 'widgets/pump_log_widgets.dart';
 
 // use centralized app icon from AppStrings
 
@@ -19,6 +21,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage>
     with AutomaticKeepAliveClientMixin {
   late final Stream<DatabaseEvent> _dataStream;
+  late final Stream<DatabaseEvent> _leafStream;
 
   @override
   bool get wantKeepAlive => true;
@@ -27,6 +30,25 @@ class _DashboardPageState extends State<DashboardPage>
   void initState() {
     super.initState();
     _dataStream = FirebaseStreams.rootStream;
+    _leafStream = FirebaseStreams.leafStream;
+  }
+
+  Widget _buildLeafHeaderCard(DatabaseEvent? event) {
+    final Map<String, dynamic> leaf = _toMap(event?.snapshot.value);
+    final String leafLastUpdated = '${leaf['last_updated'] ?? ''}';
+    final String lastUpdated = leafLastUpdated.isNotEmpty
+        ? _formatDashboardTime(leafLastUpdated)
+        : '-';
+    final String leafStatus = _displayLeafStatus('${leaf['status'] ?? '-'}');
+    final bool needsFix = leaf['needs_fix'] == true;
+    final String reuploadAt = '${leaf['reupload_at'] ?? ''}';
+
+    return _HeaderCard(
+      lastUpdated: lastUpdated,
+      leafStatus: leafStatus,
+      needsFix: needsFix,
+      reuploadAt: reuploadAt,
+    );
   }
 
   @override
@@ -62,27 +84,19 @@ class _DashboardPageState extends State<DashboardPage>
           final Map<String, dynamic> live = _toMap(data['live']);
           final Map<String, dynamic> sensors = _toMap(data['sensors']);
           final Map<String, dynamic> source = live.isNotEmpty ? live : sensors;
-          final Map<String, dynamic> leaf = _toMap(data['leaf']);
           final Map<String, dynamic> config = _toMap(data['config']);
           final Map<String, dynamic> tanks = _toMap(config['tanks']);
-
-          final String rawTime = '${source['time'] ?? '-'}';
-          final String time = _formatDashboardTime(rawTime);
-          final String leafStatus = _displayLeafStatus(
-            '${leaf['status'] ?? '-'}',
-          );
-          final bool needsFix = leaf['needs_fix'] == true;
-          final String reuploadAt = '${leaf['reupload_at'] ?? ''}';
 
           return ListView(
             key: const PageStorageKey<String>('dashboard_scroll'),
             padding: const EdgeInsets.all(16),
             children: <Widget>[
-              _HeaderCard(
-                time: time,
-                leafStatus: leafStatus,
-                needsFix: needsFix,
-                reuploadAt: reuploadAt,
+              StreamBuilder<DatabaseEvent>(
+                stream: _leafStream,
+                initialData: FirebaseStreams.lastLeafEvent,
+                builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> leafSnapshot) {
+                  return _buildLeafHeaderCard(leafSnapshot.data);
+                },
               ),
               const SizedBox(height: 14),
               GridView.count(
@@ -181,95 +195,7 @@ class _LogsSnapshot extends StatelessWidget {
           snapshot.data?.snapshot.value,
         );
 
-        final List<_LogItem> allLogs = [];
-
-        void addIfPumpLog(
-          Map<String, dynamic> data, {
-          bool isAuto = false,
-          bool isManual = false,
-        }) {
-          if (data.isEmpty) return;
-          if (data['debug'] == true) return;
-
-          final String action = data['action']?.toString().toUpperCase() ?? '';
-          final String pump = data['pump']?.toString() ?? '';
-          if (action != 'ON' && action != 'OFF') return;
-
-          final Map<String, dynamic> sensorsMap = _toMap(data['sensors']);
-          final String? moist = sensorsMap['moist']?.toString();
-          final String? temp = sensorsMap['temp']?.toString();
-          final String? hum = sensorsMap['hum']?.toString();
-          final String? n = sensorsMap['n']?.toString();
-          final String? p = sensorsMap['p']?.toString();
-          final String? k = sensorsMap['k']?.toString();
-          final bool hasSensors = sensorsMap.isNotEmpty;
-
-          String? leafStatus;
-          if (data.containsKey('leaf_status')) {
-            leafStatus = data['leaf_status']?.toString();
-          } else if (data.containsKey('leaf')) {
-            final dynamic leafVal = data['leaf'];
-            if (leafVal is String) leafStatus = leafVal;
-            if (leafVal is Map)
-              leafStatus = _toMap(leafVal)['status']?.toString();
-          }
-
-          final String lowPump = pump.toLowerCase();
-          IconData icon;
-          String title;
-
-          if (lowPump.contains('water') || pump.toUpperCase() == 'WATER') {
-            icon = Icons.water_drop_outlined;
-            title =
-                '${isAuto ? 'ري تلقائي' : 'ري يدوي'} : ${AppStrings.displayAction(action)}';
-          } else if (lowPump.contains('fert') ||
-              pump.toUpperCase() == 'FERTILIZER') {
-            icon = Icons.science_outlined;
-            title =
-                '${AppStrings.displayPumpName(pump)} ${isAuto ? 'تلقائي' : 'يدوي'} : ${AppStrings.displayAction(action)}';
-          } else {
-            icon = Icons.touch_app_outlined;
-            title =
-                '${AppStrings.displayPumpName(pump)} ${isAuto ? 'تلقائي' : 'يدوي'} : ${AppStrings.displayAction(action)}';
-          }
-
-          allLogs.add(
-            _LogItem(
-              time: _parseDate(data['time']),
-              title: title,
-              subtitle: '',
-              icon: icon,
-              isManual: isManual,
-              hasSensors: hasSensors,
-              n: n,
-              p: p,
-              k: k,
-              moist: moist,
-              temp: temp,
-              hum: hum,
-              leafStatus: leafStatus,
-            ),
-          );
-        }
-
-        // Auto logs
-        final Map<String, dynamic> autoLogs = _toMap(logsData['auto_logs']);
-        autoLogs.forEach((kind, entries) {
-          final Map<String, dynamic> kindLogs = _toMap(entries);
-          kindLogs.forEach((key, val) {
-            final Map<String, dynamic> data = _toMap(val);
-            addIfPumpLog(data, isAuto: true);
-          });
-        });
-
-        // Manual logs
-        final Map<String, dynamic> manualLogs = _toMap(logsData['manual_logs']);
-        manualLogs.forEach((key, val) {
-          final Map<String, dynamic> data = _toMap(val);
-          addIfPumpLog(data, isManual: true);
-        });
-
-        allLogs.sort((a, b) => b.time.compareTo(a.time));
+        final List<PumpLogEntry> allLogs = PumpLogParser.parseLogsNode(logsData);
 
         return Card(
           child: Padding(
@@ -308,119 +234,8 @@ class _LogsSnapshot extends StatelessWidget {
                   )
                 else
                   Column(
-                    children: allLogs.take(5).map((log) {
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primaryContainer,
-                          radius: 18,
-                          child: Icon(
-                            log.icon,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        title: Text(
-                          log.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        subtitle:
-                            (log.hasSensors ||
-                                (log.leafStatus != null &&
-                                    log.leafStatus!.isNotEmpty) ||
-                                (log.subtitle != null &&
-                                    log.subtitle!.isNotEmpty))
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (log.hasSensors)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: Row(
-                                          children: [
-                                            _MiniMetric(
-                                              Icons.water_drop,
-                                              SensorUnits.formatValue(
-                                                log.moist,
-                                                unit: SensorUnits.percent,
-                                              ),
-                                            ),
-                                            _MiniMetric(
-                                              Icons.thermostat,
-                                              SensorUnits.formatValue(
-                                                log.temp,
-                                                unit: SensorUnits.celsius,
-                                              ),
-                                            ),
-                                            _MiniMetric(
-                                              Icons.air,
-                                              SensorUnits.formatValue(
-                                                log.hum,
-                                                unit: SensorUnits.percent,
-                                              ),
-                                            ),
-                                            _MiniMetric(
-                                              Icons.eco,
-                                              SensorUnits.formatValue(
-                                                log.n,
-                                                unit: SensorUnits.mgPerKg,
-                                              ),
-                                            ),
-                                            _MiniMetric(
-                                              Icons.eco,
-                                              SensorUnits.formatValue(
-                                                log.p,
-                                                unit: SensorUnits.mgPerKg,
-                                              ),
-                                            ),
-                                            _MiniMetric(
-                                              Icons.eco,
-                                              SensorUnits.formatValue(
-                                                log.k,
-                                                unit: SensorUnits.mgPerKg,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  if (log.subtitle != null &&
-                                      log.subtitle!.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        log.subtitle!,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      'الحالة: ${log.leafStatus != null ? AppStrings.displayLeafStatus(log.leafStatus!) : 'غير معروف'}',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : null,
-                        trailing: Text(
-                          '${log.time.day}/${log.time.month}/${log.time.year}\n${log.time.hour}:${log.time.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      );
+                    children: allLogs.take(5).map((PumpLogEntry log) {
+                      return PumpLogEntryCard(log: log, compact: true);
                     }).toList(),
                   ),
               ],
@@ -430,69 +245,6 @@ class _LogsSnapshot extends StatelessWidget {
       },
     );
   }
-
-  DateTime _parseDate(dynamic val) {
-    if (val is String) {
-      try {
-        return DateTime.parse(val).toLocal();
-      } catch (_) {}
-    }
-    return DateTime.now();
-  }
-}
-
-class _MiniMetric extends StatelessWidget {
-  const _MiniMetric(this.icon, this.value);
-  final IconData icon;
-  final String value;
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.grey[600]),
-          const SizedBox(width: 3),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LogItem {
-  final DateTime time;
-  final String title;
-  final String? subtitle;
-  final IconData icon;
-  final bool isManual;
-  final bool hasSensors;
-  final String? n, p, k, moist, temp, hum;
-  final String? leafStatus;
-
-  _LogItem({
-    required this.time,
-    required this.title,
-    this.subtitle,
-    required this.icon,
-    this.isManual = false,
-    this.hasSensors = false,
-    this.n,
-    this.p,
-    this.k,
-    this.moist,
-    this.temp,
-    this.hum,
-    this.leafStatus,
-  });
 }
 
 class _PumpsSnapshot extends StatelessWidget {
@@ -529,10 +281,8 @@ Map<String, dynamic> _toMap(dynamic value) {
 String _formatDashboardTime(String rawTime) {
   if (rawTime.isEmpty || rawTime == '-') return rawTime;
 
-  // Handle ISO format with T (e.g., 2026-06-01T11:45:57.719007Z)
-  String cleanedTime = rawTime.replaceAll('T', ' ').replaceAll('Z', '').trim();
-
-  final DateTime? parsed = DateTime.tryParse(cleanedTime);
+  // Keep the Z/offset so UTC timestamps convert correctly to local time.
+  final DateTime? parsed = DateTime.tryParse(rawTime.trim());
   if (parsed != null) {
     final DateTime local = parsed.toLocal();
     String twoDigits(int value) => value.toString().padLeft(2, '0');
@@ -560,13 +310,13 @@ String _displayLeafStatus(String status) =>
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
-    required this.time,
+    required this.lastUpdated,
     required this.leafStatus,
     required this.needsFix,
     required this.reuploadAt,
   });
 
-  final String time;
+  final String lastUpdated;
   final String leafStatus;
   final bool needsFix;
   final String reuploadAt;
@@ -611,7 +361,10 @@ class _HeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text('آخر تحديث: $time', style: const TextStyle(color: Colors.white)),
+          Text(
+            'آخر تحديث للورقة: $lastUpdated',
+            style: const TextStyle(color: Colors.white),
+          ),
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
@@ -636,7 +389,7 @@ class _HeaderCard extends StatelessWidget {
           if (needsFix && reuploadAt.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              'التالية: ${_formatDashboardTime(reuploadAt)}',
+              'موعد إعادة الرفع: ${_formatDashboardTime(reuploadAt)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white, fontSize: 13),
@@ -719,14 +472,14 @@ class _TanksCapacityCard extends StatelessWidget {
     ),
     _TankDefinition(
       key: 'fert1_tank',
-      label: 'خزان السماد 1',
+      label: AppStrings.fert1TankLabel,
       icon: Icons.science_rounded,
       color: Color(0xFF43A047),
       defaultCapacity: 2000,
     ),
     _TankDefinition(
       key: 'fert2_tank',
-      label: 'خزان السماد 2',
+      label: AppStrings.fert2TankLabel,
       icon: Icons.biotech_rounded,
       color: Color(0xFFFB8C00),
       defaultCapacity: 2000,
@@ -980,8 +733,8 @@ class _PumpsCard extends StatelessWidget {
               runSpacing: 10,
               children: <Widget>[
                 _StatusChip(label: 'مضخة المياه', active: water),
-                _StatusChip(label: 'مضخة السماد 1', active: fert1),
-                _StatusChip(label: 'مضخة السماد 2', active: fert2),
+                _StatusChip(label: AppStrings.fert1PumpLabel, active: fert1),
+                _StatusChip(label: AppStrings.fert2PumpLabel, active: fert2),
                 _StatusChip(label: 'الوضع التلقائي', active: auto),
               ],
             ),

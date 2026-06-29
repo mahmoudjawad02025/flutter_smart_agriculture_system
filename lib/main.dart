@@ -79,6 +79,7 @@ class MyApp extends StatelessWidget {
             notificationsService: NotificationsService(
               database: FirebaseDatabase.instance,
             ),
+            database: FirebaseDatabase.instance,
           ),
         ),
         BlocProvider<DiseaseDetectionCubit>(
