@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:smart_cucumber_agriculture_system/features/disease_detection/services/plant_classifier_service.dart';
 import 'package:smart_cucumber_agriculture_system/features/firebase_data/models/farm_payload.dart';
 
@@ -32,8 +33,9 @@ class DiseaseDetectionService {
       return null;
     }
 
+    final Directory tempDir = await getTemporaryDirectory();
     final Directory uploadsDirectory = Directory(
-      '${Directory.current.path}${Platform.pathSeparator}lib${Platform.pathSeparator}core${Platform.pathSeparator}uploads',
+      '${tempDir.path}${Platform.pathSeparator}leaf_uploads',
     );
 
     if (!await uploadsDirectory.exists()) {
@@ -48,8 +50,7 @@ class DiseaseDetectionService {
       await savedImage.delete();
     }
 
-    final List<int> bytes = await selectedImage.readAsBytes();
-    await savedImage.writeAsBytes(bytes, flush: true);
+    await selectedImage.saveTo(savedImage.path);
 
     return savedImage.path;
   }
@@ -122,35 +123,62 @@ class DiseaseDetectionService {
         leafStatus = labels.first;
       }
 
-      final String reuploadAt = isHealthy
-          ? ''
-          : DateTime.now()
-                .toUtc()
-                .add(
-                  Duration(
-                    days: AppRuntimeConfig.diseaseReuploadDelayDays.value,
-                  ),
-                )
-                .toIso8601String();
-
-      print('[DISEASE_DETECTION] Updating Firebase with:');
-      print('[DISEASE_DETECTION]   status: $leafStatus');
-      print('[DISEASE_DETECTION]   needs_fix: ${!isHealthy}');
-      print('[DISEASE_DETECTION]   reupload_at: $reuploadAt');
-
-      await _database.ref(FarmPayload.leafPath).update(<String, dynamic>{
-        'status': leafStatus,
-        'needs_fix': !isHealthy,
-        'reupload_at': reuploadAt,
-        'last_updated': DateTime.now().toUtc().toIso8601String(),
-      });
-
-      print('[DISEASE_DETECTION] Firebase update successful!');
+      await pushLeafFields(_database, leafStatus);
     } catch (e) {
       print('[DISEASE_DETECTION] Firebase update FAILED: $e');
       // Firebase write failed - rethrow so UI shows the error
       throw Exception('فشل تحديث Firebase: $e');
     }
+  }
+
+  Future<void> updateLeafStatusManually(String status) async {
+    await pushLeafFields(_database, status);
+  }
+
+  static Future<void> pushLeafFields(
+    FirebaseDatabase database,
+    String leafStatus,
+  ) async {
+    final Map<String, dynamic> payload = buildLeafUpdatePayload(leafStatus);
+
+    print('[DISEASE_DETECTION] Updating Firebase with:');
+    print('[DISEASE_DETECTION]   status: ${payload['status']}');
+    print('[DISEASE_DETECTION]   needs_fix: ${payload['needs_fix']}');
+    print('[DISEASE_DETECTION]   reupload_at: ${payload['reupload_at']}');
+
+    await database.ref(FarmPayload.leafPath).update(payload);
+
+    print('[DISEASE_DETECTION] Firebase update successful!');
+  }
+
+  static Map<String, dynamic> buildLeafUpdatePayload(String leafStatus) {
+    final bool isHealthy = _isHealthyStatus(leafStatus);
+    final String reuploadAt = isHealthy
+        ? ''
+        : DateTime.now()
+              .toUtc()
+              .add(
+                Duration(
+                  days: AppRuntimeConfig.diseaseReuploadDelayDays.value,
+                ),
+              )
+              .toIso8601String();
+
+    return <String, dynamic>{
+      'status': leafStatus,
+      'needs_fix': !isHealthy,
+      'reupload_at': reuploadAt,
+      'last_updated': DateTime.now().toUtc().toIso8601String(),
+    };
+  }
+
+  static bool _isHealthyStatus(String status) {
+    final String normalized = status.toLowerCase();
+    final List<String> keywords = AppRuntimeConfig.healthyKeywords.value
+        .map((String value) => value.toLowerCase())
+        .toList();
+
+    return keywords.any(normalized.contains);
   }
 
   bool _isHealthy(List<String> labels) {

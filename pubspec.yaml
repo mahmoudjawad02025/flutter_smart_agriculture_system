@@ -76,14 +76,20 @@ flutter:
 
   assets:
     - lib/core/media/icons/app/app.jpg
+    - lib/core/media/icons/app/1.jpg
     - assets/best_float32.tflite
     - lib/docs/firebase_struct.json
 
 # Configuration for generating launcher icons from the app asset.
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
-  image_path: lib/core/media/icons/app/app.jpg
+  windows:
+    generate: true
+    image_path: lib/core/media/icons/app/1.jpg
+    icon_size: 48
+  image_path: lib/core/media/icons/app/1.jpg
+  remove_alpha_ios: true
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

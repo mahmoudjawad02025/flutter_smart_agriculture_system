@@ -24,6 +24,7 @@ class AppShellPage extends StatefulWidget {
 
 class _AppShellPageState extends State<AppShellPage> {
   int _currentIndex = 0;
+  final Set<int> _mountedTabIndices = <int>{0};
 
   static const List<String> _titles = <String>[
     'لوحة تحكم المزرعة',
@@ -44,6 +45,7 @@ class _AppShellPageState extends State<AppShellPage> {
       Navigator.of(context).pop();
     }
     setState(() {
+      _mountedTabIndices.add(index);
       _currentIndex = index;
     });
   }
@@ -80,117 +82,122 @@ class _AppShellPageState extends State<AppShellPage> {
         ],
       ),
       drawer: Drawer(
+        backgroundColor: const Color(0xFFF7FBF4),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+        ),
         child: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.zero,
+          child: Column(
             children: <Widget>[
-              DrawerHeader(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
+              const _DrawerHeader(),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   children: <Widget>[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(40),
-                      child: Image.asset(
-                        AppStrings.appIconAsset,
-                        width: 64,
-                        height: 64,
-                        fit: BoxFit.cover,
-                      ),
+                    const _DrawerSectionLabel(title: 'التنقل'),
+                    _DrawerNavTile(
+                      icon: Icons.dashboard_outlined,
+                      selectedIcon: Icons.dashboard_rounded,
+                      label: 'لوحة التحكم',
+                      isSelected: _currentIndex == 0,
+                      color: const Color(0xFF2E7D32),
+                      onTap: () => _goToPage(0),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      AppStrings.appTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
+                    _DrawerNavTile(
+                      icon: Icons.auto_awesome_outlined,
+                      selectedIcon: Icons.auto_awesome_rounded,
+                      label: 'كشف الأمراض',
+                      isSelected: _currentIndex == 1,
+                      color: const Color(0xFF6A1B9A),
+                      onTap: () => _goToPage(1),
+                    ),
+                    _DrawerNavTile(
+                      icon: Icons.tune_outlined,
+                      selectedIcon: Icons.tune_rounded,
+                      label: 'تكوين المزرعة',
+                      isSelected: _currentIndex == 2,
+                      color: const Color(0xFF1565C0),
+                      onTap: () => _goToPage(2),
+                    ),
+                    _DrawerNavTile(
+                      icon: Icons.settings_outlined,
+                      selectedIcon: Icons.settings_rounded,
+                      label: 'الإعدادات',
+                      isSelected: _currentIndex == 3,
+                      color: const Color(0xFF546E7A),
+                      onTap: () => _goToPage(3),
+                    ),
+                    const SizedBox(height: 8),
+                    const _DrawerSectionLabel(title: 'النشاط'),
+                    BlocBuilder<NotificationsCubit, NotificationsState>(
+                      builder: (context, state) {
+                        final int unread = state.unreadCount;
+                        return _DrawerNavTile(
+                          icon: Icons.notifications_outlined,
+                          selectedIcon: Icons.notifications_rounded,
+                          label: 'الإشعارات',
+                          color: const Color(0xFFE65100),
+                          badgeCount: unread,
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            _openNotifications();
+                          },
+                        );
+                      },
+                    ),
+                    BlocBuilder<AuthCubit, AuthState>(
+                      builder: (context, state) {
+                        if (state is AuthAuthenticated &&
+                            state.user.role == 'admin') {
+                          return _DrawerNavTile(
+                            icon: Icons.people_outline_rounded,
+                            selectedIcon: Icons.people_rounded,
+                            label: 'إدارة المستخدمين',
+                            color: const Color(0xFF00838F),
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (context) => const AdminUsersPage(),
+                                ),
+                              );
+                            },
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
                     ),
                   ],
                 ),
               ),
-              _DrawerNavTile(
-                icon: Icons.dashboard_outlined,
-                label: 'لوحة التحكم',
-                onTap: () => _goToPage(0),
-              ),
-              _DrawerNavTile(
-                icon: Icons.auto_awesome_outlined,
-                label: 'كشف الأمراض',
-                onTap: () => _goToPage(1),
-              ),
-              _DrawerNavTile(
-                icon: Icons.tune_outlined,
-                label: 'تكوين',
-                onTap: () => _goToPage(2),
-              ),
-              _DrawerNavTile(
-                icon: Icons.settings_outlined,
-                label: 'الإعدادات',
-                onTap: () => _goToPage(3),
-              ),
-              BlocBuilder<NotificationsCubit, NotificationsState>(
-                builder: (context, state) {
-                  final int unread = state.unreadCount;
-                  return _DrawerNavTile(
-                    icon: Icons.notifications_outlined,
-                    label: 'الإشعارات',
-                    trailing: unread > 0
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              unread.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          )
-                        : null,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      _openNotifications();
-                    },
-                  );
-                },
-              ),
-              // Developer cloud tools removed
-              const Divider(indent: 20, endIndent: 20),
-              BlocBuilder<AuthCubit, AuthState>(
-                builder: (context, state) {
-                  if (state is AuthAuthenticated &&
-                      state.user.role == 'admin') {
-                    return _DrawerNavTile(
-                      icon: Icons.people_outline,
-                      label: 'إدارة المستخدمين',
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AdminUsersPage(),
-                          ),
-                        );
-                      },
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-              _DrawerNavTile(
-                icon: Icons.logout,
-                label: 'تسجيل الخروج',
-                onTap: () => context.read<AuthCubit>().logout(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: _DrawerNavTile(
+                  icon: Icons.logout_rounded,
+                  selectedIcon: Icons.logout_rounded,
+                  label: 'تسجيل الخروج',
+                  color: const Color(0xFFC62828),
+                  isDestructive: true,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.read<AuthCubit>().logout();
+                  },
+                ),
               ),
             ],
           ),
         ),
       ),
-      body: _pages[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: List<Widget>.generate(_pages.length, (int index) {
+          if (!_mountedTabIndices.contains(index)) {
+            return const SizedBox.shrink();
+          }
+          return _pages[index];
+        }),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: _goToPage,
@@ -221,35 +228,217 @@ class _AppShellPageState extends State<AppShellPage> {
   }
 }
 
-class _DrawerNavTile extends StatelessWidget {
-  const _DrawerNavTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Widget? trailing;
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: <Color>[Color(0xFF2E7D32), Color(0xFF7CB342)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-        minLeadingWidth: 30,
-        leading: Icon(icon),
-        title: Text(label),
-        trailing: trailing,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        onTap: onTap,
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (BuildContext context, AuthState state) {
+          final String subtitle;
+          if (state is AuthAuthenticated) {
+            final String name = state.user.displayName?.trim() ?? '';
+            subtitle = name.isNotEmpty ? name : state.user.email;
+          } else {
+            subtitle = 'مرحبًا بك في المزرعة الذكية';
+          }
+
+          return Row(
+            children: <Widget>[
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    width: 2,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.asset(
+                    AppStrings.appIconAsset,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      AppStrings.appTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _DrawerSectionLabel extends StatelessWidget {
+  const _DrawerSectionLabel({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
+          color: Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerNavTile extends StatelessWidget {
+  const _DrawerNavTile({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.onTap,
+    required this.color,
+    this.isSelected = false,
+    this.isDestructive = false,
+    this.badgeCount = 0,
+  });
+
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+  final bool isSelected;
+  final bool isDestructive;
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color background = isSelected
+        ? color.withValues(alpha: 0.14)
+        : Colors.white;
+    final Color borderColor = isSelected
+        ? color.withValues(alpha: 0.35)
+        : Colors.grey.shade200;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: isDestructive ? 0.12 : 0.15),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(
+                      isSelected ? selectedIcon : icon,
+                      color: color,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight:
+                            isSelected ? FontWeight.w800 : FontWeight.w600,
+                        fontSize: 14,
+                        color: isDestructive
+                            ? color
+                            : const Color(0xFF263238),
+                      ),
+                    ),
+                  ),
+                  if (badgeCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE53935),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        badgeCount > 99 ? '99+' : '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  if (isSelected)
+                    Icon(Icons.check_circle, color: color, size: 18),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

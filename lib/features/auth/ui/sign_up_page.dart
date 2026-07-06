@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_cubit.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_state.dart';
+import 'package:smart_cucumber_agriculture_system/features/auth/ui/widgets/auth_ui.dart';
+
 import '../../../core/utils/ui_helpers.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -12,10 +14,10 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _passwordController;
-  late TextEditingController _confirmPasswordController;
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
+  late final TextEditingController _confirmPasswordController;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -85,186 +87,108 @@ class _SignUpPageState extends State<SignUpPage> {
           }
         }
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFEEF5E9),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF2E7D32),
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                const Text(
-                  'إنشاء حساب',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F5B24),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'انضم إلى نظام زراعة البندورة الذكي',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'الاسم الكامل',
-                    hintText: 'أدخل اسمك الكامل',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFDEE4D9)),
-                    ),
-                  ),
-                  enabled: !_isLoading,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'البريد الإلكتروني',
-                    hintText: 'أدخل بريدك الإلكتروني',
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFDEE4D9)),
-                    ),
-                  ),
-                  enabled: !_isLoading,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'كلمة المرور',
-                    hintText: 'أدخل كلمة مرور (6 أحرف على الأقل)',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFDEE4D9)),
-                    ),
-                  ),
-                  enabled: !_isLoading,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'تأكيد كلمة المرور',
-                    hintText: 'أعد إدخال كلمة المرور',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(
-                          () => _obscureConfirmPassword =
-                              !_obscureConfirmPassword,
-                        );
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFDEE4D9)),
-                    ),
-                  ),
-                  enabled: !_isLoading,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSignUp,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
-                      disabledBackgroundColor: Colors.grey,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            'إنشاء حساب',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    const Text(
-                      'هل لديك حساب بالفعل؟ ',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.pop(context),
-                      child: const Text(
-                        'تسجيل الدخول',
-                        style: TextStyle(
-                          color: Color(0xFF2E7D32),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+      child: AuthPageScaffold(
+        appBarTitle: 'إنشاء حساب',
+        showBack: true,
+        contentPadding: AuthUi.signUpContentPadding,
+        child: AuthFormCard(
+          title: 'إنشاء حساب',
+          subtitle: 'انضم إلى نظام زراعة البندورة الذكي',
+          children: <Widget>[
+            TextField(
+              controller: _nameController,
+              textInputAction: TextInputAction.next,
+              decoration: AuthUi.inputDecoration(
+                label: 'الاسم الكامل',
+                hint: 'أدخل اسمك',
+                icon: Icons.person_outline_rounded,
+              ),
+              enabled: !_isLoading,
             ),
-          ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              decoration: AuthUi.inputDecoration(
+                label: 'البريد الإلكتروني',
+                hint: 'example@email.com',
+                icon: Icons.alternate_email_rounded,
+              ),
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              textInputAction: TextInputAction.next,
+              decoration: AuthUi.inputDecoration(
+                label: 'كلمة المرور',
+                hint: '6 أحرف على الأقل',
+                icon: Icons.lock_outline_rounded,
+                suffix: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                  onPressed: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
+                ),
+              ),
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) {
+                if (!_isLoading) _handleSignUp();
+              },
+              decoration: AuthUi.inputDecoration(
+                label: 'تأكيد كلمة المرور',
+                hint: 'أعد إدخال كلمة المرور',
+                icon: Icons.verified_user_outlined,
+                suffix: IconButton(
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                  onPressed: () {
+                    setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                    );
+                  },
+                ),
+              ),
+              enabled: !_isLoading,
+            ),
+            const SizedBox(height: 22),
+            FilledButton(
+              onPressed: _isLoading ? null : _handleSignUp,
+              style: AuthUi.primaryButtonStyle,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2.2,
+                      ),
+                    )
+                  : const Text('إنشاء حساب'),
+            ),
+            const SizedBox(height: 8),
+            AuthFooterLink(
+              prompt: 'هل لديك حساب بالفعل؟',
+              actionLabel: 'تسجيل الدخول',
+              enabled: !_isLoading,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
         ),
       ),
     );

@@ -26,14 +26,13 @@ class NotificationsService {
 
       final FarmNotification notification = FarmNotification(
         id: id,
-        // Store Arabic-friendly title/message so users see localized
-        // notifications when the service creates them.
         title: 'تم اكتشاف $displayName',
         message: 'تم اكتشاف $displayName على ورقة ${AppStrings.plantDefinite}',
         diseaseName: diseaseName,
         nextUpload: nextUpload,
         isRead: false,
         createdAt: createdAt ?? DateTime.now(),
+        type: FarmNotification.typeDisease,
       );
 
       print(
@@ -55,64 +54,28 @@ class NotificationsService {
     }
   }
 
-  /// Add notification prompting user to upload image
-  Future<void> addImageUploadNotification({DateTime? createdAt}) async {
-    try {
-      final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
-
-      final FarmNotification notification = FarmNotification(
-        id: id,
-        title: 'تم استقبال الصورة بنجاح ✓',
-        message:
-            'يرجى تحميل صورة جديدة في المرة القادمة للكشف عن الأمراض المحتملة.',
-        diseaseName: 'image_upload',
-        nextUpload: '',
-        isRead: false,
-        createdAt: createdAt ?? DateTime.now(),
-      );
-
-      print('[NOTIFICATIONS_SERVICE] Adding image upload prompt notification');
-
-      // Write notification
-      await _database
-          .ref('${FarmPayload.notificationItemsPath}/notif_$id')
-          .set(notification.toMap());
-
-      // Increment unread count
-      await _incrementUnreadCount();
-
-      print(
-        '[NOTIFICATIONS_SERVICE] Image upload notification added successfully',
-      );
-    } catch (e) {
-      print(
-        '[NOTIFICATIONS_SERVICE] Error adding image upload notification: $e',
-      );
-      rethrow;
-    }
-  }
-
-  /// Add a generic log notification for pump changes and system events.
-  Future<void> addLogNotification({
-    required String title,
-    required String message,
-    String? logType,
-    DateTime? createdAt,
+  /// Remind the user to re-upload a leaf image on the scheduled day.
+  Future<void> addReuploadReminderNotification({
+    required DateTime reuploadDueAt,
   }) async {
     try {
       final String id = const Uuid().v4().replaceAll('-', '').substring(0, 12);
 
       final FarmNotification notification = FarmNotification(
         id: id,
-        title: title,
-        message: message,
-        diseaseName: logType ?? 'system_log',
+        title: 'تذكير برفع صورة اليوم',
+        message:
+            'حان موعد إعادة رفع صورة الورقة للكشف عن الأمراض. يرجى التقاط صورة جديدة اليوم.',
+        diseaseName: '',
         nextUpload: '',
         isRead: false,
-        createdAt: createdAt ?? DateTime.now(),
+        createdAt: reuploadDueAt,
+        type: FarmNotification.typeReuploadReminder,
       );
 
-      print('[NOTIFICATIONS_SERVICE] Adding log notification: $title');
+      print(
+        '[NOTIFICATIONS_SERVICE] Adding re-upload reminder for ${reuploadDueAt.toIso8601String()}',
+      );
 
       await _database
           .ref('${FarmPayload.notificationItemsPath}/notif_$id')
@@ -120,10 +83,42 @@ class NotificationsService {
 
       await _incrementUnreadCount();
 
-      print('[NOTIFICATIONS_SERVICE] Log notification added successfully');
+      print('[NOTIFICATIONS_SERVICE] Re-upload reminder added successfully');
     } catch (e) {
-      print('[NOTIFICATIONS_SERVICE] Error adding log notification: $e');
+      print('[NOTIFICATIONS_SERVICE] Error adding re-upload reminder: $e');
       rethrow;
+    }
+  }
+
+  /// Clears [next_upload] on disease notifications after the reminder fires.
+  Future<void> clearDiseaseNextUploadFields() async {
+    try {
+      final DataSnapshot snapshot = await _database
+          .ref(FarmPayload.notificationItemsPath)
+          .get();
+      if (!snapshot.exists) return;
+
+      final Map<dynamic, dynamic> raw =
+          snapshot.value as Map<dynamic, dynamic>;
+      for (final MapEntry<dynamic, dynamic> entry in raw.entries) {
+        final Map<String, dynamic> map = Map<String, dynamic>.from(entry.value);
+        final String nextUpload = map['next_upload'] as String? ?? '';
+        if (nextUpload.isEmpty) continue;
+
+        final String type = (map['type'] as String? ?? '').toLowerCase();
+        final bool isDisease = type == FarmNotification.typeDisease ||
+            (type.isEmpty &&
+                (map['disease_name'] as String? ?? '').isNotEmpty &&
+                (map['disease_name'] as String? ?? '').toLowerCase() !=
+                    'user_signup');
+        if (!isDisease) continue;
+
+        await _database
+            .ref('${FarmPayload.notificationItemsPath}/${entry.key}')
+            .update(<String, dynamic>{'next_upload': ''});
+      }
+    } catch (e) {
+      print('[NOTIFICATIONS_SERVICE] Error clearing next_upload fields: $e');
     }
   }
 
@@ -295,13 +290,15 @@ class NotificationsService {
 
       final Map<dynamic, dynamic> raw =
           event.snapshot.value as Map<dynamic, dynamic>;
-      final List<FarmNotification> notifications = raw.entries.map((e) {
-        final id = e.key.toString().replaceFirst('notif_', '');
-        final map = Map<String, dynamic>.from(e.value);
-        return FarmNotification.fromMap(id, map);
-      }).toList();
+      final List<FarmNotification> notifications = raw.entries
+          .map((e) {
+            final id = e.key.toString().replaceFirst('notif_', '');
+            final map = Map<String, dynamic>.from(e.value);
+            return FarmNotification.fromMap(id, map);
+          })
+          .where((FarmNotification n) => n.isDisplayable)
+          .toList();
 
-      // Sort by created_at descending (newest first)
       notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       return notifications;

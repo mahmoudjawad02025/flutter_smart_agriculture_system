@@ -245,6 +245,78 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 12),
             _SettingsCard(
+              title: 'صفحة التكوين',
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  child: Text(
+                    'الأقسام الأساسية تبقى ظاهرة دائمًا: بطاقة الحالة أعلى الصفحة، '
+                    'المضخات، الخزانات، وقائمة «ما تحتاجه».',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[700],
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppRuntimeConfig.showConfigRefreshTime,
+                  builder: (context, value, child) {
+                    return SwitchListTile(
+                      value: value,
+                      onChanged: AppRuntimeConfig.setShowConfigRefreshTime,
+                      title: const Text('زمن تحديث الحلقة'),
+                      subtitle: const Text(
+                        'فترة انتظار المتحكم الدقيق بين كل دورة',
+                      ),
+                    );
+                  },
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppRuntimeConfig.showConfigAutoWater,
+                  builder: (context, value, child) {
+                    return SwitchListTile(
+                      value: value,
+                      onChanged: AppRuntimeConfig.setShowConfigAutoWater,
+                      title: const Text('إعدادات الري التلقائي'),
+                    );
+                  },
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppRuntimeConfig.showConfigAutoFert,
+                  builder: (context, value, child) {
+                    return SwitchListTile(
+                      value: value,
+                      onChanged: AppRuntimeConfig.setShowConfigAutoFert,
+                      title: const Text('إعدادات التسميد التلقائي'),
+                    );
+                  },
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppRuntimeConfig.showConfigFert2Dose,
+                  builder: (context, value, child) {
+                    return SwitchListTile(
+                      value: value,
+                      onChanged: AppRuntimeConfig.setShowConfigFert2Dose,
+                      title: const Text('معالجة أمراض الأوراق'),
+                      subtitle: const Text('مرض المعالجة وجرعة السماد 2'),
+                    );
+                  },
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: AppRuntimeConfig.showConfigDetectionRules,
+                  builder: (context, value, child) {
+                    return SwitchListTile(
+                      value: value,
+                      onChanged: AppRuntimeConfig.setShowConfigDetectionRules,
+                      title: const Text('قواعد الكشف'),
+                      subtitle: const Text('حالة الورقة ومدة إعادة الرفع'),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SettingsCard(
               title: 'التحليل',
               children: <Widget>[
                 ValueListenableBuilder<bool>(

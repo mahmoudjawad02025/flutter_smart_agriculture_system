@@ -12,11 +12,23 @@ class PlantClassifierService {
   }
 
   Interpreter? _interpreter;
-  static const List<String> _labels = <String>[
+
+  /// All class labels the on-device TFLite model can output.
+  static const List<String> modelLabels = <String>[
     'Healthy',
     'BacterialSpot',
     'LateBlight',
   ];
+
+  /// Diseases the local AI can detect (excludes [Healthy]).
+  static const List<String> detectableDiseaseLabels = <String>[
+    'BacterialSpot',
+    'LateBlight',
+  ];
+
+  static const String defaultFert2DiseaseName = 'BacterialSpot';
+
+  static const List<String> _labels = modelLabels;
 
   Future<void> _initModel() async {
     final InterpreterOptions options = InterpreterOptions();

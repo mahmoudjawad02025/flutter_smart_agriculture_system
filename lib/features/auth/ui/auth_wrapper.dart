@@ -6,6 +6,7 @@ import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_state
 import 'package:smart_cucumber_agriculture_system/features/auth/ui/login_page.dart';
 
 import '../../../core/config/app_access_control.dart';
+import '../../../core/localization/app_strings.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -27,8 +28,8 @@ class AuthWrapper extends StatelessWidget {
               return const AppShellPage();
             }
 
-            // 2. Initial Loading Screen
-            if (state is AuthInitial) {
+            // 2. Loading states
+            if (state is AuthInitial || state is AuthLoading) {
               return _LoadingScreen();
             }
 
@@ -46,28 +47,45 @@ class _LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEEF5E9),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              Color(0xFFE8F3E2),
+              Color(0xFFF7FBF4),
+              Color(0xFFEEF5E9),
+            ],
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.asset(
+                  AppStrings.launcherIconAsset,
+                  width: 88,
+                  height: 88,
+                  fit: BoxFit.cover,
+                ),
               ),
-              padding: const EdgeInsets.all(20),
-              child: const Icon(
-                Icons.agriculture,
-                size: 60,
-                color: Color(0xFF2E7D32),
+              const SizedBox(height: 28),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
               ),
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'جاري تحميل التطبيق...',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF2E7D32),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
