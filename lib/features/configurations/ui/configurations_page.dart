@@ -951,7 +951,6 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
               AppRuntimeConfig.showConfigRefreshTime.value;
           final bool showAutoWater = AppRuntimeConfig.showConfigAutoWater.value;
           final bool showAutoFert = AppRuntimeConfig.showConfigAutoFert.value;
-          final bool showTanks = AppRuntimeConfig.showConfigTanks.value;
           final bool showFert2Dose = AppRuntimeConfig.showConfigFert2Dose.value;
           final bool showDetectionRules =
               AppRuntimeConfig.showConfigDetectionRules.value;
@@ -1028,10 +1027,8 @@ class _ConfigurationsPageState extends State<ConfigurationsPage> {
                       if (showAutoWater || showAutoFert)
                         const SizedBox(height: 12),
                       _PumpControlSection(database: _database),
-                      if (showTanks) ...<Widget>[
-                        const SizedBox(height: 12),
-                        _buildTanksSection(config),
-                      ],
+                      const SizedBox(height: 12),
+                      _buildTanksSection(config),
                       if (showFert2Dose) ...<Widget>[
                         const SizedBox(height: 12),
                         _buildFert2DoseFromConfig(config),

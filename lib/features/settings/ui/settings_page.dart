@@ -251,7 +251,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   child: Text(
                     'الأقسام الأساسية تبقى ظاهرة دائمًا: بطاقة الحالة أعلى الصفحة، '
-                    'المضخات، وقائمة «ما تحتاجه».',
+                    'المضخات، الخزانات، وقائمة «ما تحتاجه».',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[700],
                       height: 1.35,
@@ -288,16 +288,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       value: value,
                       onChanged: AppRuntimeConfig.setShowConfigAutoFert,
                       title: const Text('إعدادات التسميد التلقائي'),
-                    );
-                  },
-                ),
-                ValueListenableBuilder<bool>(
-                  valueListenable: AppRuntimeConfig.showConfigTanks,
-                  builder: (context, value, child) {
-                    return SwitchListTile(
-                      value: value,
-                      onChanged: AppRuntimeConfig.setShowConfigTanks,
-                      title: const Text('إعدادات الخزانات'),
                     );
                   },
                 ),

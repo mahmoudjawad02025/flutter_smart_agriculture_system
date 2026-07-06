@@ -18,7 +18,6 @@ class AppRuntimeConfig {
   static const String _showConfigRefreshTimeKey = 'show_config_refresh_time';
   static const String _showConfigAutoWaterKey = 'show_config_auto_water';
   static const String _showConfigAutoFertKey = 'show_config_auto_fert';
-  static const String _showConfigTanksKey = 'show_config_tanks';
   static const String _showConfigFert2DoseKey = 'show_config_fert2_dose';
   static const String _showConfigDetectionRulesKey =
       'show_config_detection_rules';
@@ -54,7 +53,6 @@ class AppRuntimeConfig {
   static final ValueNotifier<bool> showConfigAutoFert = ValueNotifier<bool>(
     true,
   );
-  static final ValueNotifier<bool> showConfigTanks = ValueNotifier<bool>(true);
   static final ValueNotifier<bool> showConfigFert2Dose = ValueNotifier<bool>(
     true,
   );
@@ -66,7 +64,6 @@ class AppRuntimeConfig {
       showConfigRefreshTime,
       showConfigAutoWater,
       showConfigAutoFert,
-      showConfigTanks,
       showConfigFert2Dose,
       showConfigDetectionRules,
     ],
@@ -106,7 +103,6 @@ class AppRuntimeConfig {
       showConfigRefreshTime.value = legacyVisible;
       showConfigAutoWater.value = legacyVisible;
       showConfigAutoFert.value = legacyVisible;
-      showConfigTanks.value = legacyVisible;
       showConfigFert2Dose.value = legacyVisible;
       showConfigDetectionRules.value = legacyVisible;
       return;
@@ -118,7 +114,6 @@ class AppRuntimeConfig {
         preferences.getBool(_showConfigAutoWaterKey) ?? true;
     showConfigAutoFert.value =
         preferences.getBool(_showConfigAutoFertKey) ?? true;
-    showConfigTanks.value = preferences.getBool(_showConfigTanksKey) ?? true;
     showConfigFert2Dose.value =
         preferences.getBool(_showConfigFert2DoseKey) ?? true;
     showConfigDetectionRules.value =
@@ -171,12 +166,6 @@ class AppRuntimeConfig {
     showConfigAutoFert.value = value;
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_showConfigAutoFertKey, value);
-  }
-
-  static Future<void> setShowConfigTanks(bool value) async {
-    showConfigTanks.value = value;
-    final SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_showConfigTanksKey, value);
   }
 
   static Future<void> setShowConfigFert2Dose(bool value) async {
