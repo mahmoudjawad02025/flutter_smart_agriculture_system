@@ -19,6 +19,7 @@ class FarmPayload {
   static String get pumpsPath => '$configPath/pumps';
   static String get tanksPath => '$configPath/tanks';
   static String get autoFertPath => '$configPath/auto_fert';
+  static String get wifiPath => '$configPath/wifi';
   static String get refreshTimePath => '$configPath/refresh_time';
 
   /// ESP32 main-loop delay bounds (milliseconds).
@@ -42,6 +43,12 @@ class FarmPayload {
       'sensors': <String, dynamic>{},
       'leaf': <String, dynamic>{},
       'config': <String, dynamic>{
+        'wifi': <String, dynamic>{
+          'old_ssid': '',
+          'old_pass': '',
+          'new_ssid': '',
+          'new_pass': '',
+        },
         'refresh_time': defaultRefreshTimeMs,
       },
       'users': <String, dynamic>{},
@@ -90,6 +97,7 @@ class FarmPayload {
     }
 
     await _migrateLegacyAutoFertilizerPath(farmRef);
+    await _migrateLegacyWifiFields(farmRef);
 
     final DatabaseReference usersRef = database.ref(usersPath);
     final DataSnapshot usersSnapshot = await usersRef.get();
@@ -124,6 +132,66 @@ class FarmPayload {
     }
 
     await farmRef.child('config/auto_fertilizer').remove();
+  }
+
+  static Future<void> _migrateLegacyWifiFields(
+    DatabaseReference farmRef,
+  ) async {
+    final DataSnapshot wifiSnapshot = await farmRef.child('config/wifi').get();
+    if (!wifiSnapshot.exists || wifiSnapshot.value == null) {
+      return;
+    }
+
+    final Map<String, dynamic> wifi = _toMap(wifiSnapshot.value);
+    final Map<String, dynamic> updates = <String, dynamic>{};
+
+    String pickValue(List<String> keys) {
+      for (final String key in keys) {
+        final String value = '${wifi[key] ?? ''}'.trim();
+        if (value.isNotEmpty) {
+          return value;
+        }
+      }
+      return '';
+    }
+
+    final String oldSsid = pickValue(<String>['old_ssid', 'old_name', 'name']);
+    final String oldPass = pickValue(<String>[
+      'old_pass',
+      'old_password',
+      'password',
+    ]);
+    final String newSsid = pickValue(<String>['new_ssid', 'new_name']);
+    final String newPass = pickValue(<String>['new_pass']);
+
+    if ('${wifi['old_ssid'] ?? ''}'.trim().isEmpty && oldSsid.isNotEmpty) {
+      updates['old_ssid'] = oldSsid;
+    }
+    if ('${wifi['old_pass'] ?? ''}'.isEmpty && oldPass.isNotEmpty) {
+      updates['old_pass'] = oldPass;
+    }
+    if ('${wifi['new_ssid'] ?? ''}'.trim().isEmpty && newSsid.isNotEmpty) {
+      updates['new_ssid'] = newSsid;
+    }
+    if ('${wifi['new_pass'] ?? ''}'.isEmpty && newPass.isNotEmpty) {
+      updates['new_pass'] = newPass;
+    }
+
+    if (updates.isNotEmpty) {
+      await farmRef.child('config/wifi').update(updates);
+    }
+
+    for (final String legacyKey in <String>[
+      'name',
+      'password',
+      'old_name',
+      'old_password',
+      'new_name',
+    ]) {
+      if (wifi.containsKey(legacyKey)) {
+        await farmRef.child('config/wifi/$legacyKey').remove();
+      }
+    }
   }
 
   static void _collectMissing(
