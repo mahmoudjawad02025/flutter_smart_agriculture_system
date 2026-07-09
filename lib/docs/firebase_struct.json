@@ -50,6 +50,12 @@
             "fert2": false,
             "water": false
         },
+        "wifi": {
+            "old_ssid": "",
+            "old_pass": "",
+            "new_ssid": "",
+            "new_pass": ""
+        },
         "refresh_time": 5000
     },
     "users" : {

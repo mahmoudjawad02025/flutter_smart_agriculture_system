@@ -46,6 +46,14 @@ class FirebaseStreams {
 
   static DatabaseEvent? get lastConfigEvent => _config?._lastEvent;
 
+  static _SharedQueryStream? _wifi;
+  static Stream<DatabaseEvent> get wifiStream {
+    _wifi ??= _SharedQueryStream(_db.ref(FarmPayload.wifiPath));
+    return _wifi!.stream;
+  }
+
+  static DatabaseEvent? get lastWifiEvent => _wifi?._lastEvent;
+
   static _SharedQueryStream? _refreshTime;
   static Stream<DatabaseEvent> get refreshTimeStream {
     _refreshTime ??= _SharedQueryStream(_db.ref(FarmPayload.refreshTimePath));

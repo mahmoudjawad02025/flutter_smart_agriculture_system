@@ -1,25 +1,326 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_cubit.dart';
 import 'package:smart_cucumber_agriculture_system/features/auth/cubit/auth_state.dart';
 
+import '../../../core/services/firebase_streams.dart';
 import '../../../core/config/app_runtime_config.dart';
 import '../../../core/utils/ui_helpers.dart';
+import '../../firebase_data/models/farm_payload.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  static const String staticWifiSsid = 'hardware_wifi';
+  static const String staticWifiPassword = 'hardware_wifi_123';
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final FirebaseDatabase _database = FirebaseDatabase.instance;
+  Map<String, dynamic> _cachedWifiConfig = <String, dynamic>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _primeWifiConfig();
+  }
+
+  Future<void> _primeWifiConfig() async {
+    final Map<String, dynamic> wifi = await _loadWifiConfig();
+    if (!mounted) return;
+    setState(() => _cachedWifiConfig = wifi);
+  }
+
   void _showSnackBar(String message, {bool isError = true}) {
     showLocalizedSnackBar(
       context,
       message,
       durationSeconds: 4,
       forceError: isError,
+    );
+  }
+
+  Map<String, dynamic> _toMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
+  }
+
+  String _wifiSsid(Map<String, dynamic> wifi, {required bool isNew}) {
+    final List<String> keys = isNew
+        ? <String>['new_ssid', 'new_name']
+        : <String>['old_ssid', 'old_name', 'name'];
+    for (final String key in keys) {
+      final dynamic raw = wifi[key];
+      if (raw == null) continue;
+      final String value = raw.toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  String _wifiPass(Map<String, dynamic> wifi, {required bool isNew}) {
+    final List<String> keys = isNew
+        ? <String>['new_pass']
+        : <String>['old_pass', 'old_password', 'password'];
+    for (final String key in keys) {
+      final dynamic raw = wifi[key];
+      if (raw == null) continue;
+      final String value = raw.toString();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  Future<Map<String, dynamic>> _loadWifiConfig() async {
+    final DatabaseEvent? cached = FirebaseStreams.lastWifiEvent;
+    if (cached != null && cached.snapshot.value != null) {
+      return _toMap(cached.snapshot.value);
+    }
+
+    final DataSnapshot snapshot = await _database
+        .ref(FarmPayload.wifiPath)
+        .get();
+    return _toMap(snapshot.value);
+  }
+
+  Future<void> _openChangeWifiDialog({
+    required bool isNew,
+    required String dialogTitle,
+    required String profileLabel,
+    required String nameFieldKey,
+    required String passwordFieldKey,
+    required String successMessage,
+  }) async {
+    final Map<String, dynamic> wifi = await _loadWifiConfig();
+    await _showChangeWifiDialog(
+      dialogTitle: dialogTitle,
+      profileLabel: profileLabel,
+      nameFieldKey: nameFieldKey,
+      passwordFieldKey: passwordFieldKey,
+      currentName: _wifiSsid(wifi, isNew: isNew),
+      currentPassword: _wifiPass(wifi, isNew: isNew),
+      successMessage: successMessage,
+    );
+  }
+
+  Future<bool> _showWifiDangerConfirmation({
+    required String profileLabel,
+    required String wifiName,
+  }) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          icon: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+          title: const Text('تنبيه خطير'),
+          content: Text(
+            'تأكد أن إعدادات شبكة Wi-Fi واحدة على الأقل (الحالية أو الجديدة) '
+            'صحيحة 100%. إذا كان كلاهما خاطئًا فسيفقد المتحكم الاتصال بالشبكة '
+            'وستحتاج إلى إعادة برمجته.\n\n'
+            'الملف المراد حفظه: $profileLabel\n'
+            'اسم الشبكة: $wifiName',
+            style: const TextStyle(height: 1.5),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('رجوع'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('تأكيد الإرسال'),
+            ),
+          ],
+        );
+      },
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _showChangeWifiDialog({
+    required String dialogTitle,
+    required String profileLabel,
+    required String nameFieldKey,
+    required String passwordFieldKey,
+    required String currentName,
+    required String currentPassword,
+    required String successMessage,
+  }) async {
+    String wifiName = currentName;
+    String wifiPassword = currentPassword;
+
+    final bool? shouldSubmit = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text(dialogTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'تأكد أن إعدادات شبكة Wi-Fi واحدة على الأقل (الحالية أو الجديدة) '
+                            'صحيحة 100%. إذا كان كلاهما خاطئًا فسيفقد المتحكم الاتصال '
+                            'بالشبكة وستحتاج إلى إعادة برمجته.',
+                            style: TextStyle(height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    initialValue: currentName,
+                    decoration: const InputDecoration(
+                      labelText: 'اسم شبكة Wi-Fi',
+                    ),
+                    textInputAction: TextInputAction.next,
+                    onChanged: (String value) {
+                      setState(() => wifiName = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    initialValue: currentPassword,
+                    decoration: const InputDecoration(
+                      labelText: 'كلمة مرور Wi-Fi',
+                    ),
+                    obscureText: true,
+                    onChanged: (String value) {
+                      setState(() => wifiPassword = value);
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('إلغاء'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('متابعة'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (shouldSubmit != true) {
+      return;
+    }
+
+    wifiName = wifiName.trim();
+
+    if (wifiName.isEmpty) {
+      _showSnackBar('يرجى إدخال اسم شبكة Wi-Fi.');
+      return;
+    }
+
+    if (wifiPassword.trim().isEmpty) {
+      _showSnackBar('يرجى إدخال كلمة مرور Wi-Fi.');
+      return;
+    }
+
+    final bool confirmed = await _showWifiDangerConfirmation(
+      profileLabel: profileLabel,
+      wifiName: wifiName,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await _database.ref(FarmPayload.wifiPath).update(<String, dynamic>{
+        nameFieldKey: wifiName,
+        passwordFieldKey: wifiPassword,
+      });
+      if (mounted) {
+        _showSnackBar(successMessage, isError: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('فشل حفظ إعدادات Wi-Fi: $e');
+      }
+    }
+  }
+
+  Widget _buildControllerWifiSection(Map<String, dynamic> wifi) {
+    final String oldWifiSsid = _wifiSsid(wifi, isNew: false);
+    final String newWifiSsid = _wifiSsid(wifi, isNew: true);
+
+    return Column(
+      children: <Widget>[
+        ListTile(
+          leading: const Icon(Icons.wifi_outlined),
+          title: const Text('الشبكة الحالية'),
+          subtitle: Text(
+            oldWifiSsid.isEmpty
+                ? 'لم يتم حفظ اسم الشبكة الحالية بعد'
+                : 'الشبكة الحالية: $oldWifiSsid',
+          ),
+          trailing: const Icon(Icons.edit_outlined),
+          onTap: () => _openChangeWifiDialog(
+            isNew: false,
+            dialogTitle: 'تعديل الشبكة الحالية',
+            profileLabel: 'الشبكة الحالية',
+            nameFieldKey: 'old_ssid',
+            passwordFieldKey: 'old_pass',
+            successMessage: 'تم حفظ إعدادات الشبكة الحالية للمتحكم.',
+          ),
+        ),
+        const Divider(height: 1),
+        ListTile(
+          leading: const Icon(Icons.wifi_tethering_outlined),
+          title: const Text('شبكة جديدة'),
+          subtitle: Text(
+            newWifiSsid.isEmpty
+                ? 'لم يتم حفظ اسم الشبكة الجديدة بعد'
+                : 'الشبكة الجديدة: $newWifiSsid',
+          ),
+          trailing: const Icon(Icons.edit_outlined),
+          onTap: () => _openChangeWifiDialog(
+            isNew: true,
+            dialogTitle: 'تعديل الشبكة الجديدة',
+            profileLabel: 'الشبكة الجديدة',
+            nameFieldKey: 'new_ssid',
+            passwordFieldKey: 'new_pass',
+            successMessage: 'تم حفظ إعدادات الشبكة الجديدة للمتحكم.',
+          ),
+        ),
+        const Divider(height: 1),
+        const _WifiRecoveryInfoTile(),
+      ],
     );
   }
 
@@ -217,6 +518,26 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 12),
             _SettingsCard(
+              title: 'المتحكم',
+              children: <Widget>[
+                StreamBuilder<DatabaseEvent>(
+                  stream: FirebaseStreams.wifiStream,
+                  initialData: FirebaseStreams.lastWifiEvent,
+                  builder: (context, snapshot) {
+                    final Map<String, dynamic> streamedWifi = _toMap(
+                      snapshot.data?.snapshot.value,
+                    );
+                    final Map<String, dynamic> wifi = streamedWifi.isNotEmpty
+                        ? streamedWifi
+                        : _cachedWifiConfig;
+
+                    return _buildControllerWifiSection(wifi);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _SettingsCard(
               title: 'الإشعارات',
               children: <Widget>[
                 ValueListenableBuilder<bool>(
@@ -406,6 +727,136 @@ class _SettingsCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _WifiRecoveryInfoTile extends StatelessWidget {
+  const _WifiRecoveryInfoTile();
+
+  Future<void> _showRecoveryInfo(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        final TextTheme textTheme = Theme.of(dialogContext).textTheme;
+
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          icon: const Icon(Icons.info_outline, color: Color(0xFF1565C0)),
+          title: const Text('استعادة اتصال المتحكم'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  'إذا كانت الشبكة الحالية والشبكة الجديدة معًا غير صحيحة، '
+                  'سيفقد المتحكم الاتصال بالإنترنت ولن يستقبل التحديثات من التطبيق.',
+                  style: textTheme.bodyMedium?.copyWith(height: 1.45),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'للاستعادة، يوفر المتحكم شبكة احتياطية مدمجة. '
+                  'اتصل هاتفك مؤقتًا بها، ثم أعد ضبط قيم الشبكتين من التطبيق.',
+                  style: textTheme.bodyMedium?.copyWith(height: 1.45),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F9FC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBBDEFB)),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _WifiCredentialRow(
+                        label: 'اسم الشبكة',
+                        value: SettingsPage.staticWifiSsid,
+                      ),
+                      SizedBox(height: 8),
+                      _WifiCredentialRow(
+                        label: 'كلمة المرور',
+                        value: SettingsPage.staticWifiPassword,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'تأكد أن إعدادات شبكة واحدة على الأقل (الحالية أو الجديدة) '
+                  'صحيحة 100% قبل الحفظ.',
+                  style: textTheme.bodyMedium?.copyWith(
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('حسناً'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.info_outline, color: Color(0xFF1565C0)),
+      title: const Text('ماذا لو فقد المتحكم الاتصال؟'),
+      subtitle: const Text('اضغط لعرض شبكة الاستعادة المدمجة'),
+      trailing: const Directionality(
+        textDirection: TextDirection.ltr,
+        child: Icon(Icons.chevron_left),
+      ),
+      onTap: () => _showRecoveryInfo(context),
+    );
+  }
+}
+
+class _WifiCredentialRow extends StatelessWidget {
+  const _WifiCredentialRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SizedBox(
+          width: 88,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: SelectableText(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
