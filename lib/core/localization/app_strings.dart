@@ -4,9 +4,9 @@ class AppStrings {
   // App metadata
   static const String appTitle = 'المزرعة الذكية';
   // In-app branding (drawer, dashboard, etc.)
-  static const String appIconAsset = 'lib/core/media/icons/app/app.jpg';
+  static const String appIconAsset = 'lib/core/assets/icons/app/app.jpg';
   // Same image used for mobile/desktop launcher icon (auth screens only).
-  static const String launcherIconAsset = 'lib/core/media/icons/app/1.jpg';
+  static const String launcherIconAsset = 'lib/core/assets/icons/app/1.jpg';
   static const String diseaseDetected = 'تم الكشف عن مرض';
 
   // Common UI labels

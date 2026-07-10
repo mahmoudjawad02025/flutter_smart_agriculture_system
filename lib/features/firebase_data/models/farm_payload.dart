@@ -62,7 +62,7 @@ class FarmPayload {
   static Future<Map<String, dynamic>> loadSampleData() async {
     try {
       final String jsonText = await rootBundle.loadString(
-        'lib/docs/firebase_struct.json',
+        'lib/core/assets/data/firebase_struct.json',
       );
       final dynamic decoded = json.decode(jsonText);
       if (decoded is Map) return Map<String, dynamic>.from(decoded);

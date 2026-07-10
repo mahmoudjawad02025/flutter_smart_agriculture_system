@@ -33,7 +33,7 @@ class PlantClassifierService {
   Future<void> _initModel() async {
     final InterpreterOptions options = InterpreterOptions();
     _interpreter = await Interpreter.fromAsset(
-      'assets/best_float32.tflite',
+      'lib/core/assets/models/best_float32.tflite',
       options: options,
     );
   }
