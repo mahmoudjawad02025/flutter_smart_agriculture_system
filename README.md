@@ -11,8 +11,8 @@ A local AI model classifies a leaf photo as `Healthy`, `BacterialSpot`, or `Late
 - [🗄️ Firebase](#firebase)
 - [🔌 Hardware](#hardware)
 - [🔧 Key features](#key-features)
-- [🖼️ App screens](#screens)
-- [🧱 Architecture](#architecture)
+- [📸 App screens](#screens)
+- [🏗️ Architecture](#architecture)
 - [🧰 Tech stack](#tech-stack)
 - [📁 Project structure](#project-structure)
 - [▶️ Getting started](#getting-started)
@@ -121,7 +121,7 @@ The ESP32 firmware listens to `/config` and publishes `/sensors`, `/leaf`, logs,
 
 <a id="screens"></a>
 
-## 🖼️ App screens
+## 📸 App screens
 
 Tap a group to expand it. Click any image to view it full size.
 
@@ -190,7 +190,7 @@ Tap a group to expand it. Click any image to view it full size.
 
 <a id="architecture"></a>
 
-## 🧱 Architecture
+## 🏗️ Architecture
 
 ```text
 Presentation (UI)
