@@ -125,27 +125,31 @@ The ESP32 firmware listens to `/config` and publishes `/sensors`, `/leaf`, logs,
 
 Screenshots are in `lib/core/assets/screens/`. A long screen is split into parts and reads left to right. Scroll sideways to see every screen.
 
-<div style="overflow-x: auto; white-space: nowrap;">
-  <img src="lib/core/assets/screens/signin.png" height="500" alt="Sign in" style="display: inline-block;">
-  <img src="lib/core/assets/screens/signup.png" height="500" alt="Sign up" style="display: inline-block;">
-  <img src="lib/core/assets/screens/dashboard1.png" height="500" alt="Dashboard 1" style="display: inline-block;">
-  <img src="lib/core/assets/screens/dashboard2.png" height="500" alt="Dashboard 2" style="display: inline-block;">
-  <img src="lib/core/assets/screens/dashboard3.png" height="500" alt="Dashboard 3" style="display: inline-block;">
-  <img src="lib/core/assets/screens/ai1.png" height="500" alt="AI 1" style="display: inline-block;">
-  <img src="lib/core/assets/screens/ai2.png" height="500" alt="AI 2" style="display: inline-block;">
-  <img src="lib/core/assets/screens/config1.png" height="500" alt="Config 1" style="display: inline-block;">
-  <img src="lib/core/assets/screens/config2.png" height="500" alt="Config 2" style="display: inline-block;">
-  <img src="lib/core/assets/screens/config3.png" height="500" alt="Config 3" style="display: inline-block;">
-  <img src="lib/core/assets/screens/config4.png" height="500" alt="Config 4" style="display: inline-block;">
-  <img src="lib/core/assets/screens/config5.png" height="500" alt="Config 5" style="display: inline-block;">
-  <img src="lib/core/assets/screens/setting1.png" height="500" alt="Setting 1" style="display: inline-block;">
-  <img src="lib/core/assets/screens/setting2.png" height="500" alt="Setting 2" style="display: inline-block;">
-  <img src="lib/core/assets/screens/setting3.png" height="500" alt="Setting 3" style="display: inline-block;">
-  <img src="lib/core/assets/screens/drawer.png" height="500" alt="Drawer" style="display: inline-block;">
-  <img src="lib/core/assets/screens/notifications.png" height="500" alt="Notifications" style="display: inline-block;">
-  <img src="lib/core/assets/screens/logs.png" height="500" alt="Logs" style="display: inline-block;">
-  <img src="lib/core/assets/screens/management.png" height="500" alt="Management" style="display: inline-block;">
-</div>
+<nobr>
+<table>
+  <tr>
+    <td><img src="lib/core/assets/screens/signin.png" height="500" alt="Sign in"></td>
+    <td><img src="lib/core/assets/screens/signup.png" height="500" alt="Sign up"></td>
+    <td><img src="lib/core/assets/screens/dashboard1.png" height="500" alt="Dashboard 1"></td>
+    <td><img src="lib/core/assets/screens/dashboard2.png" height="500" alt="Dashboard 2"></td>
+    <td><img src="lib/core/assets/screens/dashboard3.png" height="500" alt="Dashboard 3"></td>
+    <td><img src="lib/core/assets/screens/ai1.png" height="500" alt="AI 1"></td>
+    <td><img src="lib/core/assets/screens/ai2.png" height="500" alt="AI 2"></td>
+    <td><img src="lib/core/assets/screens/config1.png" height="500" alt="Config 1"></td>
+    <td><img src="lib/core/assets/screens/config2.png" height="500" alt="Config 2"></td>
+    <td><img src="lib/core/assets/screens/config3.png" height="500" alt="Config 3"></td>
+    <td><img src="lib/core/assets/screens/config4.png" height="500" alt="Config 4"></td>
+    <td><img src="lib/core/assets/screens/config5.png" height="500" alt="Config 5"></td>
+    <td><img src="lib/core/assets/screens/setting1.png" height="500" alt="Setting 1"></td>
+    <td><img src="lib/core/assets/screens/setting2.png" height="500" alt="Setting 2"></td>
+    <td><img src="lib/core/assets/screens/setting3.png" height="500" alt="Setting 3"></td>
+    <td><img src="lib/core/assets/screens/drawer.png" height="500" alt="Drawer"></td>
+    <td><img src="lib/core/assets/screens/notifications.png" height="500" alt="Notifications"></td>
+    <td><img src="lib/core/assets/screens/logs.png" height="500" alt="Logs"></td>
+    <td><img src="lib/core/assets/screens/management.png" height="500" alt="Management"></td>
+  </tr>
+</table>
+</nobr>
 
 ---
 
