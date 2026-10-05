@@ -123,63 +123,28 @@ The ESP32 firmware listens to `/config` and publishes `/sensors`, `/leaf`, logs,
 
 ## 🖼️ App screens
 
-Screenshots are in `lib/core/assets/screens/`. A long screen is split into parts and reads left to right.
+Screenshots are in `lib/core/assets/screens/`. A long screen is split into parts and reads left to right. Scroll sideways to see every screen.
 
 <table>
   <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/signin.png" width="300" alt="Sign in"><br>Sign in</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/signup.png" width="300" alt="Sign up"><br>Sign up</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/dashboard1.png" width="300" alt="Dashboard 1"><br>Dashboard 1</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/dashboard2.png" width="300" alt="Dashboard 2"><br>Dashboard 2</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/dashboard3.png" width="300" alt="Dashboard 3"><br>Dashboard 3</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/ai1.png" width="300" alt="AI 1"><br>AI 1</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/ai2.png" width="300" alt="AI 2"><br>AI 2</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/config1.png" width="300" alt="Config 1"><br>Config 1</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/config2.png" width="300" alt="Config 2"><br>Config 2</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/config3.png" width="300" alt="Config 3"><br>Config 3</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/config4.png" width="300" alt="Config 4"><br>Config 4</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/config5.png" width="300" alt="Config 5"><br>Config 5</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/setting1.png" width="300" alt="Setting 1"><br>Setting 1</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/setting2.png" width="300" alt="Setting 2"><br>Setting 2</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/setting3.png" width="300" alt="Setting 3"><br>Setting 3</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/drawer.png" width="300" alt="Drawer"><br>Drawer</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/notifications.png" width="300" alt="Notifications"><br>Notifications</td>
     <td align="center" width="320"><img src="lib/core/assets/screens/logs.png" width="300" alt="Logs"><br>Logs</td>
-  </tr>
-</table>
-
-<table>
-  <tr>
     <td align="center" width="320"><img src="lib/core/assets/screens/management.png" width="300" alt="Management"><br>Management</td>
   </tr>
 </table>
