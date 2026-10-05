@@ -123,33 +123,68 @@ The ESP32 firmware listens to `/config` and publishes `/sensors`, `/leaf`, logs,
 
 ## 🖼️ App screens
 
-Screenshots are in `lib/core/assets/screens/`. A long screen is split into parts and reads left to right. Scroll sideways to see every screen.
+Tap a group to expand it. Click any image to view it full size.
 
-<nobr>
-<table>
-  <tr>
-    <td><img src="lib/core/assets/screens/signin.png" height="500" alt="Sign in"></td>
-    <td><img src="lib/core/assets/screens/signup.png" height="500" alt="Sign up"></td>
-    <td><img src="lib/core/assets/screens/dashboard1.png" height="500" alt="Dashboard 1"></td>
-    <td><img src="lib/core/assets/screens/dashboard2.png" height="500" alt="Dashboard 2"></td>
-    <td><img src="lib/core/assets/screens/dashboard3.png" height="500" alt="Dashboard 3"></td>
-    <td><img src="lib/core/assets/screens/ai1.png" height="500" alt="AI 1"></td>
-    <td><img src="lib/core/assets/screens/ai2.png" height="500" alt="AI 2"></td>
-    <td><img src="lib/core/assets/screens/config1.png" height="500" alt="Config 1"></td>
-    <td><img src="lib/core/assets/screens/config2.png" height="500" alt="Config 2"></td>
-    <td><img src="lib/core/assets/screens/config3.png" height="500" alt="Config 3"></td>
-    <td><img src="lib/core/assets/screens/config4.png" height="500" alt="Config 4"></td>
-    <td><img src="lib/core/assets/screens/config5.png" height="500" alt="Config 5"></td>
-    <td><img src="lib/core/assets/screens/setting1.png" height="500" alt="Setting 1"></td>
-    <td><img src="lib/core/assets/screens/setting2.png" height="500" alt="Setting 2"></td>
-    <td><img src="lib/core/assets/screens/setting3.png" height="500" alt="Setting 3"></td>
-    <td><img src="lib/core/assets/screens/drawer.png" height="500" alt="Drawer"></td>
-    <td><img src="lib/core/assets/screens/notifications.png" height="500" alt="Notifications"></td>
-    <td><img src="lib/core/assets/screens/logs.png" height="500" alt="Logs"></td>
-    <td><img src="lib/core/assets/screens/management.png" height="500" alt="Management"></td>
-  </tr>
-</table>
-</nobr>
+<details open>
+<summary><b>🔐 Authentication</b></summary>
+<br>
+
+<img src="lib/core/assets/screens/signin.png" height="450" alt="Sign in">
+<img src="lib/core/assets/screens/signup.png" height="450" alt="Sign up">
+
+</details>
+
+<details>
+<summary><b>📊 Dashboard</b></summary>
+<br>
+
+<img src="lib/core/assets/screens/dashboard1.png" height="450" alt="Dashboard 1">
+<img src="lib/core/assets/screens/dashboard2.png" height="450" alt="Dashboard 2">
+<img src="lib/core/assets/screens/dashboard3.png" height="450" alt="Dashboard 3">
+
+</details>
+
+<details>
+<summary><b>🧪 AI disease detection</b></summary>
+<br>
+
+<img src="lib/core/assets/screens/ai1.png" height="450" alt="AI 1">
+<img src="lib/core/assets/screens/ai2.png" height="450" alt="AI 2">
+
+</details>
+
+<details>
+<summary><b>⚙️ Configuration</b></summary>
+<br>
+
+<img src="lib/core/assets/screens/config1.png" height="450" alt="Config 1">
+<img src="lib/core/assets/screens/config2.png" height="450" alt="Config 2">
+<img src="lib/core/assets/screens/config3.png" height="450" alt="Config 3">
+<img src="lib/core/assets/screens/config4.png" height="450" alt="Config 4">
+<img src="lib/core/assets/screens/config5.png" height="450" alt="Config 5">
+
+</details>
+
+<details>
+<summary><b>🛠️ Settings</b></summary>
+<br>
+
+<img src="lib/core/assets/screens/setting1.png" height="450" alt="Setting 1">
+<img src="lib/core/assets/screens/setting2.png" height="450" alt="Setting 2">
+<img src="lib/core/assets/screens/setting3.png" height="450" alt="Setting 3">
+
+</details>
+
+<details>
+<summary><b>🔔 Drawer, notifications, logs and management</b></summary>
+<br>
+
+<img src="lib/core/assets/screens/drawer.png" height="450" alt="Drawer">
+<img src="lib/core/assets/screens/notifications.png" height="450" alt="Notifications">
+<img src="lib/core/assets/screens/logs.png" height="450" alt="Logs">
+<img src="lib/core/assets/screens/management.png" height="450" alt="Management">
+
+</details>
 
 ---
 
