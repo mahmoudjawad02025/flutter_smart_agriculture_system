@@ -1,5 +1,6 @@
 # 📱 Smart Agriculture System
 
+A clean, modular, scalable Flutter architecture: feature-based folders, Cubit state management, and a service layer between the UI and Firebase.
 A local AI model classifies a leaf photo as `Healthy`, `BacterialSpot`, or `LateBlight`, a Flutter app operates the farm, and Firebase Realtime Database shares state and data with an ESP32 that holds the core logic connecting the software to the hardware; that firmware is not in this repository.
 
 ---
@@ -207,6 +208,7 @@ Firebase Realtime Database  ↔  ESP32 controller
 - **Canonical farm schema** in `FarmPayload` with default seed data and legacy field migration
 - **Separation of concerns:** UI widgets generally do not talk to Firebase directly
 - **Startup resilience:** Firebase initialization failures are logged without crashing the app shell
+- **Scalable structure:** each feature (dashboard, auth, notifications, and others) is its own module, so new features can be added without touching existing ones.
 
 ---
 
@@ -225,6 +227,8 @@ Firebase Realtime Database  ↔  ESP32 controller
 | Local preferences | `shared_preferences` |
 | Hardware integration | ESP32 plus sensors and actuators via Firebase RTDB |
 | Platforms in repo | Android, iOS, Windows, Web, Linux, macOS project files |
+
+The feature-based layout and shared Firebase streams keep the app modular and easy to extend.
 
 **Note:** `google_sign_in`, `cloud_functions`, and `dio` are listed in `pubspec.yaml` but are not part of the active runtime path today (Google Sign-In and Cloud Functions are unused; `dio` is only referenced in commented Roboflow code).
 
