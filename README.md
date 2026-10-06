@@ -1,7 +1,8 @@
 # 📱 Smart Agriculture System
 
-A clean, modular, scalable Flutter architecture: feature-based folders, Cubit state management, and a service layer between the UI and Firebase.
-A local AI model classifies a leaf photo as `Healthy`, `BacterialSpot`, or `LateBlight`, a Flutter app operates the farm, and Firebase Realtime Database shares state and data with an ESP32 that holds the core logic connecting the software to the hardware; that firmware is not in this repository.
+A clean, scalable, cross-platform Flutter app for Android, iOS, and Windows. One codebase covers live farm readings, pump control, and on-device leaf classification.
+
+A local AI model classifies a leaf photo as `Healthy`, `BacterialSpot`, or `LateBlight`. The app operates the farm, and Firebase Realtime Database shares state and data with an ESP32 that holds the core logic connecting the software to the hardware; that firmware is not in this repository.
 
 ---
 
@@ -226,7 +227,7 @@ Firebase Realtime Database  ↔  ESP32 controller
 | Image handling | `image_picker`, `image` |
 | Local preferences | `shared_preferences` |
 | Hardware integration | ESP32 plus sensors and actuators via Firebase RTDB |
-| Platforms in repo | Android, iOS, Windows, Web, Linux, macOS project files |
+| Platforms | Android, iOS, and Windows |
 
 The feature-based layout and shared Firebase streams keep the app modular and easy to extend.
 
@@ -312,7 +313,7 @@ lib/
 - `database.rules.json` is open read/write — suitable for development, not production as-is
 - Automated test coverage is minimal (`test/widget_test.dart` is a compile smoke check, not integration tests)
 - `flutter analyze` reports minor infos and warnings (deprecated APIs, debug prints) in parts of the codebase
-- Primary development and testing have been on Android; other platform folders exist but are not equally exercised
+- Day-to-day runs have been on Android and Windows. The iOS project is in the repo and configured, and has not been opened on a device or simulator
 - Leaf images are saved to the device temp directory at runtime, not to `lib/core/uploads/` (that folder is a repo placeholder)
 - This is a working IoT mobile client. It is not a finished commercial product
 
