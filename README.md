@@ -208,7 +208,7 @@ Firebase Realtime Database  ↔  ESP32 controller
 - **Canonical farm schema** in `FarmPayload` with default seed data and legacy field migration
 - **Separation of concerns:** UI widgets generally do not talk to Firebase directly
 - **Startup resilience:** Firebase initialization failures are logged without crashing the app shell
-- **Scalable structure:** each feature (dashboard, auth, notifications, and others) is its own module, so new features can be added without touching existing ones.
+- **Scalable structure:** each feature (dashboard, auth, notifications, and others) is its own module, so new features can be added with minimal changes to existing code.
 
 ---
 
